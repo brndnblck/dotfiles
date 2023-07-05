@@ -1,0 +1,36 @@
+new-session
+
+# Start numbering at 1
+set -g base-index 1
+set-window-option -g pane-base-index 1
+
+# Allows for faster key repetition
+set -s escape-time 0
+
+# Set status bar
+set -g status-bg red
+set -g status-fg white
+set -g status-left ""
+set -g status-right "#[fg=white]#H "
+
+# Rather than constraining window size to the maximum size of any client
+# connected to the *session*, constrain window size to the maximum size of any
+# client connected to *that window*. Much more reasonable.
+setw -g aggressive-resize on
+
+# Activity monitoring
+setw -g monitor-activity on
+set -g visual-activity on
+
+# Highlight active window
+#set-window-option -g window-status-current-bg white
+
+# Auto Rename Window
+set-window-option -g automatic-rename off
+
+set -g update-environment "DISPLAY WINDOWID SSH_ASKPASS SSH_AUTH_SOCK SSH_AGENT_PID SSH_CONNECTION KRB5CCNAME"
+
+# Use vim keybindings in copy mode
+setw -g mode-keys vi
+
+set -g default-terminal 'screen-256color'

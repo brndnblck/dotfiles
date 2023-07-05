@@ -1,0 +1,145 @@
+#!/bin/bash
+
+# General
+alias oo="open ."
+alias home='cd ~' # the tilda is too hard to reach
+alias wrk="cd ~/Projects/work"
+alias ops="cd ~/Projects/open-source"
+alias pers="cd ~/Projects/personal"
+alias proj="cd ~/Projects"
+alias h='history' # shortcut for history
+alias c='clear' # shortcut to clear your terminal
+alias ..='cd ..' # move up 1 dir
+alias ...='cd ../..' # move up 2 dirs
+alias gzip=pigz
+alias search='find . -maxdepth 1 -type f | xargs grep -in --color=always '
+
+# Head / Tail Shortcuts
+alias H='| head'
+alias T='| tail'
+alias G='| grep'
+alias L="| less"
+alias M="| most"
+alias LL="2>&1 | less"
+alias CA="2>&1 | cat -A"
+alias NE="2> /dev/null"
+alias NUL="> /dev/null 2>&1"
+
+# MongoDB
+alias mtail='tail -f /data/db/current/mongod.log'
+
+# GNU Overrides
+alias awk="gawk"
+alias find="gfind"
+alias grep="ggrep"
+alias sed="gsed"
+alias tar="gtar"
+alias xargs="gxargs"
+
+# List all files colorized in long format (requries coreutils)
+alias ls="gls -lh --color"
+alias lsh="gls -lah --color"
+alias lsf='gls -lah --color | grep "^-"'
+alias lsd='gls -lah --color | grep "^d"'
+
+# IP addresses
+alias extip="dig +short myip.opendns.com @resolver1.opendns.com"
+alias ip="arp `hostname` | awk -F'[()]' '{print $2}'"
+alias ips="ifconfig -a | grep -o 'inet6\? \(\([0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+\)\|[a-fA-F0-9:]\+\)' | sed -e 's/inet6* //'"
+alias whois="whois -h whois-servers.net"
+
+# Kubernetes
+alias k="kubectl"
+alias kgp="kubectl get pods"
+alias kgs="kubectl get svc"
+alias kgc="kubectl get componentstatuses"
+alias kctx="kubectl config current-context"
+alias kcon="kubectl config use-context"
+alias kgc="kubectl config get-contexts"
+alias kdelp="kubectl delete pods"
+alias kdes="kubectl describe"
+alias kaf="kubectl apply -f"
+alias kgd="kubectl get deployments"
+alias kgds="kubectl get ds" # Get daemonsets
+alias kgn="kubectl get nodes"
+alias klogs="kubectl logs"
+
+# Tmux
+alias t="tmux"
+alias tn="tmux new-session -s"
+alias ta="tmux attach-session -t"
+alias tls="tmux list-sessions"
+alias tk="tmux kill-session -t"
+alias td="tmux detach"
+
+# Ruby
+alias rake='noglob rake'
+alias bundle='noglob bundle'
+
+# Bundler
+alias bi='bundle install -j8'
+alias bu='bundle update'
+alias be='bundle exec'
+alias bv='bundle viz'
+
+# Python
+alias py="python"
+alias py3="python3"
+alias pyi="pip install"
+alias pyu="pip uninstall"
+alias pyf="pip freeze"
+alias pyr="pip install -r requirements.txt"
+alias pys="python -m SimpleHTTPServer" # Start a simple HTTP server (Python 2)
+alias pys3="python3 -m http.server" # Start a simple HTTP server (Python 3)
+alias ipy="ipython" # Start IPython shell
+alias jn="jupyter notebook" # Start Jupyter notebook
+
+# Pytorch
+alias ptenv="source activate pytorch_env"
+alias ptup="pip install torch torchvision"
+alias ptrun="python my_pytorch_script.py"
+
+# Virtualenv
+alias venv="python3 -m venv" # Create a new virtual environment
+alias vact="source bin/activate" # Activate a virtual environment
+alias vdeact="deactivate" # Deactivate the current virtual environment
+alias vrm="rm -rf bin include lib lib64 share pyvenv.cfg" # Remove a virtual environment
+
+# NPM
+alias ni="npm install"
+alias ns="npm start"
+alias nt="npm test"
+alias nr="npm run"
+alias nu="npm update"
+alias nun="npm uninstall"
+alias nin="npm init"
+alias np="npm publish"
+
+# Go
+alias g="go"
+alias gb="go build"
+alias gr="go run"
+alias gt="go test"
+alias gi="go install"
+alias gf="go fmt"
+alias gd="go doc"
+alias gg="go get"
+alias gm="go mod tidy"
+
+# Make
+alias m="make"
+alias mc="make clean"
+alias mi="make install"
+alias mt="make test"
+alias md="make dist"
+alias mdcl="make distclean"
+
+# Git
+alias git=$(brew --prefix)/bin/hub
+alias gb='gitin branch'
+alias gbr='gitin branch --remote'
+alias gba='gitin branch --all'
+alias gco='git checkout'
+alias gcob='git checkout -b'
+alias gd='git diff'
+alias gs='gitin status'
