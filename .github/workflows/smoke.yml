@@ -1,0 +1,13 @@
+name: Smoke Test
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: macOS-latest
+    
+    steps:
+    - uses: actions/checkout@v1
+    - name: Smoke Test a Full Installation
+      run:  ./script/test
