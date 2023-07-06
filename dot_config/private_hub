@@ -1,4 +1,9 @@
 github.com:
-- user: {{ (onepasswordItemFields "5kaq6gish5gkbcl4dyrp2oy2ue").handle.value }}
+- protocol: git
+{{- if eq (env "LOCATION" | trim) "test" }}
+  user: foo@bar.com
+  oauth_token: 12345
+{{ else }}
+  user: {{ (onepasswordItemFields "5kaq6gish5gkbcl4dyrp2oy2ue").handle.value }}
   oauth_token: {{ (onepasswordItemFields "5kaq6gish5gkbcl4dyrp2oy2ue").token.value }}
-  protocol: git
+{{ end }}

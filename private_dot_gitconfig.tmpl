@@ -3,7 +3,15 @@
 
 [help]
   autocorrect = -1
+{{ if eq (env "LOCATION" | trim) "test" }}
+[user]
+  email = foo@bar.com
+  name  = Some User
+  signingkey = 12345
 
+[github]
+  user = some_user
+{{ else }}
 [user]
   email = {{ (onepasswordDetailsFields "5kaq6gish5gkbcl4dyrp2oy2ue").username.value }}
   name  = Brandon Black
@@ -11,7 +19,7 @@
 
 [github]
   user = {{ (onepasswordItemFields "5kaq6gish5gkbcl4dyrp2oy2ue").handle.value }}
-
+{{ end }}
 [push]
   default = tracking
 
