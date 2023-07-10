@@ -1,0 +1,169 @@
+#!/bin/sh
+
+# attempt to kill any subprocesses still running on exit.
+trap 'kill $(jobs -p) &> /dev/null' EXIT
+
+PAM_FILE=/etc/pam.d/sudo
+
+record() {
+	logpath="$PARENT_DIR/tmp/log"
+	logfile=${LOG_FILE:='debug.log'}
+	loglevel=${LOG_LEVEL:='info'}
+	logmsg="$@"
+
+	case $loglevel in
+    'error'|'warning'|'notice'|'info'|'debug' )
+      ;;
+    * )
+      loglevel='notice'
+      ;;
+  esac
+
+	mkdir -p  $logpath
+	echo "[$(echo $loglevel | tr '[a-z]' '[A-Z]')] [$(date '+%Y-%m-%d %H:%M:%S')] $logmsg" >> $logpath/$logfile 2>&1
+}
+
+record_cmd() {
+	record "$@"
+}
+
+run() {
+	record_cmd $@
+	if [ "$?" -ne 0 ]; then
+		show-error "Something went wrong."
+		exit 1
+	fi
+}
+
+show_error() {
+	ansi --red --bold --no-restore --newline
+	echo "Error! $1"
+	ansi --reset-color --newline
+	exit 1
+}
+
+show_warn() {
+	ansi --yellow --bold --no-restore --newline
+	if [ "$1" == "--skip-newline" ]; then
+		echo "Warning! $2"
+	else
+		echo "Warning! $1"
+		ansi --reset-color --newline
+	fi
+}
+
+ensure_set() {
+	if [ -z "$1" ]; then
+		show_error "$2"
+	fi
+}
+
+ensure_sudo() {
+		# Check if we already have sudo access
+		if sudo -n true 2>/dev/null; then
+				record "Confirmed 'sudo' access already granted."
+				return 0
+		fi
+
+		# Try to get sudo access with TouchID
+		if grep -q "pam_tid.so" "$PAM_FILE"; then
+			if sudo -v -p -e 2>/dev/null; then
+				record "Confirmed 'sudo' access granted via TouchID."
+				return 0
+			fi
+		else
+			if command -v osascript >/dev/null 2>&1; then
+				PASSWORD=$(osascript -e 'Tell application "System Events" to display dialog "Please enter your password:" default answer "" with hidden answer' -e 'text returned of result' 2>/dev/null)
+				echo "$PASSWORD" | sudo -S true 2>/dev/null
+				if [ $? -eq 0 ]; then
+					record "Confirmed 'sudo' access granted via popup dialog."
+					return 0
+				fi
+			fi
+		fi
+
+		record "Failed to obtain 'sudo' access."
+		return 1
+}
+
+enable_touchid_sudo() {
+	ensure_sudo
+
+	timestamp=$(date "+%Y-%m-%d-%H%M%S")
+	
+	ADDED_MODULES=$(cat <<-EOF
+	# Automatically added by brndnblck/dotfiles on ${timestamp}.
+	auth       optional       /opt/homebrew/lib/pam/pam_reattach.so
+	auth       sufficient     pam_tid.so
+
+	# Original:
+	EOF
+	)
+
+	if grep -q "pam_tid.so" "$PAM_FILE"; then
+		record "TouchID for sudo is already enabled."
+	else
+		sudo cp $PAM_FILE ${PAM_FILE}.${timestamp}.bak
+		echo -e "$ADDED_MODULES" | cat - $PAM_FILE > $PARENT_DIR/tmp/sudo.new
+		sudo mv $PARENT_DIR/tmp/sudo.new $PAM_FILE
+
+		record "TouchID for sudo is now enabled."
+	fi
+}
+
+check_dirty() {
+	dirty=`git diff --shortstat 2> /dev/null | tail -n1`
+	if [ -n "$dirty" ]; then
+		if [ "$1" == "--abort" ]; then
+			show_error "The local repository is dirty. Aborting."
+			exit 1
+		else
+			show_warn --skip-newline "The local repository is dirty."
+		fi
+	fi
+}
+
+check_latest() {
+	latest=`git log HEAD..origin/master --oneline`
+	if [ -n "$latest" ]; then
+		if [ "$1" == "--abort" ]; then
+			ansi --red --bold --no-restore --newline
+			echo "Error! Your verison of the development environment is out-of-date."
+			ansi --white --bold --no-restore --newline
+			echo "Please update first (Run ./script/sync)."
+			ansi --reset-color --reset-attrib --newline
+			exit 1
+		else
+			show_warn "You're running an older verison of the development environment."
+		fi
+	fi
+}
+
+show_loader() {
+	($1) &
+	local pid=$!
+	[ -n "$2" ] && message="$2" || message='Please wait...'
+	local length=${#message}
+	local i=0
+	local loader='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+	ansi --hide-cursor --no-restore
+	while(ps a | awk '{print $1}' | grep -q "${pid}");  do
+		i=$(( (i+1) % 10 ))
+		ansi --blue-intense $(printf "\r   ${loader:$i:1}")
+		ansi --bold --no-restore
+		if [ -n "$message" ]; then
+			printf " $message"
+		else
+			printf ' Please wait...'
+		fi
+		ansi --reset-attrib
+		sleep .02
+	done
+
+	ansi --green --bold --no-restore
+	printf " \r✓ "
+	ansi --white --faint --no-restore
+	printf " $message\n"
+	ansi --reset-attrib --reset-color
+	ansi --show-cursor
+}

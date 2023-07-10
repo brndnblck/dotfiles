@@ -1,10 +1,37 @@
 #!/bin/sh
 
 set -e
-cd "$(dirname "$0")/.."
+
+LOG_FILE="bootstrap.log"
+CURRENT_DIR=$(realpath $(dirname "${BASH_SOURCE[0]}"))
+PARENT_DIR=$(dirname "$CURRENT_DIR")
+
+source $PARENT_DIR/script/support/ansi
+source $PARENT_DIR/script/support/helpers
+
+ensure_sudo
+
+show_loader "sleep 8"
+
+# enable_touchid_sudo
+
+exit 0
+
 
 # Install Homebrew
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+if [ ! type "brew" > /dev/null 2>&1 ]; then
+  cmd="/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+  show_loader "run $cmd" "Installing Homebrew..."
+else
+  show_loader "run brew update" "Updating System Dependencies..."
+fi
+
+# check disk encryption
+if [ -z "$(fdesetup status | grep -E "FileVault is (On|Off, but will be enabled after the next restart).")" ]; then
+  show_error "You need to enable disk encryption before you can continue."
+  open "x-apple.systempreferences:com.apple.preference.security?FileVault"
+  exit 1
+fi
 
 # Install XCode Command-Line Tools
 echo "Checking Command Line Tools for Xcode"
