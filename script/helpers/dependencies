@@ -1,0 +1,115 @@
+#!/bin/sh
+
+PAM_FILE="/etc/pam.d/sudo"
+
+ensure_sudo() {
+		# Check if we already have sudo access
+		if sudo -n true 2> /dev/null; then
+				record "Confirmed 'sudo' access already granted."
+				return 0
+		fi
+
+		# Try to get sudo access with TouchID
+		if grep -q "pam_tid.so" "$PAM_FILE"; then
+			if sudo -v -p -e 2> /dev/null; then
+				record "Confirmed 'sudo' access granted via TouchID."
+				return 0
+			fi
+		else
+			if command -v osascript >/dev/null 2>&1; then
+				PASSWORD=$(osascript -e 'Tell application "System Events" to display dialog "Please enter your password:" default answer "" with hidden answer' -e 'text returned of result' 2>/dev/null)
+				echo "$PASSWORD" | sudo -S true 2> /dev/null
+				if [ $? -eq 0 ]; then
+					record "Confirmed 'sudo' access granted via popup dialog."
+					return 0
+				fi
+			fi
+		fi
+
+		record "Failed to obtain 'sudo' access."
+		return 1
+}
+
+enable_touchid_sudo() {
+	ensure_sudo
+
+	timestamp=$(date "+%Y-%m-%d-%H%M%S")
+	
+	ADDED_MODULES=$(cat <<-EOF
+	# Automatically added by brndnblck/dotfiles on ${timestamp}.
+	auth       optional       /opt/homebrew/lib/pam/pam_reattach.so
+	auth       sufficient     pam_tid.so
+
+	# Original:
+	EOF
+	)
+
+	if grep -q "pam_tid.so" "$PAM_FILE"; then
+		record "TouchID for sudo is already enabled."
+	else
+		sudo cp $PAM_FILE ${PAM_FILE}.${timestamp}.bak
+		echo "$ADDED_MODULES" | cat - $PAM_FILE > $PARENT_DIR/tmp/sudo.new
+		sudo mv $PARENT_DIR/tmp/sudo.new $PAM_FILE
+
+		record "TouchID for sudo is now enabled."
+	fi
+}
+
+ensure_command_line_tools() {
+	xcode-select -p &> /dev/null
+	if [ $? -ne 0 ]; then
+	  record "Command Line Tools for Xcode not found. Installing from softwareupdate…"
+	  touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress;
+	  PROD=$(softwareupdate -l | grep "\*.*Command Line" | tail -n 1 | sed 's/^[^C]* //')
+	  run "softwareupdate -i \"$PROD\" --verbose > /dev/null 2>&1"
+	else
+	  record "Command Line Tools for Xcode have been installed."
+	fi
+}
+
+ensure_disk_encryption() {
+	if [ -z "$(fdesetup status | grep -E "FileVault is (On|Off, but will be enabled after the next restart).")" ]; then
+	  open "x-apple.systempreferences:com.apple.preference.security?FileVault"
+	  show_error "You need to enable disk encryption before you can continue."
+	fi
+}
+
+ensure_homebrew() {
+	if [ ! type "brew" > /dev/null 2>&1 ]; then
+	  run "/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+	fi
+}
+
+ensure_password_manager() {
+	ensure_sudo
+	run "brew install --cask 1password"
+	run "brew install --cask 1password-cli"
+
+	if [ $(op account list | wc -l) -le 1 ]; then
+		email=$(osascript -e 'Tell application "System Events" to display dialog "Please enter your 1Password Email:" default answer ""' -e 'text returned of result' 2>/dev/null)
+		secretkey=$(osascript -e 'Tell application "System Events" to display dialog "Please enter your 1Password Secret Key:" default answer ""' -e 'text returned of result' 2>/dev/null)
+		run "op account add --address start.1password.com --email $email --secret-key $secretkey"
+	fi
+
+	password=$(osascript -e 'Tell application "System Events" to display dialog "Please enter your 1Password Password:" default answer "" with hidden answer' -e 'text returned of result' 2>/dev/null)
+	run "echo \"$password\" | op signin 2>/dev/null"
+
+	if [ $? -eq 0 ]; then
+		record "Successful login to 1Password account."
+		return 0
+	else
+		show_error "Unable to add 1Password account. Halting."
+	fi
+}
+
+check_dirty() {
+	dirty=`git diff --shortstat 2> /dev/null | tail -n1`
+	if [ -n "$dirty" ]; then
+		if [ "$1" == "--abort" ]; then
+			show_error "The local repository is dirty. Aborting."
+			exit 1
+		else
+			show_warn --skip-newline "The local repository is dirty."
+		fi
+	fi
+}

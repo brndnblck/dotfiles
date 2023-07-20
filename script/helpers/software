@@ -1,0 +1,22 @@
+#!/bin/sh
+
+ensure_dependencies() {
+	ensure_sudo
+	run "brew bundle --file=$PARENT_DIR/Brewfile.dependencies"
+}
+
+ensure_applications() {
+	ensure_sudo
+	run "brew bundle --file=$PARENT_DIR/Brewfile.software"
+}
+
+ensure_osx_configuration() {
+	ensure_sudo
+	run "./$PARENT_DIR/scripts/support/helpers/preferences"
+}
+
+ensure_updated() {
+	ensure_sudo
+	run "brew upgrade"
+	run "mas upgrade"
+}

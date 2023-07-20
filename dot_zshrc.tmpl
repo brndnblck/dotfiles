@@ -1,11 +1,17 @@
 #!/bin/bash
 
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
 export PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 # nvm
 export NVM_DIR="$HOME/.nvm"
-. "$(brew --prefix nvm)/nvm.sh"
+  [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
+  [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
 
 # go
 export PATH="$GOPATH/bin:$PATH"
@@ -13,12 +19,14 @@ export PATH="$GOPATH/bin:$PATH"
 # rbenv
 eval "$(rbenv init -)"
 
-# ZSH (Oh-my-zsh)
-ZSH=$HOME/.oh-my-zsh
-ZSH_THEME="powerlevel9k/powerlevel9k"
+# Path to your oh-my-zsh installation.
+export ZSH="$HOME/.oh-my-zsh"
+
+ZSH_THEME="powerlevel10k/powerlevel10k"
 DISABLE_AUTO_UPDATE="true"
 COMPLETION_WAITING_DOTS="true"
-plugins=(git z docker npm sudo zsh-autosuggestions zsh-syntax-highlighting extract command-not-found colored-man-pages copy-file copy-dir copybuffer golang python tmux)
+
+plugins=(git z docker npm sudo extract command-not-found colored-man-pages copy-file copy-dir copybuffer golang python tmux)
 source $ZSH/oh-my-zsh.sh
 
 for file in ~/.{exports,aliases,functions,work}; do

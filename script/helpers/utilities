@@ -3,8 +3,6 @@
 # attempt to kill any subprocesses still running on exit.
 trap 'kill $(jobs -p) &> /dev/null' EXIT
 
-PAM_FILE=/etc/pam.d/sudo
-
 record() {
 	logpath="$PARENT_DIR/tmp/log"
 	logfile=${LOG_FILE:='debug.log'}
@@ -35,6 +33,13 @@ run() {
 	fi
 }
 
+show_info() {
+	ansi --magenta --bold --no-restore --newline
+	echo "$1"
+	record "$1"
+	ansi --reset-color --newline
+}
+
 show_error() {
 	ansi --red --bold --no-restore --newline
 	echo "Error! $1"
@@ -55,71 +60,6 @@ show_warn() {
 ensure_set() {
 	if [ -z "$1" ]; then
 		show_error "$2"
-	fi
-}
-
-ensure_sudo() {
-		# Check if we already have sudo access
-		if sudo -n true 2>/dev/null; then
-				record "Confirmed 'sudo' access already granted."
-				return 0
-		fi
-
-		# Try to get sudo access with TouchID
-		if grep -q "pam_tid.so" "$PAM_FILE"; then
-			if sudo -v -p -e 2>/dev/null; then
-				record "Confirmed 'sudo' access granted via TouchID."
-				return 0
-			fi
-		else
-			if command -v osascript >/dev/null 2>&1; then
-				PASSWORD=$(osascript -e 'Tell application "System Events" to display dialog "Please enter your password:" default answer "" with hidden answer' -e 'text returned of result' 2>/dev/null)
-				echo "$PASSWORD" | sudo -S true 2>/dev/null
-				if [ $? -eq 0 ]; then
-					record "Confirmed 'sudo' access granted via popup dialog."
-					return 0
-				fi
-			fi
-		fi
-
-		record "Failed to obtain 'sudo' access."
-		return 1
-}
-
-enable_touchid_sudo() {
-	ensure_sudo
-
-	timestamp=$(date "+%Y-%m-%d-%H%M%S")
-	
-	ADDED_MODULES=$(cat <<-EOF
-	# Automatically added by brndnblck/dotfiles on ${timestamp}.
-	auth       optional       /opt/homebrew/lib/pam/pam_reattach.so
-	auth       sufficient     pam_tid.so
-
-	# Original:
-	EOF
-	)
-
-	if grep -q "pam_tid.so" "$PAM_FILE"; then
-		record "TouchID for sudo is already enabled."
-	else
-		sudo cp $PAM_FILE ${PAM_FILE}.${timestamp}.bak
-		echo -e "$ADDED_MODULES" | cat - $PAM_FILE > $PARENT_DIR/tmp/sudo.new
-		sudo mv $PARENT_DIR/tmp/sudo.new $PAM_FILE
-
-		record "TouchID for sudo is now enabled."
-	fi
-}
-
-check_dirty() {
-	dirty=`git diff --shortstat 2> /dev/null | tail -n1`
-	if [ -n "$dirty" ]; then
-		if [ "$1" == "--abort" ]; then
-			show_error "The local repository is dirty. Aborting."
-			exit 1
-		else
-			show_warn --skip-newline "The local repository is dirty."
-		fi
 	fi
 }
 
