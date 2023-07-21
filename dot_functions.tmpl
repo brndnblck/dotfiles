@@ -8,17 +8,6 @@ alias-help() {
     awk -v RS='# ' -v IGNORECASE=1 '/'"$1"'/ {print "# "$0}' ~/.aliases
 }
 
-git() {
-  case $1 in
-  log)
-    shift
-    command gitin log --max-count=30 "$@"
-    ;;
-  *)
-    command git "$@";;
-  esac
-}
-
 function fetch-repos() {
   if [ $# -lt 2 ]; then
     echo "Error! Both organization name and page index are required."
