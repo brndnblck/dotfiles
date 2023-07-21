@@ -90,6 +90,7 @@ defaults write com.apple.TextEdit PlainTextEncodingForWrite -int 4
 
 # Set iTerm2 as the default terminal (not a defaults command, but useful)
 open -a "iTerm"
+killall "iTerm2"
 
 # Don’t display the annoying prompt when quitting iTerm
 defaults write com.googlecode.iterm2 PromptOnQuit -bool false
@@ -118,6 +119,8 @@ defaults write com.googlecode.iterm2 NoSyncSilenceBell -bool true
 # Enable clipboard integration in iTerm2
 defaults write com.googlecode.iterm2 "Copy to clipboard on selection" -bool
 
+echo "Test"
+
 # Google Chrome
 
 # Disable Chrome's external protocol prompt
@@ -126,16 +129,10 @@ defaults write com.google.Chrome ExternalProtocolDialogShowAlwaysOpenCheckbox -b
 # Set Chrome as the default browser
 open -a "Google Chrome" --args --make-default-browser
 
-# Sublime Text
-
-# Set Sublime Text as the default editor for certain file types (e.g., .txt, .md)
-duti -s com.sublimetext.3 public.plain-text all
-duti -s com.sublimetext.3 net.daringfireball.markdown all
-
 # Enable Sublime Text's command line tool
-ln -s "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" /usr/local/bin/sublime
+sudo ln -s "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" /usr/local/bin/sublime
 
-for app in "Dashboard" "Dock" "Finder" "SystemUIServer" "Terminal" "Music"; do
+for app in "Dashboard" "Dock" "Finder" "SystemUIServer" "Music"; do
   killall "$app" > /dev/null 2>&1
 done
 unset app

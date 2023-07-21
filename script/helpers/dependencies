@@ -1,55 +1,54 @@
 #!/bin/sh
 
-PAM_FILE="/etc/pam.d/sudo"
-
 ensure_sudo() {
-		# Check if we already have sudo access
-		if sudo -n true 2> /dev/null; then
-				record "Confirmed 'sudo' access already granted."
-				return 0
+	# Check if we already have sudo access
+	if sudo -n true 2> /dev/null; then
+		record "Confirmed 'sudo' access already granted."
+	# Try to get sudo access with TouchID
+	elif command -v osascript >/dev/null 2>&1; then 
+		PASSWORD=$(osascript -e 'Tell application "System Events" to display dialog "Please enter your password:" default answer "" with hidden answer' -e 'text returned of result' 2>/dev/null)
+		
+		# Exit if PASSWORD is empty
+		if [ -z "$PASSWORD" ]; then
+			show_error "No password provided. Exiting."
 		fi
 
-		# Try to get sudo access with TouchID
-		if grep -q "pam_tid.so" "$PAM_FILE"; then
-			if sudo -v -p -e 2> /dev/null; then
-				record "Confirmed 'sudo' access granted via TouchID."
-				return 0
-			fi
-		else
-			if command -v osascript >/dev/null 2>&1; then
-				PASSWORD=$(osascript -e 'Tell application "System Events" to display dialog "Please enter your password:" default answer "" with hidden answer' -e 'text returned of result' 2>/dev/null)
-				echo "$PASSWORD" | sudo -S true 2> /dev/null
-				if [ $? -eq 0 ]; then
-					record "Confirmed 'sudo' access granted via popup dialog."
-					return 0
-				fi
-			fi
+		echo "$PASSWORD" | sudo -S true 2> /dev/null
+		if [ $? -eq 0 ]; then
+			record "Confirmed 'sudo' access granted via popup dialog."
 		fi
-
-		record "Failed to obtain 'sudo' access."
-		return 1
+	else
+		show_error "Failed to obtain 'sudo' access."
+	fi
 }
 
 enable_touchid_sudo() {
 	ensure_sudo
+	
+	PAM_FILE="/etc/pam.d/sudo"
+	if grep -q "pam_tid.so" "$PAM_FILE"; then
+		return
+	fi
 
-	timestamp=$(date "+%Y-%m-%d-%H%M%S")
+	TIMESTAMP=$(date "+%Y-%m-%d-%H%M%S")
+	LOCATION=$(brew --prefix pam-reattach)
 	
 	ADDED_MODULES=$(cat <<-EOF
-	# Automatically added by brndnblck/dotfiles on ${timestamp}.
-	auth       optional       /opt/homebrew/lib/pam/pam_reattach.so
+	# Automatically added by brndnblck/dotfiles on ${TIMESTAMP}.
+	auth       optional       ${LOCATION}/lib/pam/pam_reattach.so
 	auth       sufficient     pam_tid.so
 
 	# Original:
 	EOF
 	)
 
-	if grep -q "pam_tid.so" "$PAM_FILE"; then
+	if grep -q "pam_tid.so" $PAM_FILE; then
 		record "TouchID for sudo is already enabled."
 	else
 		sudo cp $PAM_FILE ${PAM_FILE}.${timestamp}.bak
 		echo "$ADDED_MODULES" | cat - $PAM_FILE > $PARENT_DIR/tmp/sudo.new
 		sudo mv $PARENT_DIR/tmp/sudo.new $PAM_FILE
+		sudo -k
 
 		record "TouchID for sudo is now enabled."
 	fi
@@ -75,14 +74,15 @@ ensure_disk_encryption() {
 }
 
 ensure_homebrew() {
-	if [ ! type "brew" > /dev/null 2>&1 ]; then
-	  run "/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+	if command -v brew >/dev/null 2>&1; then
+		run "/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+	else
+		eval "$(/opt/homebrew/bin/brew shellenv)"
 	fi
 }
 
 ensure_password_manager() {
 	ensure_sudo
-	run "brew install --cask 1password"
 	run "brew install --cask 1password-cli"
 
 	if [ $(op account list | wc -l) -le 1 ]; then

@@ -1,6 +1,7 @@
 #!/bin/sh
 
-set -e
+# attempt to kill any subprocesses still running on exit.
+trap 'kill $(jobs -p) &> /dev/null' EXIT
 
 LOG_FILE="bootstrap.log"
 CURRENT_DIR=$(realpath $(dirname "${BASH_SOURCE[0]}"))
@@ -20,8 +21,8 @@ ansi --reset-color --newline
 ensure_sudo
 show_loader "ensure_disk_encryption" "Checking for Disk Encryption..."
 show_loader "ensure_command_line_tools" "Installing XCode Command Line Tools..."
+show_loader "enable_touchid_sudo" "Configuring TouchID for 'sudo' Commands..."
 show_loader "ensure_homebrew" "Installing Homebrew..."
-show_loader "ensure_password_manager" "Signing into Password Manager..."
 
 ansi --blue --bold --no-restore --newline
 echo "Installing System Software and Dependencies..."
@@ -36,12 +37,15 @@ ansi --blue --bold --no-restore --newline
 echo "Configuring Shell..."
 ansi --reset-color --newline
 
-show_loader "ensure_zsh" "Setting Up Shell..."
+show_loader "ensure_password_manager" "Signing into Password Manager..."
+show_loader "ensure_zsh" "Setting Up Shell and Enabling ZSH..."
 show_loader "ensure_fonts" "Installing Fonts and Color Schemes..."
 show_loader "ensure_dotfiles" "Setting Up Dotfiles..."
 
 ansi --blue --bold --no-restore --newline
-echo "[DONE]"
+echo "[DONE] Please restart."
 ansi --reset-color --newline
+
+sudo shutdown -r 15
 
 exit 0

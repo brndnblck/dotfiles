@@ -1,6 +1,18 @@
+tap "1password"
 tap "homebrew/bundle"
 
 brew "mas"
+
+cask "1password-cli"
+cask "docker"
+cask "font-menlo-for-powerline"
+cask "google-chrome"
+cask "google-cloud-sdk"
+cask "iterm2"
+cask "krisp"
+cask "kubecontext"
+cask "slack"
+cask "sublime-text"
 
 mas "Boom 3D", id: 1233048948
 mas "Codye", id: 1516894961

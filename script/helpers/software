@@ -2,17 +2,17 @@
 
 ensure_dependencies() {
 	ensure_sudo
-	run "brew bundle --file=$PARENT_DIR/Brewfile.dependencies"
+	run "brew bundle --no-lock -d --file=$PARENT_DIR/Brewfile.dependencies"
 }
 
 ensure_applications() {
 	ensure_sudo
-	run "brew bundle --file=$PARENT_DIR/Brewfile.software"
+	run "brew bundle --no-lock -d --file=$PARENT_DIR/Brewfile.software"
 }
 
 ensure_osx_configuration() {
 	ensure_sudo
-	run "./$PARENT_DIR/scripts/support/helpers/preferences"
+	record "source $PARENT_DIR/script/helpers/preferences"
 }
 
 ensure_updated() {

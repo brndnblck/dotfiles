@@ -1,36 +1,24 @@
 #!/bin/sh
 
-# attempt to kill any subprocesses still running on exit.
-trap 'kill $(jobs -p) &> /dev/null' EXIT
+LOGPATH="$PARENT_DIR/tmp/log"
+LOGFILE=${LOG_FILE:='debug.log'}
+LOGLEVEL=${LOG_LEVEL:='info'}
 
-record() {
-	logpath="$PARENT_DIR/tmp/log"
-	logfile=${LOG_FILE:='debug.log'}
-	loglevel=${LOG_LEVEL:='info'}
-	logmsg="$@"
+function record_cmd() {
+  mkdir -p $LOGPATH
 
-	case $loglevel in
-    'error'|'warning'|'notice'|'info'|'debug' )
-      ;;
-    * )
-      loglevel='notice'
-      ;;
-  esac
-
-	mkdir -p  $logpath
-	echo "[$(echo $loglevel | tr '[a-z]' '[A-Z]')] [$(date '+%Y-%m-%d %H:%M:%S')] $logmsg" >> $logpath/$logfile 2>&1
+  record "$@"
+  eval $@ >> "$LOG_FILE" 2>&1
 }
 
-record_cmd() {
-	record "$@"
+function record() {
+  mkdir -p $LOGPATH
+
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $@" >> $LOGPATH/$LOGFILE 2>&1
 }
 
 run() {
-	record_cmd $@
-	if [ "$?" -ne 0 ]; then
-		show-error "Something went wrong."
-		exit 1
-	fi
+	record_cmd "$@"
 }
 
 show_info() {

@@ -2,7 +2,7 @@
 
 ensure_zsh(){
 	ensure_sudo
-	run "sh -c \"$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\""
+	run "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 	run "brew install romkatv/powerlevel10k/powerlevel10k"
 	run "source ~/.zshrc"
 }
@@ -17,6 +17,6 @@ ensure_dotfiles(){
 	if command -v chezmoi >/dev/null 2>&1; then
 		run "chezmoi init --apply brndnblck"
 	else
-		show_error "Error! Missing Dotfile Manager."
+		show_error "Missing Dotfile Manager."
 	fi
 }
