@@ -22,15 +22,15 @@ export PATH="$GOPATH/bin:$PATH"
 # rbenv
 eval "$(rbenv init -)"
 
+# shell theme
+source $(brew --prefix romkatv/powerlevel10k/powerlevel10k)/powerlevel10k.zsh-theme
+
 # oh-my-zsh installation.
+export ZSH="$HOME/.oh-my-zsh"
 DISABLE_AUTO_UPDATE="true"
 COMPLETION_WAITING_DOTS="true"
-export ZSH="$HOME/.oh-my-zsh"
-plugins=(git z docker npm sudo extract command-not-found colored-man-pages copy-file copy-dir copybuffer golang python tmux)
+plugins=(git z docker npm sudo extract command-not-found colored-man-pages copybuffer golang python tmux)
 source $ZSH/oh-my-zsh.sh
-
-# shell theme
-source ~$(brew --prefix romkatv/powerlevel10k/powerlevel10k)/powerlevel10k.zsh-theme
 
 for file in ~/.{exports,aliases,functions,work}; do
   [ -r "$file" ] && source "$file"
