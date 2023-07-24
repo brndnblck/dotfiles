@@ -3,6 +3,7 @@ tap "homebrew/bundle"
 brew "mas"
 
 cask "1password-cli"
+cask "alfred"
 cask "docker"
 cask "google-chrome"
 cask "google-cloud-sdk"
