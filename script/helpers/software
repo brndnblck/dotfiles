@@ -12,7 +12,7 @@ ensure_applications() {
 
 ensure_osx_configuration() {
 	ensure_sudo
-	record "source $PARENT_DIR/script/helpers/preferences"
+	source $PARENT_DIR/script/helpers/preferences
 }
 
 ensure_updated() {
