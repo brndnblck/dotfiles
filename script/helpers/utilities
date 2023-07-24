@@ -8,7 +8,7 @@ function record_cmd() {
   mkdir -p $LOGPATH
 
   record "$@"
-  eval $@ >> "$LOG_FILE" 2>&1
+  eval $@ >> "$LOGPATH/$LOG_FILE" 2>&1
 }
 
 function record() {
