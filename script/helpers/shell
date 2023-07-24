@@ -15,7 +15,7 @@ ensure_fonts(){
 ensure_dotfiles(){
 	ensure_sudo
 	if command -v chezmoi >/dev/null 2>&1; then
-		run "chezmoi init --apply brndnblck"
+		run "chezmoi init --apply git@github.com:brndnblck/dotfiles.git"
 	else
 		show_error "Missing Dotfile Manager."
 	fi
