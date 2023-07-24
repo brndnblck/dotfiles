@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
 # homebrew and path hacking 
 eval "$(/opt/homebrew/bin/brew shellenv)"
 export PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
@@ -36,3 +31,6 @@ for file in ~/.{exports,aliases,functions,work}; do
   [ -r "$file" ] && source "$file"
 done
 unset file
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
