@@ -46,6 +46,4 @@ ansi --blue --bold --no-restore --newline
 echo "[DONE] Please restart."
 ansi --reset-color --newline
 
-sudo shutdown -r 15
-
-exit 0
+sudo shutdown -r
