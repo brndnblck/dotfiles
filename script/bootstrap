@@ -21,8 +21,8 @@ ansi --reset-color --newline
 ensure_sudo
 show_loader "ensure_disk_encryption" "Checking for Disk Encryption..."
 show_loader "ensure_command_line_tools" "Installing XCode Command Line Tools..."
-show_loader "enable_touchid_sudo" "Configuring TouchID for 'sudo' Commands..."
 show_loader "ensure_homebrew" "Installing Homebrew..."
+show_loader "enable_touchid_sudo" "Configuring TouchID for 'sudo' Commands..."
 
 ansi --blue --bold --no-restore --newline
 echo "Installing System Software and Dependencies..."
