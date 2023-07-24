@@ -1,0 +1,9 @@
+README
+LICENSE
+Brewfile.*
+
+fonts/
+script/
+tmp/
+
+.github/*
