@@ -120,11 +120,3 @@ for app in "Dashboard" "Dock" "Finder" "SystemUIServer" "Music"; do
   killall "$app" > /dev/null 2>&1
 done
 unset app
-
-# Set iTerm2 as the default terminal (not a defaults command, but useful)
-open -a "iTerm"
-killall "iTerm2"
-
-# Set Chrome as the default browser
-open -a "Google Chrome" --args --make-default-browser
-killall "Google Chrome"
