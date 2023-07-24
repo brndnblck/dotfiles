@@ -114,7 +114,8 @@ defaults write com.googlecode.iterm2 NoSyncSilenceBell -bool true
 defaults write com.google.Chrome ExternalProtocolDialogShowAlwaysOpenCheckbox -bool true
 
 # Enable Sublime Text's command line tool
-sudo ln -s "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" /usr/local/bin/sublime
+sudo ln -s "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" /usr/local/bin/sublime &> /dev/null
+sudo ln -s ~/Library/Mobile\ Documents/com\~apple\~CloudDocs/ ~/iCloud &> /dev/null
 
 for app in "Dashboard" "Dock" "Finder" "SystemUIServer" "Music"; do
   killall "$app" > /dev/null 2>&1
