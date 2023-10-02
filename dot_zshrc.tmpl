@@ -22,8 +22,11 @@ export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
 
+# miniconda
+conda init zsh
+
 # shell theme
-source $(brew --prefix romkatv/powerlevel10k/powerlevel10k)/powerlevel10k.zsh-theme
+source $(brew --prefix powerlevel10k)/powerlevel10k.zsh-theme
 
 for file in ~/.{exports,aliases,functions,work}; do
   [ -r "$file" ] && source "$file"
