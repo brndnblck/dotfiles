@@ -10,11 +10,13 @@ export ed="subl -w"
 export AUTOFEATURE=true
 export RSPEC=true
 
-# Python
-export WORKON_HOME="$HOME/.virtualenvs"
-
 # Go
 export GOPATH="$HOME/.go"
 
 # TMUX
 export DISABLE_AUTO_TITLE=true
+
+# Open Interpreter Setup
+if [ -f ~/.config/open-interpreter ]; then
+    export OPENAI_API_KEY="$(cat ~/.config/open-interpreter)"
+fi
