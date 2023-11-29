@@ -25,6 +25,33 @@ for file in ~/.{exports,aliases,functions,work}; do
 done
 unset file
 
+# shell plugins
+plugins=(
+  aws
+  bundler
+  dotenv
+  gcloud
+  git
+  github
+  golang
+  kubectx
+  macos
+  node
+  npm
+  nvm
+  poetry
+  poetry-env
+  python
+  rake
+  rbenv
+  ruby
+  rust
+  sublime
+  sudo
+  terraform
+  tmux
+)
+
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
