@@ -16,7 +16,7 @@ export GOPATH="$HOME/.go"
 # TMUX
 export DISABLE_AUTO_TITLE=true
 
-# Open Interpreter Setup
-if [ -f ~/.config/open-interpreter ]; then
-    export OPENAI_API_KEY="$(cat ~/.config/open-interpreter)"
+# OpenAI Credentials
+if [ -f ~/.config/openai ]; then
+    export OPENAI_API_KEY="$(< ~/.config/openai)"
 fi
