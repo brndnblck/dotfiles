@@ -18,7 +18,7 @@ export PATH="$GOPATH/bin:$PATH"
 eval "$(rbenv init -)"
 
 # shell theme
-source $(brew --prefix powerlevel10k)/powerlevel10k.zsh-theme
+source $(brew --prefix powerlevel10k)/share/powerlevel10k/powerlevel10k.zsh-theme
 
 for file in ~/.{exports,aliases,functions,work}; do
   [ -r "$file" ] && source "$file"
