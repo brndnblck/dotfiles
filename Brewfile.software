@@ -4,6 +4,7 @@ brew "mas"
 
 cask "1password-cli"
 cask "arc"
+cask "appcleaner"
 cask "audio-hijack"
 cask "beekeeper-studio"
 cask "cursor"
