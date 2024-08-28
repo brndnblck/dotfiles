@@ -12,6 +12,7 @@ alias c='clear' # shortcut to clear your terminal
 alias gzip=pigz
 alias search='find . -maxdepth 1 -type f | xargs grep -in --color=always '
 alias wget='wget2'
+alias top='htop'
 
 # Head / Tail Shortcuts
 alias H='| head'
@@ -26,6 +27,15 @@ alias NUL="> /dev/null 2>&1"
 
 # MongoDB
 alias mtail='tail -f /data/db/current/mongod.log'
+alias mongo='mongosh'
+alias mongod='mongod --config /usr/local/etc/mongod.conf'
+alias mongostop='mongo admin --eval "db.shutdownServer()"'
+alias mongostart='mongod --config /usr/local/etc/mongod.conf --fork'
+alias mongorestart='mongostop && mongostart'
+alias mongostat='mongostat --rowcount 0'
+alias mongotop='mongotop'
+alias mongodump='mongodump --out /tmp/mongodump'
+alias mongorestore='mongorestore /tmp/mongodump'
 
 # GNU Overrides
 alias awk="gawk"
