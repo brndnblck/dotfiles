@@ -7,8 +7,8 @@ command_timeout = 2000
 format = """$os$time$username$hostname$kubernetes$directory$git_branch$git_status$python$character"""
 
 [character]
-success_symbol = "[❱](bold black)"
-error_symbol = "[❱](bold red)"
+success_symbol = "[](bold black)"
+error_symbol = "[](bold red)"
 
 [env_var]
 disabled = true
@@ -18,26 +18,49 @@ format = '[$symbol](bold black) '
 disabled = false
 
 [os.symbols]
-Windows = "󰍲"
-Ubuntu = "󰕈"
-SUSE = ""
-Raspbian = "󰐿"
-Mint = "󰣭"
-Macos = "󰀵"
-Manjaro = ""
-Linux = "󰌽"
-Gentoo = "󰣨"
-Fedora = "󰣛"
+AlmaLinux = " "
+Alpaquita = " "
 Alpine = ""
 Amazon = ""
-Android = ""
+Android = " "
 Arch = "󰣇"
-Artix = "󰣇"
-EndeavourOS = ""
-CentOS = ""
-Debian = "󰣚"
+Artix = " "
+CentOS = " "
+Debian = " "
+DragonFly = " "
+Emscripten = " "
+EndeavourOS = " "
+Fedora = " "
+FreeBSD = " "
+Garuda = "󰛓 "
+Gentoo = " "
+HardenedBSD = "󰞌"
+Illumos = "󰈸"
+Kali = " "
+Linux = " "
+Mabox = " "
+Macos = " "
+Manjaro = " "
+Mariner = " "
+MidnightBSD = ""
+Mint = " "
+NetBSD = " "
+NixOS = " "
+OpenBSD = "󰈺 "
+openSUSE = " "
+OracleLinux = "󰌷 "
+Pop = " "
+Raspbian = " "
 Redhat = "󱄛"
 RedHatEnterprise = "󱄛"
+Redox = "󰀘 "
+RockyLinux = " "
+Solus = "󰠳 "
+SUSE = " "
+Ubuntu = " "
+Unknown = ""
+Void = " "
+Windows = "󰍲"
 
 # Shows the username
 [username]
@@ -47,24 +70,18 @@ format = '[//](black bold) [$user](#2883ff) ' # 2883ff
 disabled = false
 show_always = true
 
-# Shows the hostname
-[hostname]
-ssh_only = false
-format = '[//](black bold) [$hostname](bold blue) '
-disabled = false
-
 # Shows current directory
 [directory]
 truncation_length = 0
 truncation_symbol = '…/'
-home_symbol = '⌂ '
-read_only = '  '
+home_symbol = '󱂶 '
+read_only = '  '
 format = '[//](black bold) [$path]($style)[$read_only]($read_only_style) '
 style = '#7ed1fb' # yellow bold
 
 # Shows current git branch
 [git_branch]
-symbol = ' '
+symbol = ' '
 format = '[//](black bold) [$symbol\[$branch\]]($style) '
 style = 'bold green'
 
@@ -73,66 +90,167 @@ style = 'bold green'
 disabled = true
 format = '[ $all_status $ahead_behind]($style) '
 style = 'bold green'
-conflicted = '🏳'
+conflicted = '󱂴'
 up_to_date = ''
-untracked = ' '
-ahead = '⇡${count}'
-diverged = '⇕⇡${ahead_count}⇣${behind_count}'
-behind = '⇣${count}'
+untracked = '󰌸 '
+ahead = '${count}'
+diverged = '${ahead_count}⇣${behind_count}'
+behind = '${count}'
 stashed = ' '
 modified = ' '
 staged = '[++\($count\)](green)'
-renamed = '◎ '
-deleted = ' '
+renamed = '󰑕 '
+deleted = ' '
 
 # Shows kubernetes context and namespace
 [kubernetes]
 format = 'via [󱃾 $context\($namespace\)](bold purple) '
 disabled = false
 
-[python]
-symbol = '󰌠'
-python_binary = ['./venv/bin/python', 'python', 'python3', 'python2']
-format = '[//](black bold) [${symbol} ${pyenv_prefix}(${version} )(\($virtualenv\) )]($style) '
+[aws]
+symbol = "  "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
 
-[nodejs]
-symbol = ''
+[buf]
+symbol = " "
 format = '[//](black bold) [${symbol} (${version} )]($style) '
 
 [c]
-symbol = ''
+symbol = " "
 format = '[//](black bold) [${symbol} (${version} )]($style) '
 
-[rust]
-symbol = ''
+[conda]
+symbol = " "
 format = '[//](black bold) [${symbol} (${version} )]($style) '
 
-[golang]
-symbol = ''
+[crystal]
+symbol = " "
 format = '[//](black bold) [${symbol} (${version} )]($style) '
 
-[php]
-symbol = ''
-format = '[//](black bold) [${symbol} (${version} )]($style) '
-
-[java]
-symbol = ''
-format = '[//](black bold) [${symbol} (${version} )]($style) '
-
-[kotlin]
-symbol = ''
-format = '[//](black bold) [${symbol} (${version} )]($style) '
-
-[haskell]
-symbol = ''
+[dart]
+symbol = " "
 format = '[//](black bold) [${symbol} (${version} )]($style) '
 
 [docker_context]
-symbol = ''
-format = '[//](black bold) [${symbol}($context)]($style) '
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
 
-[conda]
-format = '[//](black bold) [${symbol}($environment)]($style) '
+[fennel]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[fossil_branch]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[golang]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[guix_shell]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[haskell]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[haxe]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[hg_branch]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[hostname]
+ssh_symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[java]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[julia]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[kotlin]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[lua]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[memory_usage]
+symbol = "󰍛 "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[meson]
+symbol = "󰔷 "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[nim]
+symbol = "󰆥 "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[nix_shell]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[nodejs]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[ocaml]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[package]
+symbol = "󰏗 "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[perl]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[php]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[pijul_channel]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[python]
+symbol = " "
+python_binary = ['./venv/bin/python', 'python', 'python3', 'python2']
+format = '[//](black bold) [${symbol} ${pyenv_prefix}(${version} )(\($virtualenv\) )]($style) '
+
+[rlang]
+symbol = "󰟔 "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[ruby]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[rust]
+symbol = "󱘗 "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[scala]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[swift]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
+
+[zig]
+symbol = " "
+format = '[//](black bold) [${symbol} (${version} )]($style) '
 
 [time]
 disabled = false
