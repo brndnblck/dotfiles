@@ -17,11 +17,11 @@ export PATH="$GOPATH/bin:$PATH"
 # rust
 source "$HOME/.cargo/env"
 
+# starship initialization
+eval "$(starship init zsh)"
+
 # rbenv
 eval "$(rbenv init -)"
-
-# shell theme
-source $(brew --prefix powerlevel10k)/share/powerlevel10k/powerlevel10k.zsh-theme
 
 for file in ~/.{exports,aliases,functions,work}; do
   [ -r "$file" ] && source "$file"
@@ -55,9 +55,6 @@ plugins=(
   terraform
   tmux
 )
-
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!

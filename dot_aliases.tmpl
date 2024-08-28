@@ -32,6 +32,7 @@ alias mtail='tail -f /data/db/current/mongod.log'
 alias awk="gawk"
 alias find="gfind"
 alias grep="ggrep"
+alias make="gmake"
 alias sed="gsed"
 alias tar="gtar"
 alias xargs="gxargs"
@@ -43,10 +44,28 @@ alias lsf='gls -lah --color | grep "^-"'
 alias lsd='gls -lah --color | grep "^d"'
 
 # IP addresses
-alias extip="dig +short myip.opendns.com @resolver1.opendns.com"
+alias eip="dig +short myip.opendns.com @resolver1.opendns.com"
 alias ip="arp `hostname` | awk -F'[()]' '{print $2}'"
 alias ips="ifconfig -a | grep -o 'inet6\? \(\([0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+\)\|[a-fA-F0-9:]\+\)' | sed -e 's/inet6* //'"
 alias whois="whois -h whois-servers.net"
+
+# Docker (using Podman)
+alias docker="podman"
+alias docker-compose="podman-compose"
+
+# Podman
+alias pd="podman"
+alias pdi="podman images"
+alias pdps="podman ps"
+alias pdpsa="podman ps -a"
+alias pdrm="podman rm"
+alias pdrmi="podman rmi"
+alias pdp="podman pull"
+alias pdr="podman run"
+alias pde="podman exec"
+alias pdl="podman logs"
+alias pdb="podman build"
+alias pdc="podman-compose"
 
 # Kubernetes
 alias k="kubectl"
@@ -109,6 +128,23 @@ alias nu="npm update"
 alias nun="npm uninstall"
 alias nin="npm init"
 alias np="npm publish"
+
+# Rust
+alias ca="cargo add"
+alias cb="cargo build"
+alias cc="cargo check"
+alias cf="cargo fmt"
+alias cg="cargo generate"
+alias ci="cargo install"
+alias cl="cargo clippy"
+alias cn="cargo new"
+alias co="cargo outdated"
+alias cr="cargo run"
+alias cs="cargo search"
+alias ct="cargo test"
+alias cu="cargo update"
+alias cv="cargo version"
+alias cw="cargo watch"
 
 # Go
 alias g="go"

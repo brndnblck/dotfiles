@@ -1,0 +1,10 @@
+# Get editor completions based on the config schema
+"$schema" = 'https://starship.rs/config-schema.json'
+
+[aws]
+format = 'on [$symbol($profile )(\($region\) )]($style)'
+style = 'bold blue'
+symbol = '🅰 '
+
+[container]
+format = '[$symbol \[$name\]]($style) '

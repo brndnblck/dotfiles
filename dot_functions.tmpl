@@ -8,42 +8,6 @@ alias-help() {
     awk -v RS='# ' -v IGNORECASE=1 '/'"$1"'/ {print "# "$0}' ~/.aliases
 }
 
-function fetch-repos() {
-  if [ $# -lt 2 ]; then
-    echo "Error! Both organization name and page index are required."
-    return 1
-  else
-    curl -s "https://api.github.com/orgs/$1/repos?page=$2&per_page=100" -u ${GITHUB_USER}:${GITHUB_TOKEN} | grep 'ssh_url' | awk 'match($0, /"ssh_url": "(.*)",/, res) { print res[1] }'
-  fi
-}
-
-function clone-repos() {
-  local repo_filter='/old-'
-
-  if [ $# -lt 1 ]; then
-    echo "Error! Organization name required."
-    return 1
-  fi
-
-  echo "[START] Cloning all repos in the '$1' organization...\n"
-
-  for x in $(seq 1 100); do
-    local repos=$(fetch-repos $1 "${x}")
-    while read -r repo; do
-      if [[ -n "${repo}" ]] && [[ ! "${repo}" =~ "$repo_filter" ]]; then
-        local folder=$(echo "${repo}" | awk 'match($0, /git@github\.com:.*\/(.*)\.git/, res) {print res[1]}')
-        if [ ! -d "${folder}" ]; then
-          git clone "${repo}" "${folder}" && echo "\n"
-        else
-          echo "[SKIP] Folder '${folder}' already exists...\n"
-        fi
-      fi
-    done <<< "${repos}"
-  done
-
-  echo "[DONE]"
-}
-
 function dev-restart() {
   sudo launchctl unload -w /Library/LaunchDaemons/homebrew.mxcl.nginx.plist
   sudo launchctl load -w /Library/LaunchDaemons/homebrew.mxcl.nginx.plist
@@ -141,15 +105,6 @@ tell application "Reminders"
   end tell
 end tell
 EOF
-}
-
-# Create a data URL from a file
-function dataurl() {
-  local mimeType=$(file -b --mime-type "$1")
-  if [[ $mimeType == text/* ]]; then
-    mimeType="${mimeType};charset=utf-8"
-  fi
-  echo "data:${mimeType};base64,$(openssl base64 -in "$1" | tr -d '\n')"
 }
 
 # Helper to extract an archvie
