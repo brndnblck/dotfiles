@@ -4,21 +4,17 @@
 add_newline = true
 command_timeout = 2000
 
-format = """$env_var$os$time$username$hostname$kubernetes$directory$git_branch$git_status$python
-$character"""
+format = """$os$time$username$hostname$kubernetes$directory$git_branch$git_status$python$character"""
 
 [character]
-success_symbol = "╰⎯"
-error_symbol = "╰⎯"
+success_symbol = "[❱](bold black)"
+error_symbol = "[❱](bold red)"
 
 [env_var]
-symbol = "╭╴"
-variable = 'SHELL'
-format = "$symbol"
-disabled = false
+disabled = true
 
 [os]
-format = '[$symbol](bold white) '   
+format = '[$symbol](bold black) '   
 disabled = false
 
 [os.symbols]
@@ -61,7 +57,7 @@ disabled = false
 [directory]
 truncation_length = 0
 truncation_symbol = '…/'
-home_symbol = '~'
+home_symbol = '⌂ '
 read_only = '  '
 format = '[//](black bold) [$path]($style)[$read_only]($read_only_style) '
 style = '#7ed1fb' # yellow bold
