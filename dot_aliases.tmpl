@@ -9,10 +9,9 @@ alias pers="cd ~/Projects/personal"
 alias proj="cd ~/Projects"
 alias h='history' # shortcut for history
 alias c='clear' # shortcut to clear your terminal
-alias ..='cd ..' # move up 1 dir
-alias ...='cd ../..' # move up 2 dirs
 alias gzip=pigz
 alias search='find . -maxdepth 1 -type f | xargs grep -in --color=always '
+alias wget='wget2'
 
 # Head / Tail Shortcuts
 alias H='| head'
@@ -37,16 +36,28 @@ alias sed="gsed"
 alias tar="gtar"
 alias xargs="gxargs"
 
-# List all files colorized in long format (requries coreutils)
-alias ls="gls -lh --color"
-alias lsh="gls -lah --color"
-alias lsf='gls -lah --color | grep "^-"'
-alias lsd='gls -lah --color | grep "^d"'
+# directory movement
+alias ..='cd ..'
+alias ...='cd ../../'
+alias ....='cd ../../../'
+
+# ls
+alias ls='eza --group-directories-first --icons'
+alias ll='eza --group-directories-first --icons -lh'
+alias la='eza --group-directories-first --icons -a'
+alias lla='eza --group-directories-first --icons -lah'
+alias lsa='eza --group-directories-first --icons -lah'
+alias l='eza'
+alias lt='eza --tree'
+alias lm='eza --long --sort=modified'
+alias lsize='eza --long --sort=size'
+alias lext='eza --long --sort=extension'
+alias ldot='eza -a | grep "^\."'
+alias ldir='eza -D'
+alias lfile='eza -f'
 
 # IP addresses
-alias eip="dig +short myip.opendns.com @resolver1.opendns.com"
-alias ip="arp `hostname` | awk -F'[()]' '{print $2}'"
-alias ips="ifconfig -a | grep -o 'inet6\? \(\([0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+\)\|[a-fA-F0-9:]\+\)' | sed -e 's/inet6* //'"
+alias ip='echo "Local IPs:" && ifconfig | grep "inet " | awk '\''{printf "\t%s\n", $2}'\'' && echo "External IP:" && curl -s ipinfo.io/ip | awk '\''{printf "\t%s\n", $0}'\'';'
 alias whois="whois -h whois-servers.net"
 
 # Docker (using Podman)
