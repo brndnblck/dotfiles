@@ -8,6 +8,10 @@ alias-help() {
     awk -v RS='# ' -v IGNORECASE=1 '/'"$1"'/ {print "# "$0}' ~/.aliases
 }
 
+function colormap() {
+  for i in {0..255}; do print -Pn "%K{$i}  %k%F{$i}${(l:3::0:)i}%f " ${${(M)$((i%6)):#3}:+$'\n'}; done
+}
+
 function dev-restart() {
   sudo launchctl unload -w /Library/LaunchDaemons/homebrew.mxcl.nginx.plist
   sudo launchctl load -w /Library/LaunchDaemons/homebrew.mxcl.nginx.plist
