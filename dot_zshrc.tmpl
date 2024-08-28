@@ -28,33 +28,13 @@ for file in ~/.{exports,aliases,functions,work}; do
 done
 unset file
 
-# shell plugins
-plugins=(
-  aws
-  bundler
-  dotenv
-  direnv
-  gcloud
-  git
-  github
-  golang
-  kubectx
-  macos
-  node
-  npm
-  nvm
-  poetry
-  poetry-env
-  python
-  rake
-  rbenv
-  ruby
-  rust
-  sublime
-  sudo
-  terraform
-  tmux
-)
+# shell configuration
+setopt promptsubst
+autoload -Uz +X compinit && compinit
+
+# case insensitive path-completion
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+zstyle ':completion:*' menu select
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
