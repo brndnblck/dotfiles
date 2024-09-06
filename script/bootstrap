@@ -28,6 +28,7 @@ ansi --blue --bold --no-restore --newline
 echo "Installing System Software and Dependencies..."
 ansi --reset-color --newline
 
+show_loader "ensure_development" "Installing Development Tools & Runtimes..."
 show_loader "ensure_dependencies" "Installing Core System Dependencies..."
 show_loader "ensure_applications" "Installing Third-Party Applications..."
 show_loader "ensure_osx_configuration" "Applying OS X Configuration..."

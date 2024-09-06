@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # General
 alias oo="open ."
 alias home='cd ~' # the tilda is too hard to reach
@@ -67,7 +65,7 @@ alias ldir='eza -D'
 alias lfile='eza -f'
 
 # IP addresses
-alias ip='echo "Local IPs:" && ifconfig | grep "inet " | awk '\''{printf "\t%s\n", $2}'\'' && echo "External IP:" && curl -s ipinfo.io/ip | awk '\''{printf "\t%s\n", $0}'\'';'
+alias ip='echo "\nLocal IPs:" && ifconfig | grep "inet " | awk '\''{printf "\t%s\n", $2}'\'' && echo "External IP:" && curl -s ipinfo.io/ip | awk '\''{printf "\t%s\n", $0}'\'';'
 alias whois="whois -h whois-servers.net"
 
 # Docker (using Podman)

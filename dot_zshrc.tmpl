@@ -1,28 +1,37 @@
-#!/bin/bash
+# enable command auto-correction
+setopt CORRECT
+
+# enable command history
+HISTSIZE=1000
+SAVEHIST=1000
+HISTFILE=~/.zsh_history
 
 # homebrew and path hacking 
 eval "$(/opt/homebrew/bin/brew shellenv)"
 export PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
-export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 # nvm
-NVM_PATH=$(brew --prefix nvm)
-export NVM_DIR="$HOME/.nvm"
-  [ -s "$NVM_PATH/nvm.sh" ] && \. "$NVM_PATH/nvm.sh"  # This loads nvm
-  [ -s "$NVM_PATH/etc/bash_completion.d/nvm" ] && \. "$NVM_PATH/etc/bash_completion.d/nvm"
-
-# go
-export PATH="$GOPATH/bin:$PATH"
+eval "$(nodenv init - zsh)"
+export PATH="$(nodenv root)/shims:$PATH"
 
 # rust
 source "$HOME/.cargo/env"
 
-# starship initialization
+# starship
 eval "$(starship init zsh)"
 
 # rbenv
 eval "$(rbenv init -)"
+export PATH="$(rbenv root)/shims:$PATH"
 
+# pyenv
+eval "$(pyenv init -)"
+export PATH="$(pyenv root)/shims:$PATH"
+
+# kubernetes
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+
+# load functions and aliases
 for file in ~/.{exports,aliases,functions,work}; do
   [ -r "$file" ] && source "$file"
 done
@@ -30,10 +39,14 @@ unset file
 
 # shell configuration
 setopt promptsubst
+
+# initialize and load Zsh autocompletion
 autoload -Uz +X compinit && compinit
 
-# case insensitive path-completion
+# case-insensitive path-completion
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+
+# enable menu-based selection of completion options
 zstyle ':completion:*' menu select
 
 # >>> conda initialize >>>

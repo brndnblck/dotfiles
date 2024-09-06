@@ -1,5 +1,33 @@
 #!/bin/sh
 
+ensure_development() {
+	eval "$(/opt/homebrew/bin/brew shellenv)"
+
+	# ruby
+	eval "$(rbenv init -)"
+	export PATH="$(rbenv root)/shims:$PATH"
+	rbenv install $(cat ../dot_rbenv/version)
+
+	# python
+	eval "$(pyenv init -)"
+	export PATH="$(pyenv root)/shims:$PATH"
+	pyenv install $(cat ../dot_pyenv/version)
+
+	# rust
+	rustup install nightly stable
+	rustup default stable
+
+	# node
+	eval "$(nodenv init -)"
+	export PATH="$(nodenv root)/shims:$PATH"
+	nodenv install $(cat ../dot_nodenv/version)
+
+	# go
+	eval "$(goenv init -)"
+	export PATH="$(goenv root)/shims:$PATH"
+	goenv install $(cat ../dot_goenv/version)
+}
+
 ensure_dependencies() {
 	ensure_sudo
 	run "brew bundle --no-lock -d --file=$PARENT_DIR/Brewfile.dependencies"
