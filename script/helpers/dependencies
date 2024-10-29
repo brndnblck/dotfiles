@@ -45,7 +45,7 @@ enable_touchid_sudo() {
 	if grep -q "pam_tid.so" $PAM_FILE; then
 		record "TouchID for sudo is already enabled."
 	else
-		sudo cp $PAM_FILE ${PAM_FILE}.${timestamp}.bak
+		sudo cp $PAM_FILE ${PAM_FILE}.${TIMESTAMP}.bak
 		echo "$ADDED_MODULES" | cat - $PAM_FILE > $PARENT_DIR/tmp/sudo.new
 		sudo mv $PARENT_DIR/tmp/sudo.new $PAM_FILE
 		sudo -k
