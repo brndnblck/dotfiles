@@ -68,24 +68,6 @@ alias lfile='eza -f'
 alias ip='echo "\nLocal IPs:" && ifconfig | grep "inet " | awk '\''{printf "\t%s\n", $2}'\'' && echo "External IP:" && curl -s ipinfo.io/ip | awk '\''{printf "\t%s\n", $0}'\'';'
 alias whois="whois -h whois-servers.net"
 
-# Docker (using Podman)
-alias docker="podman"
-alias docker-compose="podman-compose"
-
-# Podman
-alias pd="podman"
-alias pdi="podman images"
-alias pdps="podman ps"
-alias pdpsa="podman ps -a"
-alias pdrm="podman rm"
-alias pdrmi="podman rmi"
-alias pdp="podman pull"
-alias pdr="podman run"
-alias pde="podman exec"
-alias pdl="podman logs"
-alias pdb="podman build"
-alias pdc="podman-compose"
-
 # Kubernetes
 alias k="kubectl"
 alias kgp="kubectl get pods"
