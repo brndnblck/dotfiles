@@ -16,6 +16,9 @@ export GOPATH="$HOME/.go"
 # TMUX
 export DISABLE_AUTO_TITLE=true
 
+# Ollama
+OLLAMA_ORIGINS=moz-extension://*,chrome-extension://* ollama serve
+
 # OpenAI Credentials
 if [ -f ~/.config/openai ]; then
     export OPENAI_API_KEY="$(< ~/.config/openai)"
