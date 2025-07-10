@@ -1,0 +1,33 @@
+# General aliases
+alias oo="open ."
+alias home="cd ~"
+alias wrk="cd ~/Projects/work"
+alias ops="cd ~/Projects/open-source"
+alias pers="cd ~/Projects/personal"
+alias proj="cd ~/Projects"
+alias h="history"
+alias c="clear"
+alias gzip=pigz
+alias search="find . -maxdepth 1 -type f | xargs grep -in --color=always "
+alias wget="wget2"
+alias top="htop"
+
+# Head / Tail Shortcuts
+alias H="| head"
+alias T="| tail"
+alias G="| grep"
+alias L="| less"
+alias M="| most"
+alias LL="2>&1 | less"
+alias CA="2>&1 | cat -A"
+alias NE="2> /dev/null"
+alias NUL="> /dev/null 2>&1"
+
+# Directory movement
+alias ..="cd .."
+alias ...="cd ../../"
+alias ....="cd ../../../"
+
+# IP addresses
+alias ip='echo "\nLocal IPs:" && ifconfig | grep "inet " | awk '\''{printf "\t%s\n", $2}'\'' && echo "External IP:" && curl -s ipinfo.io/ip | awk '\''{printf "\t%s\n", $0}'\'';'
+alias whois="whois -h whois-servers.net"

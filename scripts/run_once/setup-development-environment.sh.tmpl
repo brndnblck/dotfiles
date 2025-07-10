@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+
+# Development Environment Setup
+# This script runs once after chezmoi applies dotfiles
+
+set -euo pipefail
+
+echo "Setting up development environment..."
+
+# Function to check if a service is running
+is_service_running() {
+    local service_name="$1"
+    sudo brew services list | grep -q "${service_name}.*started"
+}
+
+# Function to ensure a service is running
+ensure_service_running() {
+    local service_name="$1"
+    
+    if is_service_running "$service_name"; then
+        echo "Service $service_name is already running"
+        return 0
+    fi
+    
+    echo "Starting service $service_name..."
+    if sudo brew services start "$service_name"; then
+        echo "Service $service_name started successfully"
+    else
+        echo "Failed to start service $service_name"
+        return 1
+    fi
+}
+
+# Determine nginx directory based on architecture
+nginx_dir="{{ .homebrew_prefix }}/etc/nginx"
+
+if [ ! -d "$nginx_dir" ]; then
+    echo "Warning: nginx directory not found at $nginx_dir"
+    echo "Make sure nginx is installed via Homebrew"
+    exit 1
+fi
+
+echo "Configuring nginx..."
+
+# Create servers directory if it doesn't exist
+mkdir -p "$nginx_dir/servers"
+
+# Copy nginx configuration if it doesn't already include servers directory
+nginx_conf="$nginx_dir/nginx.conf"
+if ! grep -q "include.*servers/\*.conf" "$nginx_conf" 2>/dev/null; then
+    echo "Updating nginx configuration..."
+    
+    # Create backup of original nginx.conf
+    if [ -f "$nginx_conf" ]; then
+        cp "$nginx_conf" "$nginx_conf.backup.$(date +%Y%m%d-%H%M%S)"
+    fi
+    
+    # Copy our templated configuration
+    cp ~/.config/nginx/nginx.conf "$nginx_conf"
+    echo "nginx configuration updated"
+else
+    echo "nginx configuration already includes servers directory"
+fi
+
+# Configure dnsmasq
+dnsmasq_dir="{{ .homebrew_prefix }}/etc"
+dnsmasq_conf="$dnsmasq_dir/dnsmasq.conf"
+
+echo "Configuring dnsmasq..."
+
+# Copy dnsmasq configuration
+cp ~/.config/dnsmasq/dnsmasq.conf "$dnsmasq_conf"
+echo "dnsmasq configuration updated"
+
+# Start services
+echo "Starting services..."
+ensure_service_running "nginx" || echo "Warning: Failed to start nginx"
+ensure_service_running "dnsmasq" || echo "Warning: Failed to start dnsmasq"
+
+# Configure system resolver for .test domains
+echo "Configuring system resolver for .test domains..."
+
+# Check if resolver is already configured
+if [ -f /etc/resolver/test ] && grep -q "nameserver 127.0.0.1" /etc/resolver/test; then
+    echo "System resolver for .test domains is already configured"
+else
+    # Create resolver directory if it doesn't exist
+    sudo mkdir -p /etc/resolver
+    
+    # Configure system to use dnsmasq for .test domains
+    sudo tee /etc/resolver/test > /dev/null << EOF
+nameserver 127.0.0.1
+EOF
+    
+    echo "System resolver configured for .test domains"
+fi
+
+# Test nginx configuration
+if nginx -t 2>/dev/null; then
+    echo "nginx configuration is valid"
+else
+    echo "Warning: nginx configuration has errors"
+fi
+
+echo "Development environment setup complete!"
+echo "You can now use dev-init, dev-rm, dev-ls, and dev-restart functions"
+echo "Example: dev-init myapp 3000 (creates myapp.test -> localhost:3000)"

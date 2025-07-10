@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 ensure_sudo() {
 	# Check if we already have sudo access
@@ -75,9 +75,22 @@ ensure_disk_encryption() {
 
 ensure_homebrew() {
 	if command -v brew >/dev/null 2>&1; then
-		run "/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+		show_info "Homebrew is already installed"
+		return 0
+	fi
+	
+	show_info "Installing Homebrew..."
+	retry_with_backoff run "/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+	
+	# Set up Homebrew environment
+	eval "$($(get_homebrew_bin) shellenv)"
+	
+	# Verify installation
+	if validate_command "brew" "Homebrew"; then
+		show_success "Homebrew installed successfully"
 	else
-		eval "$(/opt/homebrew/bin/brew shellenv)"
+		show_error "Homebrew installation failed"
+		return 1
 	fi
 }
 

@@ -1,0 +1,65 @@
+tap "homebrew/bundle"
+
+# Core utilities
+brew "ack"
+brew "bind"              # Provides dig and host commands
+brew "bzip2"             # For compression/decompression
+brew "chezmoi"           # Dotfiles management
+brew "direnv"            # Environment variable management
+brew "dnsmasq"           # Local DNS for .test domains
+brew "expect"            # Automation tool
+brew "eza"               # Modern ls replacement
+brew "gawk"              # GNU awk
+brew "git"               # Version control
+brew "gh"                # GitHub CLI
+brew "gnu-sed"           # GNU sed
+brew "gnu-tar"           # GNU tar
+brew "grep"              # Search tool
+brew "htop"              # System monitor
+brew "jq"                # JSON processor
+brew "nginx"             # Web server for local development
+brew "pam-reattach"      # TouchID for sudo
+brew "parallel"          # Parallel processing
+brew "starship"          # Shell prompt
+brew "terminal-notifier" # macOS notifications
+brew "tmux"              # Terminal multiplexer
+brew "tree"              # Directory tree viewer
+brew "yq"                # YAML processor
+brew "wget2"             # Download tool
+
+# Development environment managers
+brew "goenv"             # Go version management
+brew "nodenv"            # Node.js version management
+brew "pyenv"             # Python version management
+brew "rbenv"             # Ruby version management
+
+# AI and productivity tools
+brew "aicommits"         # AI-powered commit messages
+
+{{- if .is_work_machine }}
+# Work-specific tools
+brew "awscli"            # AWS command line
+brew "terraform"         # Infrastructure as code
+{{- end }}
+
+# Container and Kubernetes tools
+{{- if or .is_work_machine (eq .hostname "development") }}
+brew "ctop"              # Container monitoring
+brew "dive"              # Docker image analysis
+brew "docker-squash"     # Docker image optimization
+brew "duf"               # Disk usage analyzer
+brew "k9s"               # Kubernetes TUI
+brew "krew"              # kubectl plugin manager
+brew "kubectx"           # Kubernetes context switcher
+brew "lazydocker"        # Docker TUI
+brew "lazygit"           # Git TUI
+{{- end }}
+
+# Security tools (only for specific machines)
+{{- if eq .hostname "security-research" }}
+brew "bettercap"         # Network reconnaissance
+{{- end }}
+
+# Fonts
+brew "font-jetbrains-mono-nerd-font"
+brew "font-symbols-only-nerd-font"

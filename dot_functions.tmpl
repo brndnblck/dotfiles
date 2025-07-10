@@ -4,97 +4,268 @@
 GITHUB_USER=$(awk '/github.com/{getline; print $3}' ~/.config/hub)
 GITHUB_TOKEN=$(awk '/github.com/{getline; getline; print $2}' ~/.config/hub)
 
+# Search for and display help for specific aliases
+# Usage: alias-help <search-term>
+# Example: alias-help git
 alias-help() {
     awk -v RS='# ' -v IGNORECASE=1 '/'"$1"'/ {print "# "$0}' ~/.aliases
 }
 
+# Display a colormap of all 256 terminal colors
+# Usage: colormap
 function colormap() {
   for i in {0..255}; do print -Pn "%K{$i}  %k%F{$i}${(l:3::0:)i}%f " ${${(M)$((i%6)):#3}:+$'\n'}; done
 }
 
+# Restart the nginx service for development environments
+# Usage: dev-restart
 function dev-restart() {
-  sudo launchctl unload -w /Library/LaunchDaemons/homebrew.mxcl.nginx.plist
-  sudo launchctl load -w /Library/LaunchDaemons/homebrew.mxcl.nginx.plist
+  echo "Restarting nginx service..."
+  if sudo brew services restart nginx; then
+    echo "nginx service restarted successfully"
+  else
+    echo "Error: Failed to restart nginx service"
+    return 1
+  fi
 }
 
-# create a new dev app alias
+# Create a new nginx proxy configuration for local development
+# Creates a .test domain that proxies to a local port
+# Usage: dev-init <app-name> <port>
+# Example: dev-init myapp 3000 (creates myapp.test -> localhost:3000)
 function dev-init() {
-sudo -v
-if [ $# -lt 2 ]
-then
-  echo "Error! App alias and port required."
-else
-local name=$(echo $1 | awk '{print tolower($0)}')
-tee /usr/local/etc/nginx/servers/$name.conf > /dev/null << EOF
+  if [ $# -lt 2 ]; then
+    echo "Usage: dev-init <app-name> <port>"
+    echo "Example: dev-init myapp 3000"
+    return 1
+  fi
+  
+  local name=$(echo "$1" | awk '{print tolower($0)}')
+  local port="$2"
+  
+  # Validate port is numeric
+  if ! [[ "$port" =~ ^[0-9]+$ ]]; then
+    echo "Error: Port must be a number"
+    return 1
+  fi
+  
+  # Check if port is in valid range
+  if [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
+    echo "Error: Port must be between 1 and 65535"
+    return 1
+  fi
+  
+  # Determine nginx config directory
+  local nginx_dir
+  if [ -d "/opt/homebrew/etc/nginx/servers" ]; then
+    nginx_dir="/opt/homebrew/etc/nginx/servers"
+  elif [ -d "/usr/local/etc/nginx/servers" ]; then
+    nginx_dir="/usr/local/etc/nginx/servers"
+  else
+    echo "Error: nginx servers directory not found"
+    return 1
+  fi
+  
+  # Check if config already exists
+  if [ -f "$nginx_dir/$name.conf" ]; then
+    echo "Error: Configuration for $name already exists"
+    return 1
+  fi
+  
+  sudo -v || return 1
+  
+  sudo tee "$nginx_dir/$name.conf" > /dev/null << EOF
 server {
     listen 80;
     server_name $name.test;
     location / {
-        proxy_pass http://127.0.0.1:$2;
+        proxy_pass http://127.0.0.1:$port;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
     }
 }
 EOF
-dev-restart
-fi
-}
-
-# delete a dev app alias
-function dev-rm() {
-if [ $# -lt 1 ]
-then
-  echo "Error! App name required."
-else
-  local name=$(echo $1 | awk '{print tolower($0)}')
-  rm /usr/local/etc/nginx/servers/$name.conf
-fi
-}
-
-# list current dev app aliases
-function dev-ls() {
-  echo "\nAvailable Environments:\n"
-  for f in /usr/local/etc/nginx/servers/*.conf; do
-    local name=$(basename $f)
-    printf '* %s\n' "${name%.conf}"
-  done
-}
-
-# exports a git repo to a new project folder
-function git-export() {
-  if [ $# -lt 2 ]
-  then
-    echo "Error! Repo and project name required."
+  
+  if [ $? -eq 0 ]; then
+    echo "Created nginx config for $name.test -> localhost:$port"
+    dev-restart
   else
-    git clone --quiet --depth=1 $1 $2
-    rm -rf $2/.git*
+    echo "Error: Failed to create nginx config"
+    return 1
   fi
 }
 
-# clean merged git branches
-function gb-clean() {
-  git branch -d $(git branch --merged=master | grep -v master)
-  git branch -d $(git branch --merged=main | grep -v main)
-  git fetch --prune
+# Remove a development environment nginx configuration
+# Usage: dev-rm <app-name>
+# Example: dev-rm myapp
+function dev-rm() {
+  if [ $# -lt 1 ]; then
+    echo "Usage: dev-rm <app-name>"
+    return 1
+  fi
+  
+  local name=$(echo "$1" | awk '{print tolower($0)}')
+  
+  # Determine nginx config directory
+  local nginx_dir
+  if [ -d "/opt/homebrew/etc/nginx/servers" ]; then
+    nginx_dir="/opt/homebrew/etc/nginx/servers"
+  elif [ -d "/usr/local/etc/nginx/servers" ]; then
+    nginx_dir="/usr/local/etc/nginx/servers"
+  else
+    echo "Error: nginx servers directory not found"
+    return 1
+  fi
+  
+  local config_file="$nginx_dir/$name.conf"
+  
+  if [ ! -f "$config_file" ]; then
+    echo "Error: Configuration for $name does not exist"
+    return 1
+  fi
+  
+  if rm "$config_file" 2>/dev/null; then
+    echo "Removed configuration for $name.test"
+    dev-restart
+  else
+    echo "Error: Failed to remove configuration (may need sudo)"
+    return 1
+  fi
 }
 
-# Repeat Command
+# List all configured development environments
+# Usage: dev-ls
+function dev-ls() {
+  # Determine nginx config directory
+  local nginx_dir
+  if [ -d "/opt/homebrew/etc/nginx/servers" ]; then
+    nginx_dir="/opt/homebrew/etc/nginx/servers"
+  elif [ -d "/usr/local/etc/nginx/servers" ]; then
+    nginx_dir="/usr/local/etc/nginx/servers"
+  else
+    echo "Error: nginx servers directory not found"
+    return 1
+  fi
+  
+  echo "\nAvailable Environments:\n"
+  
+  local found=false
+  for f in "$nginx_dir"/*.conf; do
+    if [ -f "$f" ]; then
+      local name=$(basename "$f")
+      printf '* %s\n' "${name%.conf}"
+      found=true
+    fi
+  done
+  
+  if [ "$found" = false ]; then
+    echo "No development environments configured"
+  fi
+  echo
+}
+
+# Clone a git repository without git history (export)
+# Perfect for creating new projects from templates
+# Usage: git-export <repo-url> <project-name>
+# Example: git-export https://github.com/user/template.git my-new-project
+function git-export() {
+  if [ $# -lt 2 ]; then
+    echo "Usage: git-export <repo-url> <project-name>"
+    echo "Example: git-export https://github.com/user/repo.git my-project"
+    return 1
+  fi
+  
+  local repo_url="$1"
+  local project_name="$2"
+  
+  # Check if target directory already exists
+  if [ -d "$project_name" ]; then
+    echo "Error: Directory '$project_name' already exists"
+    return 1
+  fi
+  
+  echo "Cloning repository..."
+  if git clone --quiet --depth=1 "$repo_url" "$project_name"; then
+    echo "Removing git history..."
+    rm -rf "$project_name"/.git*
+    echo "Project exported to: $project_name"
+  else
+    echo "Error: Failed to clone repository"
+    return 1
+  fi
+}
+
+# Clean up branches that have been merged into main/master
+# Deletes local branches and prunes remote tracking branches
+# Usage: git-branch-clean
+function git-branch-clean() {
+  # Check if we're in a git repository
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "Error: Not in a git repository"
+    return 1
+  fi
+  
+  echo "Cleaning merged branches..."
+  
+  # Clean branches merged into master
+  local master_branches=$(git branch --merged=master 2>/dev/null | grep -v master | xargs)
+  if [ -n "$master_branches" ]; then
+    echo "Deleting branches merged into master: $master_branches"
+    git branch -d $master_branches
+  fi
+  
+  # Clean branches merged into main
+  local main_branches=$(git branch --merged=main 2>/dev/null | grep -v main | xargs)
+  if [ -n "$main_branches" ]; then
+    echo "Deleting branches merged into main: $main_branches"
+    git branch -d $main_branches
+  fi
+  
+  echo "Pruning remote tracking branches..."
+  git fetch --prune
+  
+  echo "Branch cleanup complete"
+}
+
+# Execute a command multiple times
+# Usage: repeat <count> <command>
+# Example: repeat 5 echo "hello"
 function repeat() {
   if [ $# -lt 2 ]
   then
     echo "Error! Count and command required."
   else
-    for i in {1..$0}; do $#; done
+    local count=$1
+    shift
+    for i in $(seq 1 $count); do "$@"; done
   fi
 }
 
-# DNS Records
-function dighost() {
-  host $(dig $1 | grep ANSWER -C 1 | tail -n 1 | awk '{ print $5 }')
+# Perform DNS lookup and reverse DNS lookup
+# Usage: dig-host <hostname>
+# Example: dig-host google.com
+function dig-host() {
+  if [ $# -lt 1 ]; then
+    echo "Usage: dig-host <hostname>"
+    return 1
+  fi
+  
+  local hostname="$1"
+  local ip=$(dig +short "$hostname" | tail -n 1)
+  
+  if [ -z "$ip" ]; then
+    echo "Error: No IP found for $hostname"
+    return 1
+  fi
+  
+  echo "IP for $hostname: $ip"
+  host "$ip"
 }
 
-# Add reminder to Reminders.app (OS X 10.8+)
+# Add a reminder to the Reminders.app (macOS only)
+# Usage: remind <text> or echo "text" | remind
+# Example: remind "Buy milk" or echo "Meeting at 3pm" | remind
 function remind() {
   local text
   if [ -t 0 ]; then
@@ -111,8 +282,10 @@ end tell
 EOF
 }
 
-# Helper to extract an archvie
-# credit: http://nparikh.org/notes/zshrc.txt
+# Extract various archive formats automatically
+# Detects format by file extension and uses appropriate tool
+# Usage: extract <archive-file>
+# Example: extract myfile.tar.gz
 extract () {
   if [ -f $1 ]; then
     case $1 in

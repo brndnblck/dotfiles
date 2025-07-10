@@ -1,0 +1,60 @@
+tap "homebrew/bundle"
+
+# Mac App Store command line
+brew "mas"
+
+# Essential applications
+cask "1password-cli"      # Password manager CLI
+cask "appcleaner"         # Application uninstaller
+cask "iterm2"             # Terminal emulator
+cask "sublime-text"       # Text editor
+
+{{- if .is_work_machine }}
+# Work-specific applications
+cask "slack"              # Team communication
+cask "google-cloud-sdk"   # Google Cloud tools
+cask "beekeeper-studio"   # Database client
+cask "kubecontext"        # Kubernetes context manager
+{{- else }}
+# Personal applications
+cask "brave-browser"      # Privacy-focused browser
+cask "obsidian"           # Note-taking
+cask "cursor"             # AI-powered code editor
+cask "ollama"             # Local LLM runner
+{{- end }}
+
+# Audio/Video tools
+{{- if or .is_work_machine (eq .hostname "streaming-setup") }}
+cask "audio-hijack"       # Audio recording
+cask "blackhole-2ch"      # Audio routing
+cask "elgato-control-center" # Elgato device control
+cask "elgato-stream-deck" # Stream deck control
+cask "opal-composer"      # Webcam effects
+{{- end }}
+
+# Development tools
+{{- if not .is_work_machine }}
+cask "rapidapi"           # API testing
+{{- end }}
+
+# Mac App Store applications
+
+# Productivity
+mas "Fantastical - Calendar", id: 975937182
+mas "Hidden Bar", id: 1452453066
+mas "Stay", id: 435410196
+
+# Utilities
+mas "Contact Organizer", id: 922498351
+mas "DaisyDisk", id: 411643860
+mas "Folder Tidy", id: 486626129
+mas "Transmit", id: 1436522307
+
+{{- if .is_work_machine }}
+# Work-specific Mac App Store apps
+mas "Microsoft Word", id: 462054704
+mas "Keynote", id: 409183694
+{{- else }}
+# Personal Mac App Store apps
+mas "Pixelmator Pro", id: 1289583905
+{{- end }}

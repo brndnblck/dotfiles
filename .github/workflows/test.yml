@@ -1,0 +1,101 @@
+name: Test Dotfiles
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  test:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        shell: [bash, zsh]
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Homebrew
+      id: set-up-homebrew
+      uses: Homebrew/actions/setup-homebrew@master
+      
+    - name: Install test dependencies
+      run: |
+        brew install chezmoi
+        
+    - name: Create test configuration
+      run: |
+        mkdir -p $HOME/.config/chezmoi
+        cat > $HOME/.config/chezmoi/chezmoi.toml << EOF
+        [data]
+            name = "Test User"
+            email = "test@example.com"
+        EOF
+        
+    - name: Run syntax tests with ${{ matrix.shell }}
+      run: |
+        # Test shell script syntax with both bash and the matrix shell
+        echo "Testing with ${{ matrix.shell }}"
+        
+        # Test helper scripts
+        find script/helpers -type f -exec ${{ matrix.shell }} -n {} \;
+        
+        # Test main scripts
+        ${{ matrix.shell }} -n script/bootstrap
+        ${{ matrix.shell }} -n script/test
+        
+        # Test template scripts (that are shell scripts)
+        find . -name "*.sh.tmpl" -exec ${{ matrix.shell }} -n {} \;
+        
+    - name: Run dotfiles tests with ${{ matrix.shell }}
+      run: |
+        chmod +x script/test
+        ${{ matrix.shell }} script/test
+        
+    - name: Test Brewfile syntax
+      run: |
+        # Test static Brewfiles
+        if [ -f Brewfile.dependencies ]; then
+          brew bundle check --file=Brewfile.dependencies --no-lock
+        fi
+        if [ -f Brewfile.software ]; then
+          brew bundle check --file=Brewfile.software --no-lock
+        fi
+        
+        # Test templated Brewfiles
+        if [ -f Brewfile.dependencies.tmpl ]; then
+          chezmoi execute-template < Brewfile.dependencies.tmpl > /tmp/Brewfile.dependencies.test
+          brew bundle check --file=/tmp/Brewfile.dependencies.test --no-lock
+        fi
+        if [ -f Brewfile.software.tmpl ]; then
+          chezmoi execute-template < Brewfile.software.tmpl > /tmp/Brewfile.software.test
+          brew bundle check --file=/tmp/Brewfile.software.test --no-lock
+        fi
+        
+    - name: Test chezmoi configuration
+      run: |
+        # Test chezmoi can process templates
+        if [ -f dot_chezmoi.toml.tmpl ]; then
+          chezmoi execute-template < dot_chezmoi.toml.tmpl > /tmp/chezmoi.toml.test
+        fi
+        
+        # Test other templates
+        find . -name "*.tmpl" -exec chezmoi execute-template < {} \; > /dev/null
+        
+    - name: Validate run_once scripts
+      run: |
+        # Check run_once scripts have proper permissions and syntax
+        find . -name "run_once_*.sh.tmpl" -exec bash -n {} \;
+        
+    - name: Test bootstrap script components
+      run: |
+        # Source and test helper scripts
+        cd script/helpers
+        for helper in *; do
+          if [ -f "$helper" ] && [ "$helper" != "preferences" ]; then
+            echo "Testing helper: $helper"
+            bash -n "$helper"
+          fi
+        done

@@ -1,46 +1,131 @@
-#!/bin/sh
+#!/usr/bin/env bash
+
+# Source common utilities
+source "$(dirname "${BASH_SOURCE[0]}")/common"
 
 ensure_development() {
-	eval "$(/opt/homebrew/bin/brew shellenv)"
+	# Set up Homebrew environment
+	setup_homebrew_env
 
-	# ruby
-	eval "$(rbenv init -)"
-	export PATH="$(rbenv root)/shims:$PATH"
-	rbenv install $(cat ../dot_rbenv/version)
+	# Ruby
+	local ruby_version=$(read_version_file "$PARENT_DIR/dot_rbenv/version" "3.1.0")
+	install_version_if_missing "rbenv" "$ruby_version" "3.1.0"
 
-	# python
-	eval "$(pyenv init -)"
-	export PATH="$(pyenv root)/shims:$PATH"
-	pyenv install $(cat ../dot_pyenv/version)
+	# Python
+	local python_version=$(read_version_file "$PARENT_DIR/dot_pyenv/version" "3.11.0")
+	install_version_if_missing "pyenv" "$python_version" "3.11.0"
 
-	# rust
-	rustup install nightly stable
-	rustup default stable
+	# Rust
+	if command -v rustup >/dev/null 2>&1; then
+		if ! rustup toolchain list | grep -q "stable"; then
+			show_info "Installing Rust stable toolchain..."
+			rustup install stable || true
+		else
+			show_info "Rust stable toolchain is already installed"
+		fi
+		
+		if ! rustup toolchain list | grep -q "nightly"; then
+			show_info "Installing Rust nightly toolchain..."
+			rustup install nightly || true
+		else
+			show_info "Rust nightly toolchain is already installed"
+		fi
+		
+		rustup default stable || true
+	else
+		show_info "rustup not found, skipping Rust installation"
+	fi
 
-	# node
-	eval "$(nodenv init -)"
-	export PATH="$(nodenv root)/shims:$PATH"
-	nodenv install $(cat ../dot_nodenv/version)
+	# Node.js
+	local node_version=$(read_version_file "$PARENT_DIR/dot_nodenv/version" "18.17.0")
+	install_version_if_missing "nodenv" "$node_version" "18.17.0"
 
-	# go
-	eval "$(goenv init -)"
-	export PATH="$(goenv root)/shims:$PATH"
-	goenv install $(cat ../dot_goenv/version)
+	# Go
+	local go_version=$(read_version_file "$PARENT_DIR/dot_goenv/version" "1.22.0")
+	install_version_if_missing "goenv" "$go_version" "1.22.0"
 }
 
 ensure_dependencies() {
 	ensure_sudo
-	run "brew bundle --no-lock -d --file=$PARENT_DIR/Brewfile.dependencies"
+	process_brewfile "Brewfile.dependencies" "Installing Core Dependencies"
+}
+
+ensure_chezmoi_setup() {
+	# Verify chezmoi is installed
+	if ! command -v chezmoi >/dev/null 2>&1; then
+		show_error "chezmoi is not installed. It should have been installed in the dependencies step."
+		return 1
+	fi
+	
+	show_info "Setting up chezmoi dotfiles management..."
+	
+	# Check if we're already in a chezmoi-managed directory
+	if [ -d "$PARENT_DIR/.git" ]; then
+		show_info "Configuring chezmoi to use current directory as source..."
+		
+		# Navigate to the dotfiles directory
+		cd "$PARENT_DIR"
+		
+		# Ensure we're on the latest version from origin, discarding local changes
+		show_info "Syncing with remote repository..."
+		git fetch origin
+		
+		# Get the current branch name
+		local current_branch=$(git branch --show-current)
+		if [ -z "$current_branch" ]; then
+			current_branch="master"  # fallback to master if no current branch
+		fi
+		
+		# Reset to origin, discarding any local changes
+		show_info "Resetting to origin/$current_branch, discarding local changes..."
+		git reset --hard "origin/$current_branch"
+		
+		# Clean any untracked files
+		git clean -fd
+		
+		# Prompt for initial data if .chezmoi.toml.tmpl exists
+		if [ -f "dot_chezmoi.toml.tmpl" ]; then
+			if [ ! -f "$HOME/.config/chezmoi/chezmoi.toml" ]; then
+				show_info "Setting up chezmoi configuration..."
+				
+				# Create chezmoi config directory
+				mkdir -p "$HOME/.config/chezmoi"
+				
+				# Prompt for required data
+				read -p "Enter your full name: " user_name
+				read -p "Enter your email address: " user_email
+				
+				# Create initial chezmoi config
+				cat > "$HOME/.config/chezmoi/chezmoi.toml" << EOF
+[data]
+    name = "$user_name"
+    email = "$user_email"
+EOF
+			fi
+		fi
+		
+		# Apply the dotfiles, forcing overwrite of any existing files
+		show_info "Applying dotfiles with chezmoi (forcing updates)..."
+		if chezmoi init --source="$PARENT_DIR" --apply --force; then
+			show_success "Dotfiles applied successfully"
+		else
+			show_error "Failed to apply dotfiles"
+			return 1
+		fi
+	else
+		show_error "Expected to be in a git repository for dotfiles"
+		return 1
+	fi
 }
 
 ensure_applications() {
 	ensure_sudo
-	run "brew bundle --no-lock -d --file=$PARENT_DIR/Brewfile.software"
+	process_brewfile "Brewfile.software" "Installing Applications"
 }
 
 ensure_osx_configuration() {
-	ensure_sudo
-	source $PARENT_DIR/script/helpers/preferences
+	show_info "macOS preferences configuration moved to chezmoi"
+	show_info "Preferences will be applied by run_once_before_configure-macos-preferences.sh.tmpl"
 }
 
 ensure_updated() {

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 LOGPATH="$PARENT_DIR/tmp/log"
 LOGFILE=${LOG_FILE:='debug.log'}

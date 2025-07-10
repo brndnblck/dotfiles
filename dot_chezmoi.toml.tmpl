@@ -1,0 +1,18 @@
+[data]
+    name = {{ .name | quote }}
+    email = {{ .email | quote }}
+    hostname = {{ .chezmoi.hostname | quote }}
+    is_apple_silicon = {{ eq .chezmoi.arch "arm64" }}
+    is_work_machine = {{ or (contains "work" (.chezmoi.hostname | lower)) (contains "corp" (.chezmoi.hostname | lower)) }}
+    
+    # System paths based on architecture
+    homebrew_prefix = {{ if eq .chezmoi.arch "arm64" }}"/opt/homebrew"{{ else }}"/usr/local"{{ end }}
+    
+    # Default language versions
+    ruby_version = "3.1.0"
+    python_version = "3.11.0"
+    node_version = "18.17.0"
+    go_version = "1.22.0"
+
+[template]
+    options = ["missingkey=error"]
