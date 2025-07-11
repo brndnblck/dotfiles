@@ -1,6 +1,6 @@
 [data]
-    name = {{ .name | quote }}
-    email = {{ .email | quote }}
+    name = {{ .name | default "Brandon Black" | quote }}
+    email = {{ .email | default "github@brblck.com" | quote }}
     hostname = {{ .chezmoi.hostname | quote }}
     is_apple_silicon = {{ eq .chezmoi.arch "arm64" }}
     is_work_machine = {{ or (contains "work" (.chezmoi.hostname | lower)) (contains "corp" (.chezmoi.hostname | lower)) }}

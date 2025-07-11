@@ -1,7 +1,7 @@
 {{ if eq (env "LOCATION" | trim) "test" }}
 OPENAI_KEY=somevalue
 {{ else }}
-OPENAI_KEY={{ (onepasswordItemFields "q2aq6ursyvkrjzpmcvpu5t73ci").token.value }}
+OPENAI_KEY={{ (onepasswordItemFields "u6w7jmk7rbpu2jgzl2zewsze2e").token.value }}
 {{ end -}}
 model=gpt-3.5-turbo
 type=conventional
