@@ -36,14 +36,12 @@ brew "rbenv"             # Ruby version management
 # AI and productivity tools
 brew "aicommits"         # AI-powered commit messages
 
-{{- if .is_work_machine }}
-# Work-specific tools
+
+# Platform Tools
 brew "awscli"            # AWS command line
 brew "terraform"         # Infrastructure as code
-{{- end }}
 
 # Container and Kubernetes tools
-{{- if or .is_work_machine (eq .hostname "development") }}
 brew "ctop"              # Container monitoring
 brew "dive"              # Docker image analysis
 brew "docker-squash"     # Docker image optimization
@@ -53,12 +51,9 @@ brew "krew"              # kubectl plugin manager
 brew "kubectx"           # Kubernetes context switcher
 brew "lazydocker"        # Docker TUI
 brew "lazygit"           # Git TUI
-{{- end }}
 
 # Security tools (only for specific machines)
-{{- if eq .hostname "security-research" }}
 brew "bettercap"         # Network reconnaissance
-{{- end }}
 
 # Fonts
 brew "font-jetbrains-mono-nerd-font"
