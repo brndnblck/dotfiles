@@ -1,6 +1,6 @@
 [data]
-    name = {{ promptString "name" "Brandon Black" | quote }}
-    email = {{ promptString "email" "github@brblck.com" | quote }}
+    name = {{ if hasKey . "name" }}{{ .name | quote }}{{ else }}"Brandon Black"{{ end }}
+    email = {{ if hasKey . "email" }}{{ .email | quote }}{{ else }}"github@brblck.com"{{ end }}
     hostname = {{ .chezmoi.hostname | quote }}
     is_apple_silicon = {{ eq .chezmoi.arch "arm64" }}
     is_work_machine = {{ or (contains "work" (.chezmoi.hostname | lower)) (contains "corp" (.chezmoi.hostname | lower)) }}
