@@ -1,0 +1,6 @@
+tap "homebrew/bundle"
+
+# Essential tools needed for bootstrap process
+brew "chezmoi"           # Dotfiles management
+brew "git"               # Version control
+brew "mas"               # Mac App Store CLI

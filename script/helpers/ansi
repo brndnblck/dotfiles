@@ -222,6 +222,9 @@ ansi() {
     local BELL=$'\007'
 
     while $CONTINUE; do
+        if [ $# -eq 0 ]; then
+            break
+        fi
         case "$1" in
             --help | -h | -\?)
                 ansi_showHelp

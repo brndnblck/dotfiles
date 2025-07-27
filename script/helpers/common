@@ -1,19 +1,25 @@
 #!/usr/bin/env bash
 
-# Common utilities for bootstrap scripts
+# Source ansi utilities
+source "$(dirname "${BASH_SOURCE[0]}")/ansi"
 
-# Architecture detection
+# Set PARENT_DIR if not already set
+if [ -z "${PARENT_DIR:-}" ]; then
+    CURRENT_DIR=$(realpath $(dirname "${BASH_SOURCE[0]}"))
+    PARENT_DIR=$(dirname "$CURRENT_DIR")
+fi
+
+# ============================================================================
+# System Information
+# ============================================================================
+
 get_architecture() {
-    uname -m
+    local arch=$(uname -m)
+    echo "$arch"
 }
 
-is_apple_silicon() {
-    [[ $(get_architecture) == "arm64" ]]
-}
-
-# Homebrew path detection
 get_homebrew_prefix() {
-    if is_apple_silicon; then
+    if [[ $(get_architecture) == "arm64" ]]; then
         echo "/opt/homebrew"
     else
         echo "/usr/local"
@@ -24,424 +30,355 @@ get_homebrew_bin() {
     echo "$(get_homebrew_prefix)/bin/brew"
 }
 
-# Setup Homebrew environment
 setup_homebrew_env() {
-    if command -v brew >/dev/null 2>&1; then
+    if check_command \"brew\" \"Homebrew\"; then
         eval "$($(get_homebrew_bin) shellenv)"
     fi
 }
 
-# Network utilities
-retry_with_backoff() {
-    local max_attempts=3
-    local delay=5
-    local attempt=1
-    
-    while [ $attempt -le $max_attempts ]; do
-        if "$@"; then
-            return 0
-        fi
-        
-        if [ $attempt -eq $max_attempts ]; then
-            echo "Command failed after $max_attempts attempts: $*"
-            return 1
-        fi
-        
-        echo "Attempt $attempt failed. Retrying in $delay seconds..."
-        sleep $delay
-        delay=$((delay * 2))
-        attempt=$((attempt + 1))
-    done
+# ============================================================================
+# Access Control
+# ============================================================================
+
+ensure_sudo() {
+	if silent "sudo -n true"; then
+		record "INFO" "sudo access already available"
+		return 0
+	fi
+	
+	if check_file_exists "/tmp/.bootstrap_sudo_authenticated" "sudo auth marker"; then
+		if silent "sudo -n -v"; then
+			log_info "sudo session refreshed"
+			return 0
+		else
+			rm -f "/tmp/.bootstrap_sudo_authenticated"
+		fi
+	fi
+	
+	if ! tty >/dev/null 2>&1; then
+		log_error "Sudo access not available in background process" "true"
+	fi
+	
+	if [ -z "${CI:-}" ]; then
+		record "INFO" "Requesting sudo password..."
+		sudo_password=$(osascript -e 'Tell application "System Events" to display dialog "Please enter your admin password:" default answer "" with hidden answer' -e 'text returned of result' 2>/dev/null)
+		if [ $? -ne 0 ] || [ -z "$sudo_password" ]; then
+			show_error "Sudo password entry cancelled. Exiting." "true"
+		fi
+		
+		if echo "$sudo_password" | sudo -S -v 2>/dev/null; then
+			log_info "sudo access granted and cached"
+			touch "/tmp/.bootstrap_sudo_authenticated"
+			# Set a longer sudo timeout for bootstrap (60 minutes)
+			silent "sudo -S sh -c 'echo \"Defaults timestamp_timeout=60\" > /etc/sudoers.d/bootstrap_timeout'" <<< "$sudo_password" || true
+			start_sudo_keepalive
+		else
+			show_error "Invalid sudo password. Exiting." "true"
+		fi
+	else
+		show_error "Failed to obtain sudo access in CI environment." "true"
+	fi
 }
 
-# Service management utilities
-is_service_running() {
-    local service_name="$1"
-    sudo brew services list | grep -q "${service_name}.*started"
+start_sudo_keepalive() {
+	if check_file_exists "/tmp/.bootstrap_sudo_authenticated" "sudo auth marker"; then
+		stop_sudo_keepalive
+		(
+			while check_file_exists "/tmp/.bootstrap_sudo_authenticated" "sudo auth marker"; do
+				sleep 300  # 5 minutes
+				if ! sudo -n true 2>/dev/null; then
+					log_warn "sudo session expired, keep-alive exiting"
+					break
+				fi
+			done
+		) &
+		echo $! > "/tmp/.bootstrap_sudo_keepalive_pid"
+		log_info "sudo keep-alive started (PID: $!)"
+	fi
 }
 
-ensure_service_running() {
-    local service_name="$1"
-    
-    if is_service_running "$service_name"; then
-        echo "Service $service_name is already running"
-        return 0
-    fi
-    
-    echo "Starting service $service_name..."
-    if sudo brew services start "$service_name"; then
-        echo "Service $service_name started successfully"
-    else
-        echo "Failed to start service $service_name"
-        return 1
-    fi
+stop_sudo_keepalive() {
+	if check_file_exists "/tmp/.bootstrap_sudo_keepalive_pid" "sudo keepalive PID"; then
+		local pid=$(cat "/tmp/.bootstrap_sudo_keepalive_pid" 2>/dev/null)
+		if [ -n "$pid" ]; then
+			kill "$pid" 2>/dev/null || true
+		fi
+		rm -f "/tmp/.bootstrap_sudo_keepalive_pid"
+		log_info "sudo keep-alive stopped"
+	fi
 }
 
-restart_service() {
-    local service_name="$1"
-    
-    echo "Restarting service $service_name..."
-    if sudo brew services restart "$service_name"; then
-        echo "Service $service_name restarted successfully"
-    else
-        echo "Failed to restart service $service_name"
-        return 1
-    fi
-}
+# ============================================================================
+# Logging and Output
+# ============================================================================
 
-# Version management utilities
-install_version_if_missing() {
-    local version_manager="$1"
-    local version="$2"
-    local fallback_version="$3"
-    
-    if ! command -v "$version_manager" >/dev/null 2>&1; then
-        echo "$version_manager not found, skipping installation"
-        return 0
-    fi
-    
-    
-    # Use fallback if version is empty
-    if [ -z "$version" ]; then
-        version="$fallback_version"
-    fi
-    
-    # Check if version is already installed
-    if $version_manager versions | grep -q "$version"; then
-        echo "$version_manager $version is already installed"
-        return 0
-    fi
-    
-    echo "Installing $version_manager $version..."
-    if $version_manager install "$version"; then
-        echo "$version_manager $version installed successfully"
-    else
-        echo "Failed to install $version_manager $version"
-        return 1
-    fi
-}
-
-# File utilities
-read_version_file() {
-    local file_path="$1"
-    local fallback="$2"
-    
-    if [ -f "$file_path" ]; then
-        cat "$file_path"
-    else
-        echo "$fallback"
-    fi
-}
-
-# Validation utilities
-validate_command() {
-    local command="$1"
-    local description="$2"
-    
-    if command -v "$command" >/dev/null 2>&1; then
-        echo "✓ $description: $command is available"
-        return 0
-    else
-        echo "✗ $description: $command is not available"
-        return 1
-    fi
-}
-
-# Idempotency utilities
-is_already_configured() {
-    local config_file="$1"
-    local pattern="$2"
-    
-    [ -f "$config_file" ] && grep -q "$pattern" "$config_file"
-}
-
-backup_file() {
-    local file_path="$1"
-    local timestamp=$(date "+%Y-%m-%d-%H%M%S")
-    
-    if [ -f "$file_path" ]; then
-        cp "$file_path" "${file_path}.${timestamp}.bak"
-        echo "Backed up $file_path to ${file_path}.${timestamp}.bak"
-    fi
-}
-
-# Progress tracking
-create_marker_file() {
-    local step_name="$1"
-    local marker_dir="$HOME/.dotfiles-bootstrap"
-    
-    mkdir -p "$marker_dir"
-    touch "$marker_dir/$step_name"
-}
-
-is_step_completed() {
-    local step_name="$1"
-    local marker_dir="$HOME/.dotfiles-bootstrap"
-    
-    [ -f "$marker_dir/$step_name" ]
-}
-
-# Unified Logging System
-log_message() {
+handle_message() {
     local level="$1"
     local message="$2"
     local exit_on_error="${3:-true}"
+    local display="${4:-true}"
     
+    # Log to file
     case "$level" in
         "info")
-            if command -v ansi >/dev/null 2>&1; then
+            record "INFO" "$message"
+            ;;
+        "success")
+            record "SUCCESS" "$message"
+            ;;
+        "warn")
+            record "WARN" "$message"
+            ;;
+        "error")
+            record "ERROR" "$message"
+            ;;
+        "test")
+            record "TEST" "$message"
+            ;;
+    esac
+    
+    # Display to user only if requested
+    if [ "$display" = "true" ]; then
+        case "$level" in
+            "info")
                 ansi --blue --bold --no-restore
                 echo "INFO: $message"
                 ansi --reset-color
-            else
-                echo "INFO: $message"
-            fi
-            ;;
-        "success")
-            if command -v ansi >/dev/null 2>&1; then
+                ;;
+            "success")
                 ansi --green --bold --no-restore
                 echo "✓ SUCCESS: $message"
                 ansi --reset-color
-            else
-                echo "✓ SUCCESS: $message"
-            fi
-            ;;
-        "warn")
-            if command -v ansi >/dev/null 2>&1; then
+                ;;
+            "warn")
                 ansi --yellow --bold --no-restore
                 echo "⚠ WARNING: $message"
-                ansi --reset-color
-            else
-                echo "⚠ WARNING: $message"
-            fi >&2
-            ;;
-        "error")
-            if command -v ansi >/dev/null 2>&1; then
+                ansi --reset-color >&2
+                ;;
+            "error")
+                ansi --newline
                 ansi --red --bold --no-restore
                 echo "✗ ERROR: $message"
-                ansi --reset-color
-            else
-                echo "✗ ERROR: $message"
-            fi >&2
-            if [ "$exit_on_error" = "true" ]; then
-                exit 1
-            fi
-            ;;
-        "test")
-            if command -v ansi >/dev/null 2>&1; then
+                ansi --reset-color --newline
+                ;;
+            "test")
                 ansi --magenta --bold --no-restore
                 echo "TEST: $message"
                 ansi --reset-color
-            else
-                echo "TEST: $message"
-            fi
-            ;;
-    esac
-}
-
-# Convenience wrappers for backward compatibility
-show_info() { log_message "info" "$1"; }
-show_success() { log_message "success" "$1"; }
-show_warn() { log_message "warn" "$1"; }
-show_error() { log_message "error" "$1" "${2:-true}"; }
-info() { log_message "info" "$1"; }
-success() { log_message "success" "$1"; }
-error() { log_message "error" "$1" "${2:-true}"; }
-
-# Template Processing
-process_template() {
-    local template_file="$1"
-    local output_file="$2"
-    local cleanup_temp="${3:-true}"
-    
-    if [ ! -f "$template_file" ]; then
-        show_error "Template file not found: $template_file"
-        return 1
+                ;;
+        esac
     fi
     
-    if command -v chezmoi >/dev/null 2>&1; then
-        if [ "$cleanup_temp" = "true" ] && echo "$output_file" | grep -q "^/tmp/"; then
-            trap "rm -f '$output_file'" EXIT
-        fi
-        
-        if chezmoi execute-template < "$template_file" > "$output_file"; then
-            show_success "Template processed: $template_file -> $output_file"
-            return 0
-        else
-            show_error "Failed to process template: $template_file"
-            return 1
-        fi
-    else
-        show_error "chezmoi not available for template processing"
-        return 1
+    # Handle exit on error
+    if [ "$level" = "error" ] && [ "$exit_on_error" = "true" ]; then
+        exit 1
     fi
 }
 
-# Brewfile Processing
-process_brewfile() {
-    local brewfile_name="$1"
-    local description="$2"
-    
-    show_info "Processing $description..."
-    
-    if [ -f "$PARENT_DIR/${brewfile_name}.tmpl" ]; then
-        local temp_brewfile="/tmp/${brewfile_name}.$$"
-        if command -v chezmoi >/dev/null 2>&1; then
-            show_info "Using templated ${brewfile_name}.tmpl"
-            if process_template "$PARENT_DIR/${brewfile_name}.tmpl" "$temp_brewfile"; then
-                if brew bundle --no-lock -d --file="$temp_brewfile"; then
-                    show_success "$description completed"
-                    rm -f "$temp_brewfile"
-                    return 0
-                else
-                    show_error "Failed to install packages from $brewfile_name"
-                    rm -f "$temp_brewfile"
-                    return 1
-                fi
-            else
-                return 1
-            fi
-        else
-            show_warn "chezmoi not available, falling back to static ${brewfile_name}"
-            if [ -f "$PARENT_DIR/${brewfile_name}" ]; then
-                brew bundle --no-lock -d --file="$PARENT_DIR/${brewfile_name}"
-            else
-                show_error "Neither ${brewfile_name}.tmpl nor ${brewfile_name} found"
-                return 1
-            fi
-        fi
-    elif [ -f "$PARENT_DIR/${brewfile_name}" ]; then
-        show_info "Using static ${brewfile_name}"
-        if brew bundle --no-lock -d --file="$PARENT_DIR/${brewfile_name}"; then
-            show_success "$description completed"
-            return 0
-        else
-            show_error "Failed to install packages from $brewfile_name"
-            return 1
-        fi
-    else
-        show_error "Neither ${brewfile_name}.tmpl nor ${brewfile_name} found"
-        return 1
-    fi
-}
+show_info() { handle_message "info" "$1"; }
+show_success() { handle_message "success" "$1"; }
+show_warn() { handle_message "warn" "$1"; }
+show_error() { handle_message "error" "$1" "${2:-true}"; }
 
-# Enhanced Command Execution
-safe_run() {
-    local description="$1"
+log_info() { handle_message "info" "$1" "false" "false"; }
+log_success() { handle_message "success" "$1" "false" "false"; }
+log_warn() { handle_message "warn" "$1" "false" "false"; }
+log_error() { handle_message "error" "$1" "${2:-false}" "false"; }
+
+record() {
+    local level="${1:-INFO}"
     shift
-    
-    show_info "Running: $description"
-    if "$@"; then
-        show_success "$description completed"
-        return 0
-    else
-        local exit_code=$?
-        show_error "$description failed (exit code: $exit_code)" false
-        return $exit_code
-    fi
+    mkdir -p "$PARENT_DIR/tmp/log"
+    echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') $level: $@" >> "$PARENT_DIR/tmp/log/debug.log" 2>&1
 }
 
-# File and Command Utilities
+show_header() {
+    local message="$1"
+    local color="${2:-blue}"
+    
+    ansi --${color} --bold --no-restore --newline
+    echo "$message"
+    ansi --reset-color --newline
+}
+
+# ============================================================================
+# Command Execution
+# ============================================================================
+
+run() {
+	record "INFO" "Running: $1"
+	if eval "$1"; then
+		record "INFO" "Command succeeded: $1"
+		return 0
+	else
+		record "ERROR" "Command failed: $1"
+		show_error "Command failed: $1"
+		return 1
+	fi
+}
+
+run_silent() {
+	record "INFO" "$@"
+	eval "$@"
+}
+
+silent() {
+	record "INFO" "Running (silent): $1"
+	if eval "$1" >> "$PARENT_DIR/tmp/log/debug.log" 2>&1; then
+		record "INFO" "Command succeeded (silent): $1"
+		return 0
+	else
+		local exit_code=$?
+		record "ERROR" "Command failed (silent): $1 (exit code: $exit_code)"
+		return $exit_code
+	fi
+}
+
+show_loader() {
+    ($1) &
+    local pid=$!
+    [ -n "$2" ] && message="$2" || message='Please wait...'
+    local length=${#message}
+    local i=0
+    local loader='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+    ansi --hide-cursor --no-restore
+    
+    # Handle interrupts in loader
+    trap 'kill $pid 2>/dev/null; ansi --show-cursor; exit 130' INT TERM
+    
+    while(ps a | awk '{print $1}' | grep -q "${pid}");  do
+        i=$(( (i+1) % 10 ))
+        ansi --blue-intense $(printf "\r   ${loader:$i:1}")
+        ansi --bold --no-restore
+        if [ -n "$message" ]; then
+            printf " $message"
+        else
+            printf ' Please wait...'
+        fi
+        ansi --reset-attrib
+        sleep .02
+    done
+
+    # Reset trap
+    trap - INT TERM
+    
+    ansi --green --bold --no-restore
+    printf " \r✓ "
+    ansi --white --faint --no-restore
+    printf " $message\n"
+    ansi --reset-attrib --reset-color
+    ansi --show-cursor
+}
+
+# ============================================================================
+# File System Utilities
+# ============================================================================
+
 check_file_exists() {
     local file_path="$1"
     local description="$2"
     
     if [ -f "$file_path" ]; then
-        show_success "$description: $file_path exists"
         return 0
     else
-        show_warn "$description: $file_path not found"
         return 1
     fi
 }
 
-ensure_command_or_install() {
-    local command="$1"
-    local install_method="$2"
-    local description="$3"
+check_directory_exists() {
+    local dir_path="$1"
+    local description="$2"
     
-    if validate_command "$command" "$description"; then
+    if [ -d "$dir_path" ]; then
         return 0
     else
-        show_info "Installing $description via $install_method"
-        if eval "$install_method"; then
-            validate_command "$command" "$description"
-        else
-            show_error "Failed to install $description"
-            return 1
+        return 1
+    fi
+}
+
+check_command() {
+    local command="$1"
+    local description="$2"
+    
+    if command -v "$command" >/dev/null 2>&1; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# ============================================================================
+# Template Processing
+# ============================================================================
+
+process_template() {
+    local template_file="$1"
+    local output_file="$2"
+    local cleanup_temp="${3:-true}"
+    
+    if ! check_file_exists "$template_file" "Template file"; then
+        return 1
+    fi
+    
+    if ! check_command "chezmoi" "Chezmoi"; then
+        return 1
+    fi
+    
+    if [ "$cleanup_temp" = "true" ] && echo "$output_file" | grep -q "^/tmp/"; then
+        trap "rm -f '$output_file'" EXIT
+    fi
+    
+    if chezmoi execute-template < "$template_file" > "$output_file"; then
+        log_success "Template processed: $template_file -> $output_file"
+        return 0
+    else
+        log_error "Failed to process template: $template_file" "true"
+    fi
+}
+
+# ============================================================================
+# Package Management
+# ============================================================================
+
+process_brewfile() {
+    local brewfile_name="$1"
+    local description="$2"
+    
+    log_info "Processing $description..."
+    
+    # Refresh sudo session before running brew bundle to avoid second prompt
+    if check_file_exists "/tmp/.bootstrap_sudo_authenticated" "sudo auth marker"; then
+        if ! silent "sudo -n true"; then
+            log_warn "sudo session expired, package installation may prompt for password"
         fi
     fi
-}
-
-# Generic Setup Step Pattern
-setup_step() {
-    local step_name="$1"
-    local setup_function="$2"
-    local description="$3"
     
-    if is_step_completed "$step_name"; then
-        show_info "$description already completed, skipping"
-        return 0
-    fi
-    
-    show_info "Starting: $description"
-    if $setup_function; then
-        create_marker_file "$step_name"
-        show_success "$description completed"
-        return 0
+    if check_file_exists "$PARENT_DIR/${brewfile_name}.tmpl" "Templated Brewfile"; then
+        local temp_brewfile="/tmp/${brewfile_name}.$$"
+        log_info "Using templated ${brewfile_name}.tmpl"
+        if process_template "$PARENT_DIR/${brewfile_name}.tmpl" "$temp_brewfile"; then
+            if silent "brew bundle -d --file=\"$temp_brewfile\""; then
+                log_success "$description completed"
+                rm -f "$temp_brewfile"
+                return 0
+            else
+                rm -f "$temp_brewfile"
+                log_error "Failed to install packages from $brewfile_name" "false"
+                return 1
+            fi
+        else
+            log_error "Failed to process template" "true"
+        fi
+    elif check_file_exists "$PARENT_DIR/${brewfile_name}" "Static Brewfile"; then
+        log_info "Using static ${brewfile_name}"
+        if silent "brew bundle -d --file=\"$PARENT_DIR/${brewfile_name}\""; then
+            log_success "$description completed"
+            return 0
+        else
+            log_error "Failed to install packages from $brewfile_name" "false"
+            return 1
+        fi
     else
-        show_error "$description failed"
-        return 1
+        log_error "Neither ${brewfile_name}.tmpl nor ${brewfile_name} found" "true"
     fi
-}
-
-# Cleanup utilities
-cleanup_markers() {
-    local marker_dir="$HOME/.dotfiles-bootstrap"
-    
-    if [ -d "$marker_dir" ]; then
-        rm -rf "$marker_dir"
-        show_success "Cleaned up bootstrap markers"
-    fi
-}
-
-# System requirements
-check_macos_version() {
-    local min_version="$1"
-    local current_version=$(sw_vers -productVersion)
-    local current_major=$(echo "$current_version" | cut -d. -f1)
-    local min_major=$(echo "$min_version" | cut -d. -f1)
-    
-    if [ "$current_major" -lt "$min_major" ]; then
-        echo "Error: macOS $min_version or later is required. Current: $current_version"
-        return 1
-    fi
-    
-    echo "✓ macOS version check passed ($current_version)"
-    return 0
-}
-
-check_disk_space() {
-    local required_gb="$1"
-    local available_space=$(df -h / | tail -1 | awk '{print $4}' | sed 's/G.*//')
-    
-    if [ "${available_space%%.*}" -lt "$required_gb" ]; then
-        echo "Error: At least ${required_gb}GB of free disk space is required. Available: ${available_space}GB"
-        return 1
-    fi
-    
-    echo "✓ Disk space check passed (${available_space}GB available)"
-    return 0
-}
-
-check_network_connectivity() {
-    local host="$1"
-    
-    if ! ping -c 1 "$host" >/dev/null 2>&1; then
-        echo "Error: Network connectivity to $host is required"
-        return 1
-    fi
-    
-    echo "✓ Network connectivity to $host check passed"
-    return 0
 }

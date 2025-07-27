@@ -1,0 +1,120 @@
+#!/usr/bin/env bash
+
+# Source common utilities
+source "$(dirname "${BASH_SOURCE[0]}")/common"
+
+# ============================================================================
+# Dotfiles Management
+# ============================================================================
+
+ensure_dotfiles_setup() {
+	check_command "chezmoi" "Chezmoi dotfiles manager" || log_error "chezmoi is not installed. It should have been installed in the dependencies step." "true"
+	
+	log_info "Setting up chezmoi dotfiles management..."
+	
+	check_directory_exists "$PARENT_DIR/.git" "Git repository" || log_error "Expected to be in a git repository for dotfiles" "true"
+	
+	log_info "Configuring chezmoi to use current directory as source..."
+	cd "$PARENT_DIR"
+	
+	log_info "Syncing with remote repository..."
+	silent "git fetch origin"
+	
+	if ! silent "git diff-index --quiet HEAD --"; then
+		log_info "Local changes detected, stashing before sync..."
+		silent "git stash push -m \"Bootstrap: auto-stash before sync $(date)\""
+	fi
+	
+	local current_branch=$(git branch --show-current)
+	if [ -z "$current_branch" ]; then
+		current_branch="master"
+	fi
+	
+	if silent "git merge --ff-only \"origin/$current_branch\""; then
+		log_info "Successfully fast-forwarded to latest remote changes"
+	else
+		log_info "Cannot fast-forward, using current local state"
+	fi
+	
+	log_info "Initializing chezmoi with data context..."
+	silent "chezmoi init --source=\"$PARENT_DIR\" --force" || log_error "Failed to initialize chezmoi" "true"
+	
+	log_info "Applying dotfiles with chezmoi..."
+	silent "chezmoi apply --force" || log_error "Failed to apply dotfiles" "true"
+	
+	log_success "Dotfiles applied successfully"
+}
+
+# ============================================================================
+# System Configuration
+# ============================================================================
+
+configure_macos_preferences() {
+	# Ensure sudo session is active before running preferences
+	if check_file_exists "/tmp/.bootstrap_sudo_authenticated" "sudo auth marker"; then
+		if ! silent "sudo -n true"; then
+			log_warn "sudo session expired before setting preferences"
+		fi
+	fi
+	run "$PARENT_DIR/script/helpers/preferences"
+}
+
+ensure_password_manager() {
+	if ! check_command "op" "1Password CLI"; then
+		show_error "1Password CLI not found. It should have been installed with applications." "true"
+	fi
+
+	local account_count=$(op account list 2>/dev/null | wc -l || echo "0")
+	if [ "$account_count" -le 1 ]; then
+		echo -n "1Password Email: "
+		read -r email
+		if [ -z "$email" ]; then
+			show_error "1Password email is required. Exiting." "true"
+		fi
+		
+		echo -n "1Password Secret Key: "
+		read -r secretkey
+		if [ -z "$secretkey" ]; then
+			show_error "1Password secret key is required. Exiting." "true"
+		fi
+		
+		silent "op account add --address start.1password.com --email $email --secret-key $secretkey"
+	fi
+
+	echo -n "1Password Password: "
+	read -s password
+	echo  # Add newline after hidden input
+	
+	if [ -z "$password" ]; then
+		show_error "1Password password is required. Exiting." "true"
+	fi
+	
+	if silent "echo \"$password\" | op signin"; then
+		record "Successful login to 1Password account."
+		return 0
+	else
+		show_error "Unable to authenticate with 1Password. Halting." "true"
+	fi
+}
+
+# ============================================================================
+# Legacy Functions (to be cleaned up)
+# ============================================================================
+
+ensure_zsh(){
+	export ZDOTDIR="${ZDOTDIR:-$HOME}"
+	silent "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+	silent "brew install romkatv/powerlevel10k/powerlevel10k"
+}
+
+ensure_fonts(){
+	silent "cp fonts/*.ttf ~/Library/Fonts"
+}
+
+ensure_dotfiles(){
+	if check_command "chezmoi" "Chezmoi dotfiles manager"; then
+		run "chezmoi init --apply git@github.com:brndnblck/dotfiles.git"
+	else
+		show_error "Missing Dotfile Manager."
+	fi
+}
