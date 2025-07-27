@@ -7,15 +7,28 @@ ensure_development() {
 	# Set up Homebrew environment
 	setup_homebrew_env
 
-	# Ruby
-	local ruby_version=$(read_version_file "$PARENT_DIR/dot_rbenv/version" "3.1.0")
-	install_version_if_missing "rbenv" "$ruby_version" "3.1.0"
+	# asdf setup
+	if command -v asdf >/dev/null 2>&1; then
+		show_info "Setting up asdf plugins and versions..."
+		
+		# Install common plugins
+		asdf plugin add ruby 2>/dev/null || true
+		asdf plugin add python 2>/dev/null || true  
+		asdf plugin add nodejs 2>/dev/null || true
+		asdf plugin add golang 2>/dev/null || true
+		
+		# Install versions from .tool-versions if it exists
+		if [ -f "$PARENT_DIR/dot_tool-versions" ]; then
+			show_info "Installing versions from .tool-versions..."
+			cd "$PARENT_DIR" && asdf install
+		else
+			show_info "No .tool-versions file found, skipping version installation"
+		fi
+	else
+		show_info "asdf not found, skipping version management setup"
+	fi
 
-	# Python
-	local python_version=$(read_version_file "$PARENT_DIR/dot_pyenv/version" "3.11.0")
-	install_version_if_missing "pyenv" "$python_version" "3.11.0"
-
-	# Rust
+	# Rust setup with rustup
 	if command -v rustup >/dev/null 2>&1; then
 		if ! rustup toolchain list | grep -q "stable"; then
 			show_info "Installing Rust stable toolchain..."
@@ -35,14 +48,6 @@ ensure_development() {
 	else
 		show_info "rustup not found, skipping Rust installation"
 	fi
-
-	# Node.js
-	local node_version=$(read_version_file "$PARENT_DIR/dot_nodenv/version" "18.17.0")
-	install_version_if_missing "nodenv" "$node_version" "18.17.0"
-
-	# Go
-	local go_version=$(read_version_file "$PARENT_DIR/dot_goenv/version" "1.22.0")
-	install_version_if_missing "goenv" "$go_version" "1.22.0"
 }
 
 ensure_dependencies() {

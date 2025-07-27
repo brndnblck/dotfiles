@@ -100,25 +100,6 @@ install_version_if_missing() {
         return 0
     fi
     
-    # Initialize version manager
-    case "$version_manager" in
-        rbenv)
-            eval "$(rbenv init -)"
-            export PATH="$(rbenv root)/shims:$PATH"
-            ;;
-        pyenv)
-            eval "$(pyenv init -)"
-            export PATH="$(pyenv root)/shims:$PATH"
-            ;;
-        nodenv)
-            eval "$(nodenv init -)"
-            export PATH="$(nodenv root)/shims:$PATH"
-            ;;
-        goenv)
-            eval "$(goenv init -)"
-            export PATH="$(goenv root)/shims:$PATH"
-            ;;
-    esac
     
     # Use fallback if version is empty
     if [ -z "$version" ]; then

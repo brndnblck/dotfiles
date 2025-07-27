@@ -10,23 +10,17 @@ HISTFILE=~/.zsh_history
 eval "$(/opt/homebrew/bin/brew shellenv)"
 export PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
 
-# nvm
-eval "$(nodenv init - zsh)"
-export PATH="$(nodenv root)/shims:$PATH"
+# asdf
+. {{ .homebrew_prefix }}/opt/asdf/libexec/asdf.sh
+
+# direnv
+eval "$(direnv hook zsh)"
 
 # rust
 source "$HOME/.cargo/env"
 
 # starship
 eval "$(starship init zsh)"
-
-# rbenv
-eval "$(rbenv init -)"
-export PATH="$(rbenv root)/shims:$PATH"
-
-# pyenv
-eval "$(pyenv init -)"
-export PATH="$(pyenv root)/shims:$PATH"
 
 # kubernetes
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
