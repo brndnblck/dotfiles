@@ -1,14 +1,105 @@
 #!/bin/bash
 
-# values pulled from .netrc file for hub
 GITHUB_USER=$(awk '/github.com/{getline; print $3}' ~/.config/hub)
 GITHUB_TOKEN=$(awk '/github.com/{getline; getline; print $2}' ~/.config/hub)
 
+# Render alias matches with consistent formatting
+# Usage: _render_aliases MODULE_NAME MATCHES [SHOW_COMMENTS]
+_render_aliases() {
+    local module_name="$1"
+    local matches="$2"
+    local show_comments="${3:-false}"
+    
+    echo -e "\e[1;36m=== $module_name ===\e[0m"
+    
+    local max_width=$(echo "$matches" | grep "^alias " | sed -E 's/^alias ([^=]+)=.*/\1/' | awk '{if(length > max) max = length} END {print max+0}')
+    
+    local in_multiline_alias=false
+    local current_alias_name=""
+    local first_line=true
+    echo "$matches" | while IFS= read -r line; do
+        if [[ "$line" =~ ^alias\ .* ]]; then
+            local alias_name=$(echo "$line" | sed -E 's/^alias ([^=]+)=.*/\1/')
+            local alias_cmd=$(echo "$line" | cut -d'=' -f2-)
+            
+            if [[ "$line" =~ \'\$$ ]] || [[ "$alias_cmd" =~ [^\\]\&\&\s*$ ]]; then
+                in_multiline_alias=true
+                current_alias_name="$alias_name"
+                alias_cmd=$(echo "$alias_cmd" | sed 's/^["\x27]//' | sed 's/["\x27]$//' | tr '\n' ' ')
+            else
+                alias_cmd=$(echo "$alias_cmd" | sed 's/^["\x27]//' | sed 's/["\x27]$//')
+            fi
+            
+            if [ ${#alias_cmd} -gt 80 ]; then
+                alias_cmd="${alias_cmd:0:77}..."
+            fi
+            
+            printf "\e[1;32m%-*s\e[0m \e[1;30m%s\e[0m\n" $max_width "$alias_name" "$alias_cmd"
+        elif [[ "$in_multiline_alias" == true ]] && [[ "$line" =~ \'\;?\'?\s*$ ]]; then
+            in_multiline_alias=false
+            current_alias_name=""
+        elif [[ "$in_multiline_alias" == false ]] && [[ "$show_comments" == true ]]; then
+            if [[ "$line" =~ ^#.* ]] && [[ ! "$line" =~ ^#[[:space:]]*$ ]]; then
+                if [[ "$first_line" != true ]]; then
+                    echo
+                fi
+                echo -e "\e[1;34m$line\e[0m"
+            fi
+        fi
+        first_line=false
+    done
+    echo
+}
+
 # Search for and display help for specific aliases
-# Usage: alias-help <search-term>
+# Usage: alias-help SEARCH_TERM
 # Example: alias-help git
 alias-help() {
-    awk -v RS='# ' -v IGNORECASE=1 '/'"$1"'/ {print "# "$0}' ~/.aliases
+    echo
+    if [ -d ~/.aliases.d ]; then
+        for alias_file in ~/.aliases.d/*; do
+            if [ -r "$alias_file" ]; then
+                local module_name=$(basename "$alias_file" .tmpl | tr '[:lower:]' '[:upper:]' | tr '_' ' ')
+                local matches=$(awk -v RS='# ' -v IGNORECASE=1 '/'"$1"'/ {print "# "$0}' "$alias_file")
+                if [ -n "$matches" ]; then
+                    _render_aliases "$module_name" "$matches" true
+                fi
+            fi
+        done
+    fi
+}
+
+# Search for aliases by name or command
+# Usage: alias-search SEARCH_TERM
+# Example: alias-search docker
+alias-search() {
+    if [ $# -eq 0 ]; then
+        echo "Usage: alias-search SEARCH_TERM"
+        return 1
+    fi
+    
+    echo
+    if [ -d ~/.aliases.d ]; then
+        for alias_file in ~/.aliases.d/*; do
+            if [ -r "$alias_file" ]; then
+                local module_name=$(basename "$alias_file" .tmpl | tr '[:lower:]' '[:upper:]' | tr '_' ' ')
+                local base_name=$(basename "$alias_file" .tmpl)
+                
+                # Check if search term matches module name or if there are matching aliases
+                local matches=$(grep -i "$1" "$alias_file" | grep "^alias ")
+                local module_matches=false
+                
+                if [[ "$module_name" =~ .*$(echo "$1" | tr '[:lower:]' '[:upper:]').* ]] || [[ "$base_name" =~ .*$(echo "$1" | tr '[:upper:]' '[:lower:]').* ]]; then
+                    module_matches=true
+                    matches=$(grep "^alias " "$alias_file")
+                fi
+                
+                if [ -n "$matches" ]; then
+                    _render_aliases "$module_name" "$matches" false
+                fi
+            fi
+        done
+    fi
 }
 
 # Display a colormap of all 256 terminal colors
@@ -31,11 +122,11 @@ function dev-restart() {
 
 # Create a new nginx proxy configuration for local development
 # Creates a .test domain that proxies to a local port
-# Usage: dev-init <app-name> <port>
+# Usage: dev-init APP_NAME PORT
 # Example: dev-init myapp 3000 (creates myapp.test -> localhost:3000)
 function dev-init() {
   if [ $# -lt 2 ]; then
-    echo "Usage: dev-init <app-name> <port>"
+    echo "Usage: dev-init APP_NAME PORT"
     echo "Example: dev-init myapp 3000"
     return 1
   fi
@@ -97,11 +188,11 @@ EOF
 }
 
 # Remove a development environment nginx configuration
-# Usage: dev-rm <app-name>
+# Usage: dev-rm APP_NAME
 # Example: dev-rm myapp
 function dev-rm() {
   if [ $# -lt 1 ]; then
-    echo "Usage: dev-rm <app-name>"
+    echo "Usage: dev-rm APP_NAME"
     return 1
   fi
   
@@ -167,11 +258,11 @@ function dev-ls() {
 
 # Clone a git repository without git history (export)
 # Perfect for creating new projects from templates
-# Usage: git-export <repo-url> <project-name>
+# Usage: git-export REPO_URL PROJECT_NAME
 # Example: git-export https://github.com/user/template.git my-new-project
 function git-export() {
   if [ $# -lt 2 ]; then
-    echo "Usage: git-export <repo-url> <project-name>"
+    echo "Usage: git-export REPO_URL PROJECT_NAME"
     echo "Example: git-export https://github.com/user/repo.git my-project"
     return 1
   fi
@@ -229,7 +320,7 @@ function git-branch-clean() {
 }
 
 # Execute a command multiple times
-# Usage: repeat <count> <command>
+# Usage: repeat COUNT COMMAND
 # Example: repeat 5 echo "hello"
 function repeat() {
   if [ $# -lt 2 ]
@@ -243,11 +334,11 @@ function repeat() {
 }
 
 # Perform DNS lookup and reverse DNS lookup
-# Usage: dig-host <hostname>
+# Usage: dig-host HOSTNAME
 # Example: dig-host google.com
 function dig-host() {
   if [ $# -lt 1 ]; then
-    echo "Usage: dig-host <hostname>"
+    echo "Usage: dig-host HOSTNAME"
     return 1
   fi
   
@@ -264,7 +355,7 @@ function dig-host() {
 }
 
 # Add a reminder to the Reminders.app (macOS only)
-# Usage: remind <text> or echo "text" | remind
+# Usage: remind TEXT or echo "text" | remind
 # Example: remind "Buy milk" or echo "Meeting at 3pm" | remind
 function remind() {
   local text
@@ -284,7 +375,7 @@ EOF
 
 # Extract various archive formats automatically
 # Detects format by file extension and uses appropriate tool
-# Usage: extract <archive-file>
+# Usage: extract ARCHIVE_FILE
 # Example: extract myfile.tar.gz
 extract () {
   if [ -f $1 ]; then

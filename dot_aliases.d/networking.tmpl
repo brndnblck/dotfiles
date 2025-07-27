@@ -1,0 +1,8 @@
+# Request Authoring
+alias wget="wget2"
+
+# DNS and IP Addresses
+alias ip='echo "\nLocal IPs:" && ifconfig | grep "inet " | awk '\''{
+printf "\t%s\n", $2}'\'' && echo "External IP:" && curl -s ipinfo.io/ip | awk '\''{
+printf "\t%s\n", $0}'\''\;'
+alias whois="whois -h whois-servers.net"
