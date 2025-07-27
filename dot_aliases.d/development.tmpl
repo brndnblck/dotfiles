@@ -66,3 +66,13 @@ alias mi="make install"
 alias mt="make test"
 alias md="make dist"
 alias mdcl="make distclean"
+
+# Caddy
+alias dev-start="sudo caddy start --config {{ .homebrew_prefix }}/etc/Caddyfile"
+alias dev-stop="sudo caddy stop"
+alias dev-restart="sudo caddy reload --config {{ .homebrew_prefix }}/etc/Caddyfile"
+alias dev-config="$EDITOR {{ .homebrew_prefix }}/etc/Caddyfile"
+alias dev-logs="sudo caddy logs"
+alias dev-run="caddy run"
+alias dev-local="caddy run --config Caddyfile"
+alias dev-fmt="caddy fmt --overwrite"

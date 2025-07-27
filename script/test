@@ -122,27 +122,14 @@ test_aliases() {
   done
 }
 
-test_nginx_config() {
-  log_test "Testing nginx configuration"
+test_caddy_config() {
+  log_test "Testing caddy configuration"
   
-  # Check if nginx helper script exists
-  if [ -f "script/helpers/nginx" ]; then
-    log_pass "nginx helper script exists"
+  # Check if caddy is in Brewfile
+  if grep -q "brew \"caddy\"" Brewfile.dependencies 2>/dev/null; then
+    log_pass "caddy is in Brewfile.dependencies"
   else
-    log_fail "nginx helper script is missing"
-  fi
-  
-  # Check if nginx and dnsmasq are in Brewfile
-  if grep -q "brew \"nginx\"" Brewfile.dependencies 2>/dev/null; then
-    log_pass "nginx is in Brewfile.dependencies"
-  else
-    log_fail "nginx is missing from Brewfile.dependencies"
-  fi
-  
-  if grep -q "brew \"dnsmasq\"" Brewfile.dependencies 2>/dev/null; then
-    log_pass "dnsmasq is in Brewfile.dependencies"
-  else
-    log_fail "dnsmasq is missing from Brewfile.dependencies"
+    log_fail "caddy is missing from Brewfile.dependencies"
   fi
 }
 
@@ -156,7 +143,7 @@ test_dependencies
 test_brewfiles
 test_templates
 test_aliases
-test_nginx_config
+test_caddy_config
 
 # Report results
 ansi --newline
