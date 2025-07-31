@@ -11,7 +11,8 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 export PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
 
 # asdf
-. {{ if eq .chezmoi.arch "arm64" }}/opt/homebrew{{ else }}/usr/local{{ end }}/opt/asdf/libexec/asdf.sh
+export PATH="$HOME/.asdf/shims:$PATH"
+. "$(brew --prefix asdf)/libexec/asdf.sh"
 
 # direnv
 eval "$(direnv hook zsh)"
