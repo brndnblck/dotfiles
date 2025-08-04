@@ -10,6 +10,8 @@ cask "kubecontext"        # Kubernetes context manager
 cask "obsidian"           # Note-taking
 cask "ollama"             # Local LLM runner
 cask "sublime-text"       # Text editor
+brew "fabric-ai"          # AI-powered CLI tool
+brew "yt-dlp"             # YouTube downloader
 
 {{- if or (contains "work" (.chezmoi.hostname | lower)) (contains "corp" (.chezmoi.hostname | lower)) }}
 cask "slack"              # Team communication
