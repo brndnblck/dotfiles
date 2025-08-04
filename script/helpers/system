@@ -53,7 +53,9 @@ configure_macos_preferences() {
 	# Ensure sudo session is active before running preferences
 	if check_file_exists "/tmp/.bootstrap_sudo_authenticated" "sudo auth marker"; then
 		if ! silent "sudo -n true"; then
-			log_warn "sudo session expired before setting preferences"
+			log_warn "sudo session expired, re-authenticating..."
+			sudo_password=$(prompt_sudo_password)
+			echo "$sudo_password" | sudo -S -v 2>/dev/null || show_error "Invalid password. Exiting." "true"
 		fi
 	fi
 	run "$PARENT_DIR/script/helpers/preferences"

@@ -40,6 +40,17 @@ setup_homebrew_env() {
 # Access Control
 # ============================================================================
 
+prompt_sudo_password() {
+	ansi --newline
+	ansi "Prompting for password..."
+	ansi --newline
+	sudo_password=$(osascript -e 'Tell application "System Events" to display dialog "Please enter your admin password:" default answer "" with hidden answer' -e 'text returned of result' 2>/dev/null)
+	if [ $? -ne 0 ] || [ -z "$sudo_password" ]; then
+		show_error "Sudo password entry cancelled. Exiting." "true"
+	fi
+	echo "$sudo_password"
+}
+
 ensure_sudo() {
 	if silent "sudo -n true"; then
 		record "INFO" "sudo access already available"
@@ -60,11 +71,7 @@ ensure_sudo() {
 	fi
 	
 	if [ -z "${CI:-}" ]; then
-		record "INFO" "Requesting sudo password..."
-		sudo_password=$(osascript -e 'Tell application "System Events" to display dialog "Please enter your admin password:" default answer "" with hidden answer' -e 'text returned of result' 2>/dev/null)
-		if [ $? -ne 0 ] || [ -z "$sudo_password" ]; then
-			show_error "Sudo password entry cancelled. Exiting." "true"
-		fi
+		sudo_password=$(prompt_sudo_password)
 		
 		if echo "$sudo_password" | sudo -S -v 2>/dev/null; then
 			log_info "sudo access granted and cached"
@@ -355,7 +362,7 @@ process_brewfile() {
     fi
     
     if check_file_exists "$PARENT_DIR/${brewfile_name}.tmpl" "Templated Brewfile"; then
-        local temp_brewfile="/tmp/${brewfile_name}.$$"
+        local temp_brewfile="/tmp/$(basename "${brewfile_name}").$$"
         log_info "Using templated ${brewfile_name}.tmpl"
         if process_template "$PARENT_DIR/${brewfile_name}.tmpl" "$temp_brewfile"; then
             if silent "brew bundle -d --file=\"$temp_brewfile\""; then
