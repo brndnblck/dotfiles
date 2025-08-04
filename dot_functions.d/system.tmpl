@@ -5,10 +5,10 @@ function colormap() {
   for i in {0..255}; do print -Pn "%K{$i}  %k%F{$i}${(l:3::0:)i}%f " ${${(M)$((i%6)):#3}:+$'\n'}; done
 }
 
-function repeat() {
+function run-repeat() {
   # Description: Execute a command multiple times
-  # Usage: repeat COUNT COMMAND
-  # Example: repeat 5 echo "hello"
+  # Usage: run-repeat COUNT COMMAND
+  # Example: run-repeat 5 echo "hello"
   if [ $# -lt 2 ]
   then
     echo "Error! Count and command required."
