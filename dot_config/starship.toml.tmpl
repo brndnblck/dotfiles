@@ -1,9 +1,7 @@
-# Get editor completions based on the config schema
 "$schema" = 'https://starship.rs/config-schema.json'
 
 format = """$os$time$username$hostname$directory$git_branch$git_status$python$character"""
 
-# Dream Color Palette
 palette = 'dream'
 
 [palettes.dream]
@@ -71,13 +69,11 @@ Unknown = ""
 Void = " "
 Windows = "󰍲"
 
-# Shows the username
 [username]
 format = '[//](bright-black bold) [$user](green) '
 disabled = false
 show_always = true
 
-# Shows current directory
 [directory]
 truncation_length = 3
 truncation_symbol = '…/'
@@ -93,13 +89,11 @@ style = 'cyan'
 "Pictures" = " "
 "Developer" = "󰲋 "
 
-# Shows current git branch
 [git_branch]
 symbol = ' '
 format = '[//](bright-black bold) [$symbol\[$branch\]]($style)'
 style = 'green'
 
-# Shows current git status
 [git_status]
 disabled = true
 format = '[ $all_status $ahead_behind]($style)'
@@ -116,7 +110,6 @@ staged = '[++\($count\)](bold cyan)'
 renamed = '󰑕 '
 deleted = ' '
 
-# Shows kubernetes context and namespace
 [kubernetes]
 format = 'via [󱃾 $context\($namespace\)](purple) '
 disabled = false
