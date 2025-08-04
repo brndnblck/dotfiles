@@ -1,0 +1,31 @@
+# Background and foreground
+background = 0B0B0B
+foreground = C7C7C7
+
+# Cursor
+cursor-color = C7C7C7
+cursor-text = FFFFFF
+
+# Selection
+selection-background = 666666
+selection-foreground = FFFFFF
+
+# Normal colors (0-7)
+palette = 0=121212
+palette = 1=a52aff
+palette = 2=7129ff
+palette = 3=3d2aff
+palette = 4=2b4fff
+palette = 5=2883ff
+palette = 6=28b9ff
+palette = 7=f1f1f1
+
+# Bright colors (8-15)
+palette = 8=666666
+palette = 9=ba5aff
+palette = 10=905aff
+palette = 11=657b83
+palette = 12=5c78ff
+palette = 13=5ea2ff
+palette = 14=5ac8ff
+palette = 15=ffffff
