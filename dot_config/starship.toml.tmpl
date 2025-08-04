@@ -1,12 +1,26 @@
 # Get editor completions based on the config schema
 "$schema" = 'https://starship.rs/config-schema.json'
 
-format = """$os$time$username$hostname$kubernetes$directory$git_branch$git_status$python$character"""
+format = """$os$time$username$hostname$directory$git_branch$git_status$python$character"""
+
+# Dream Color Palette
+palette = 'dream'
+
+[palettes.dream]
+color_purple = '#a52aff'
+color_blue = '#2b4fff'
+color_cyan = '#28b9ff'
+color_magenta = '#2883ff'
+color_bright_purple = '#ba5aff'
+color_bright_blue = '#5c78ff'
+color_bright_cyan = '#5ac8ff'
+color_bright_magenta = '#5ea2ff'
+color_dark = '#121212'
+color_light = '#f1f1f1'
 
 [character]
 success_symbol = " [](bright-black bold)"
 error_symbol = " [](bold red)"
-
 
 [os]
 format = '[$symbol](green bold)'   
@@ -71,6 +85,13 @@ home_symbol = '󱂶 '
 read_only = '  '
 format = '[//](bright-black bold) [$path]($style)[$read_only]($read_only_style) '
 style = 'cyan'
+
+[directory.substitutions]
+"Documents" = "󰈙 "
+"Downloads" = " "
+"Music" = "󰝚 "
+"Pictures" = " "
+"Developer" = "󰲋 "
 
 # Shows current git branch
 [git_branch]
@@ -145,7 +166,7 @@ symbol = " "
 [hostname]
 ssh_only = true
 ssh_symbol = "󰌘 "
-format = '[//](bright-black bold) [$ssh_symbol$hostname](blue)'
+format = '[@$hostname](green) '
 
 [java]
 symbol = " "
@@ -191,7 +212,6 @@ symbol = " "
 
 [python]
 symbol = " "
-python_binary = ['./venv/bin/python', 'python', 'python3', 'python2']
 format = '[//](bright-black bold) [${symbol} (${version} )(\($virtualenv\) )]($style)'
 
 [rlang]
