@@ -14,6 +14,9 @@ export PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
 export PATH="$HOME/.asdf/shims:$PATH"
 . "$(brew --prefix asdf)/libexec/asdf.sh"
 
+# npm global packages
+export PATH="$HOME/.config/npm/global/bin:$PATH"
+
 # direnv
 eval "$(direnv hook zsh)"
 
