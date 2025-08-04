@@ -49,6 +49,44 @@ update_development_tools() {
         local version=$(silent "asdf current $tool | awk '{print \$2}'" || echo "not installed")
         echo "  $tool: $version"
     done
+    
+    # Update cargo packages
+    if check_command "cargo" "Cargo package manager"; then
+        if check_file_exists "$PARENT_DIR/dependencies/cargo-packages" "cargo packages file"; then
+            log_info "Updating cargo packages..."
+            while IFS= read -r line || [ -n "$line" ]; do
+                # Skip empty lines and comments
+                [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+                
+                # Extract package name (first word)
+                package=$(echo "$line" | awk '{print $1}')
+                
+                if [ -n "$package" ]; then
+                    log_info "Updating cargo package: $package"
+                    silent "cargo install $package" || true
+                fi
+            done < "$PARENT_DIR/dependencies/cargo-packages"
+        fi
+    fi
+    
+    # Update npm packages
+    if check_command "npm" "Node package manager"; then
+        if check_file_exists "$PARENT_DIR/dependencies/npm-packages" "npm packages file"; then
+            log_info "Updating npm packages..."
+            while IFS= read -r line || [ -n "$line" ]; do
+                # Skip empty lines and comments
+                [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+                
+                # Extract package name (first word)
+                package=$(echo "$line" | awk '{print $1}')
+                
+                if [ -n "$package" ]; then
+                    log_info "Updating npm package: $package"
+                    silent "npm install -g $package@latest" || true
+                fi
+            done < "$PARENT_DIR/dependencies/npm-packages"
+        fi
+    fi
 }
 
 # Main execution

@@ -8,11 +8,11 @@ source "$(dirname "${BASH_SOURCE[0]}")/common"
 # ============================================================================
 
 ensure_dependencies() {
-	process_brewfile "Brewfile.dependencies" "Installing Core Dependencies"
+	process_brewfile "dependencies/Brewfile.dependencies" "Installing Core Dependencies"
 }
 
 ensure_applications() {
-	process_brewfile "Brewfile.software" "Installing Applications"
+	process_brewfile "dependencies/Brewfile.software" "Installing Applications"
 }
 
 # ============================================================================
@@ -59,6 +59,44 @@ ensure_development() {
 		fi
 		
 		silent "rustup default stable" || true
+		
+		# Install cargo packages from dependencies file
+		if check_file_exists "$PARENT_DIR/dependencies/cargo-packages" "cargo packages file"; then
+			log_info "Installing cargo packages..."
+			while IFS= read -r line || [ -n "$line" ]; do
+				# Skip empty lines and comments
+				[[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+				
+				# Extract package name (first word)
+				package=$(echo "$line" | awk '{print $1}')
+				
+				if [ -n "$package" ]; then
+					log_info "Installing cargo package: $package"
+					silent "cargo install $package" || true
+				fi
+			done < "$PARENT_DIR/dependencies/cargo-packages"
+		fi
+	fi
+	
+	# Install npm packages from dependencies file
+	if check_command "npm" "Node package manager"; then
+		if check_file_exists "$PARENT_DIR/dependencies/npm-packages" "npm packages file"; then
+			log_info "Installing npm packages..."
+			while IFS= read -r line || [ -n "$line" ]; do
+				# Skip empty lines and comments
+				[[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+				
+				# Extract package name (first word)
+				package=$(echo "$line" | awk '{print $1}')
+				
+				if [ -n "$package" ]; then
+					if ! silent "npm list -g $package >/dev/null 2>&1"; then
+						log_info "Installing npm package: $package"
+						silent "npm install -g $package" || true
+					fi
+				fi
+			done < "$PARENT_DIR/dependencies/npm-packages"
+		fi
 	fi
 }
 

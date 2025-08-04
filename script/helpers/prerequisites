@@ -172,7 +172,7 @@ ensure_bootstrap_tools() {
 	setup_homebrew_env
 	
 	log_info "Installing essential bootstrap tools..."
-	if silent "brew bundle -d --file=\"$PARENT_DIR/Brewfile.minimal\""; then
+	if silent "brew bundle -d --file=\"$PARENT_DIR/dependencies/Brewfile.minimal\""; then
 		log_success "Essential bootstrap tools installed"
 	else
 		show_error "Failed to install essential bootstrap tools" "true"

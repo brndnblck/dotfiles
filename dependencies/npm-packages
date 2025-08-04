@@ -1,0 +1,22 @@
+# Default NPM packages to install globally
+# Format: one package per line, comments supported
+
+# Package managers and tools
+@antfu/ni       # Universal package manager interface
+pnpm            # Fast, disk space efficient package manager
+yarn            # Alternative package manager
+
+# Development tools
+typescript      # TypeScript compiler
+@types/node     # Node.js type definitions
+ts-node         # TypeScript execution for Node.js
+nodemon         # Auto-restart Node.js applications
+
+# AI and productivity
+aicommits2      # AI-powered commit messages
+@commitlint/cli # Commit message linting
+
+# Utilities
+http-server     # Simple HTTP server
+live-server     # Development server with live reload
+npm-check-updates # Update package.json dependencies
