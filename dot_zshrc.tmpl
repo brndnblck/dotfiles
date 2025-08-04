@@ -37,6 +37,12 @@ unset file
 
 # shell configuration
 setopt promptsubst
+setopt autocd                   # change directory by typing directory name
+setopt interactivecomments      # allow comments in interactive shell
+setopt magicequalsubst          # enable filename expansion for arguments of the form 'anything=expression'
+setopt nonomatch                # hide error message if there is no match for the pattern
+setopt notify                   # report background jobs status immediately
+setopt numericglobsort          # sort filenames numerically when it makes sense
 
 # initialize and load Zsh autocompletion
 autoload -Uz +X compinit && compinit
@@ -47,18 +53,8 @@ zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 # enable menu-based selection of completion options
 zstyle ':completion:*' menu select
 
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/Users/brandon/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/Users/brandon/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "/Users/brandon/miniconda3/etc/profile.d/conda.sh"
-    else
-        export PATH="/Users/brandon/miniconda3/bin:$PATH"
-    fi
-fi
-unset __conda_setup
-# <<< conda initialize <<<
-
+# completion enhancements from p3rception
+zstyle ':completion:*' special-dirs true               # complete . and .. special directories
+zstyle ':completion:*' list-colors ''                 # enable colored completion listings
+zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#) ([0-9a-z-]#)*=01;34=0=01'
+zstyle ':completion:*:*:*:*:processes' command "ps -u $USER -o pid,user,comm -w -w"
