@@ -28,9 +28,19 @@ ensure_development() {
 		silent "asdf plugin add nodejs" || true
 		silent "asdf plugin add golang" || true
 		
-		if check_file_exists "$PARENT_DIR/dot_tool-versions" ".tool-versions file"; then
-			cd "$PARENT_DIR" && silent "asdf install"
-		fi
+		# Install and set latest stable versions dynamically
+		for tool in ruby python nodejs golang; do
+			log_info "Installing latest stable $tool..."
+			local latest_version=$(silent "asdf latest $tool")
+			
+			if [ -n "$latest_version" ]; then
+				log_info "Installing $tool $latest_version..."
+				silent "asdf install $tool $latest_version" || true
+				silent "asdf global $tool $latest_version" || true
+			else
+				log_warn "Could not determine latest stable version for $tool"
+			fi
+		done
 	fi
 
 	if check_command "rustup" "Rust toolchain manager"; then

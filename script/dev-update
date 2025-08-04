@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+# Set strict error handling
+set -euo pipefail
+
+CURRENT_DIR=$(realpath $(dirname "${BASH_SOURCE[0]}"))
+PARENT_DIR=$(dirname "$CURRENT_DIR")
+
+# Source common helpers
+source "$CURRENT_DIR/helpers/common"
+
+update_development_tools() {
+    show_header "Updating Development Tools to Latest Stable Versions"
+    
+    if ! check_command "asdf" "asdf version manager"; then
+        log_error "asdf not found. Please install asdf first."
+        exit 1
+    fi
+    
+    # Update plugin repositories
+    show_loader "asdf plugin update --all" "Updating asdf plugin repositories..."
+    
+    # Update each tool to latest stable
+    for tool in ruby python nodejs golang; do
+        log_info "Checking latest stable version for $tool..."
+        
+        local latest_version=$(silent "asdf latest $tool")
+        
+        if [ -n "$latest_version" ]; then
+            local current_version=$(silent "asdf current $tool | awk '{print \$2}'" || echo "none")
+            
+            if [ "$current_version" = "$latest_version" ]; then
+                log_success "$tool is already at latest stable version: $latest_version"
+            else
+                log_info "Upgrading $tool from $current_version to $latest_version..."
+                show_loader "asdf install $tool $latest_version" "Installing $tool $latest_version..."
+                silent "asdf global $tool $latest_version"
+                log_success "$tool updated to $latest_version"
+            fi
+        else
+            log_warn "Could not determine latest stable version for $tool"
+        fi
+    done
+    
+    show_header "Development tools update complete!" "green"
+    
+    log_info "Current versions:"
+    for tool in ruby python nodejs golang; do
+        local version=$(silent "asdf current $tool | awk '{print \$2}'" || echo "not installed")
+        echo "  $tool: $version"
+    done
+}
+
+# Main execution
+update_development_tools
