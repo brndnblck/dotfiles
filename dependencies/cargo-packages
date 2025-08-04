@@ -1,15 +1,32 @@
-# Default Cargo packages to install globally
-# Format: one package per line, comments supported
+basalt-tui
+Valkyrie00/homebrew-bbrew/bbre
+bandwhich
+chmod-cli
+csvlens
+atuin
+atac
+ddv
+flamelens
+flawz
+kdash
+lychee
+mcp-probe
+termscp
+tenere
+trippy
+wiper
+hexpatch
+onefetch
+osintui
+
+https://github.com/shenmian/tracker
+
+
 
 # Core utilities (modern replacements)
-bat          # Better cat with syntax highlighting
-eza          # Better ls with icons and colors
-fd-find      # Better find command
-ripgrep      # Better grep (rg command)
 zoxide       # Better cd with smart directory jumping
 
 # Development tools
-starship     # Cross-shell prompt
 tokei        # Code statistics
 hyperfine    # Command-line benchmarking
 cargo-watch  # Auto-recompile on file changes
