@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+
+# Validation Module
+# File system, network, and command validation functions
+
+# Source configuration constants
+source "$(dirname "${BASH_SOURCE[0]}")/config"
+
+# Source logging functions (needed for validation operations)
+source "$(dirname "${BASH_SOURCE[0]}")/logging"
+
+# Source error handling utilities
+source "$(dirname "${BASH_SOURCE[0]}")/errors"
+
+# ============================================================================
+# File System Utilities
+# ============================================================================
+
+check_file_exists() {
+    local file_path="$1"
+    local description="$2"
+    
+    if [ -f "$file_path" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+check_directory_exists() {
+    local dir_path="$1"
+    local description="$2"
+    
+    if [ -d "$dir_path" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+check_command() {
+    local command="$1"
+    local description="$2"
+    
+    if command -v "$command" >/dev/null 2>&1; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# ============================================================================
+# Network Validation
+# ============================================================================
+
+check_network_connectivity() {
+    local url="${1:-$DEFAULT_CONNECTIVITY_URL}"
+    local timeout="${2:-$DEFAULT_NETWORK_TIMEOUT}"
+    
+    # Check if we can reach the URL with a timeout
+    if command -v curl >/dev/null 2>&1; then
+        if curl --connect-timeout "$timeout" --max-time "$((timeout * CURL_CONNECT_TIMEOUT_MULTIPLIER))" -s --head "$url" >/dev/null 2>&1; then
+            return 0
+        fi
+    elif command -v wget >/dev/null 2>&1; then
+        if wget --timeout="$timeout" --tries="$NETWORK_MAX_RETRIES" -q --spider "$url" >/dev/null 2>&1; then
+            return 0
+        fi
+    else
+        # Fallback to ping if no curl/wget
+        if ping -c 1 -W "$timeout" "$FALLBACK_PING_HOST" >/dev/null 2>&1; then
+            return 0
+        fi
+    fi
+    
+    return 1
+}
+
+validate_network_operation() {
+    local operation="$1"
+    local url="$2"
+    
+    if ! check_network_connectivity "$url"; then
+        network_error "$operation" "$url" "true"
+        return $EXIT_NETWORK_ERROR
+    fi
+    
+    log_info "Network connectivity verified for $operation"
+    return $EXIT_SUCCESS
+}

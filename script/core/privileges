@@ -1,0 +1,156 @@
+#!/usr/bin/env bash
+
+# Privileges Module
+# sudo access management, authentication, and cleanup functions
+
+# Source configuration constants
+source "$(dirname "${BASH_SOURCE[0]}")/config"
+
+# Source ansi utilities for colored output
+source "$(dirname "${BASH_SOURCE[0]}")/ansi"
+
+# Source logging and validation functions (needed for privilege operations)
+source "$(dirname "${BASH_SOURCE[0]}")/logging"
+source "$(dirname "${BASH_SOURCE[0]}")/validation"
+source "$(dirname "${BASH_SOURCE[0]}")/execution"
+
+# ============================================================================
+# Access Control
+# ============================================================================
+
+prompt_sudo_password() {
+	ansi --newline
+	ansi "Prompting for password..."
+	ansi --newline
+	sudo_password=$(osascript -e 'Tell application "System Events" to display dialog "Please enter your admin password:" default answer "" with hidden answer' -e 'text returned of result' 2>/dev/null)
+	if [ $? -ne 0 ] || [ -z "$sudo_password" ]; then
+		show_error "Sudo password entry cancelled. Exiting." "true"
+	fi
+	echo "$sudo_password"
+}
+
+# Check if sudo access is already available
+check_existing_sudo_access() {
+	if silent "sudo -n true"; then
+		record "INFO" "sudo access already available"
+		return 0
+	fi
+	return 1
+}
+
+# Try to refresh existing sudo session
+try_refresh_sudo_session() {
+	if check_file_exists "$SUDO_AUTH_MARKER" "sudo auth marker"; then
+		if silent "sudo -n -v"; then
+			log_info "sudo session refreshed"
+			return 0
+		else
+			rm -f "$SUDO_AUTH_MARKER"
+		fi
+	fi
+	return 1
+}
+
+# Validate environment supports sudo prompting
+validate_sudo_environment() {
+	if ! tty >/dev/null 2>&1; then
+		log_error "Sudo access not available in background process" "true"
+		return 1
+	fi
+	
+	if [ -n "${CI:-}" ]; then
+		show_error "Failed to obtain sudo access in CI environment." "true"
+		return 1
+	fi
+	return 0
+}
+
+# Configure sudo timeout and setup cleanup
+configure_sudo_session() {
+	local sudo_password="$1"
+	
+	log_info "sudo access granted and cached"
+	touch "$SUDO_AUTH_MARKER"
+	
+	# Set a reasonable sudo timeout for bootstrap
+	silent "sudo -S sh -c 'echo \"Defaults timestamp_timeout=$DEFAULT_SUDO_TIMEOUT_MINUTES\" > $BOOTSTRAP_TIMEOUT_CONFIG'" <<< "$sudo_password" || true
+	
+	# Setup cleanup for sudoers modification
+	trap 'cleanup_sudo_config' EXIT INT TERM
+	start_sudo_keepalive
+}
+
+# Obtain new sudo authentication
+obtain_new_sudo_access() {
+	local sudo_password
+	sudo_password=$(prompt_sudo_password)
+	
+	if echo "$sudo_password" | sudo -S -v 2>/dev/null; then
+		configure_sudo_session "$sudo_password"
+		return 0
+	else
+		show_error "Invalid sudo password. Exiting." "true"
+		return 1
+	fi
+}
+
+# Main sudo access function - simplified and focused
+ensure_sudo() {
+	# Try existing access first
+	if check_existing_sudo_access; then
+		return 0
+	fi
+	
+	# Try refreshing existing session
+	if try_refresh_sudo_session; then
+		return 0
+	fi
+	
+	# Validate we can prompt for sudo
+	if ! validate_sudo_environment; then
+		return 1
+	fi
+	
+	# Obtain new sudo access
+	obtain_new_sudo_access
+}
+
+start_sudo_keepalive() {
+	if check_file_exists "$SUDO_AUTH_MARKER" "sudo auth marker"; then
+		stop_sudo_keepalive
+		(
+			while check_file_exists "/tmp/.bootstrap_sudo_authenticated" "sudo auth marker"; do
+				sleep $SUDO_KEEPALIVE_INTERVAL
+				if ! sudo -n true 2>/dev/null; then
+					log_warn "sudo session expired, keep-alive exiting"
+					break
+				fi
+			done
+		) &
+		echo $! > "$SUDO_KEEPALIVE_PID"
+		log_info "sudo keep-alive started (PID: $!)"
+	fi
+}
+
+stop_sudo_keepalive() {
+	if check_file_exists "$SUDO_KEEPALIVE_PID" "sudo keepalive PID"; then
+		local pid=$(cat "$SUDO_KEEPALIVE_PID" 2>/dev/null)
+		if [ -n "$pid" ]; then
+			kill "$pid" 2>/dev/null || true
+		fi
+		rm -f "$SUDO_KEEPALIVE_PID"
+		log_info "sudo keep-alive stopped"
+	fi
+}
+
+cleanup_sudo_config() {
+	# Clean up sudo configuration and authentication markers
+	stop_sudo_keepalive
+	rm -f "$SUDO_AUTH_MARKER" 2>/dev/null || true
+	
+	# Remove the temporary sudoers timeout configuration
+	if [ -f "$BOOTSTRAP_TIMEOUT_CONFIG" ]; then
+		sudo rm -f "$BOOTSTRAP_TIMEOUT_CONFIG" 2>/dev/null || true
+		log_info "Cleaned up sudo timeout configuration"
+	fi
+}

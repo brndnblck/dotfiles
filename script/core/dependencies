@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+
+# Source common utilities
+source "$(dirname "${BASH_SOURCE[0]}")/common"
+
+# ============================================================================
+# Package Installation
+# ============================================================================
+
+ensure_dependencies() {
+	process_brewfile "dependencies/dependencies.brewfile" "Installing Core Dependencies"
+}
+
+ensure_applications() {
+	process_brewfile "dependencies/applications.brewfile" "Installing Applications"
+}
+
+# ============================================================================
+# Development Environment Setup
+# ============================================================================
+
+ensure_development() {
+	setup_homebrew_env
+
+	if check_command "asdf" "asdf version manager"; then
+		silent "asdf plugin add ruby" || true
+		silent "asdf plugin add python" || true
+		silent "asdf plugin add nodejs" || true
+		silent "asdf plugin add golang" || true
+		
+		# Install and set latest stable versions dynamically
+		for tool in ruby python nodejs golang; do
+			log_info "Installing latest stable $tool..."
+			local latest_version=$(silent "asdf latest $tool")
+			
+			if [ -n "$latest_version" ]; then
+				log_info "Installing $tool $latest_version..."
+				silent "asdf install $tool $latest_version" || true
+				silent "asdf global $tool $latest_version" || true
+			else
+				log_warn "Could not determine latest stable version for $tool"
+			fi
+		done
+	fi
+
+	if check_command "rustup" "Rust toolchain manager"; then
+		if ! silent "rustup toolchain list | grep -q stable"; then
+			log_info "Installing Rust stable toolchain..."
+			silent "rustup install stable" || true
+		else
+			log_info "Rust stable toolchain is already installed"
+		fi
+		
+		if ! silent "rustup toolchain list | grep -q nightly"; then
+			log_info "Installing Rust nightly toolchain..."
+			silent "rustup install nightly" || true
+		else
+			log_info "Rust nightly toolchain is already installed"
+		fi
+		
+		silent "rustup default stable" || true
+		
+		# Install cargo packages from dependencies file
+		process_package_file \
+			"${DOTFILES_PARENT_DIR:-$PWD}/dependencies/cargo.packages" \
+			"cargo" \
+			"silent \"cargo install\"" \
+			"cargo install --list | grep -q '^{} v'" \
+			"Rust cargo packages"
+	fi
+	
+	# Install npm packages from dependencies file
+	# First ensure asdf environment is loaded
+	if check_command "asdf" "asdf version manager"; then
+		# Source asdf to ensure npm is available in PATH
+		if [ -f "$HOME/.asdf/asdf.sh" ]; then
+			source "$HOME/.asdf/asdf.sh"
+		elif [ -f "$(brew --prefix asdf)/libexec/asdf.sh" ]; then
+			source "$(brew --prefix asdf)/libexec/asdf.sh"
+		fi
+		
+		# Reshim to ensure npm is available
+		silent "asdf reshim nodejs" || true
+	fi
+	
+	if check_command "npm" "Node package manager"; then
+		process_package_file \
+			"${DOTFILES_PARENT_DIR:-$PWD}/dependencies/npm.packages" \
+			"npm" \
+			"silent \"npm install -g\"" \
+			"npm list -g {} >/dev/null 2>&1" \
+			"Node.js npm packages"
+	else
+		log_warn "npm not found. Make sure Node.js is properly installed via asdf."
+	fi
+}
+
+# ============================================================================
+# Maintenance
+# ============================================================================
+
+ensure_updated() {
+	silent "brew upgrade"
+	silent "mas upgrade"
+}
+

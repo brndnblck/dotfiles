@@ -1,0 +1,11 @@
+#!/bin/bash
+
+GITHUB_USER=$(awk '/github.com/{getline; print $3}' ~/.config/hub)
+GITHUB_TOKEN=$(awk '/github.com/{getline; getline; print $2}' ~/.config/hub)
+
+# Load function modules
+if [ -d ~/.functions.d ]; then
+    for function_file in ~/.functions.d/*; do
+        [ -r "$function_file" ] && source "$function_file"
+    done
+fi

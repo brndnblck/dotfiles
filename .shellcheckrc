@@ -1,0 +1,8 @@
+# ShellCheck configuration for dotfiles project
+# Disable only true style warnings that are overly strict for this codebase
+
+# SC2250: Prefer putting braces around variable references
+# This is a style preference, not a functional issue
+# SC1091: Not following sourced files - expected in modular shell scripts  
+# SC2329: Function never invoked - false positive for trap functions
+disable=SC2250,SC1091,SC2329

@@ -1,0 +1,15 @@
+[submodule "script/tests/support/bats-core"]
+	path = script/tests/support/bats-core
+	url = https://github.com/bats-core/bats-core.git
+
+[submodule "script/tests/support/bats-assert"]
+	path = script/tests/support/bats-assert
+	url = https://github.com/bats-core/bats-assert.git
+
+[submodule "script/tests/support/bats-support"]
+	path = script/tests/support/bats-support
+	url = https://github.com/bats-core/bats-support.git
+
+[submodule "script/tests/support/bats-mock"]
+	path = script/tests/support/bats-mock
+	url = https://github.com/grayhemp/bats-mock.git

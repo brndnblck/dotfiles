@@ -1,0 +1,289 @@
+#!/usr/bin/env bash
+
+# Packaging Module
+# Template processing, temporary file management, and package installation functions
+
+# Source ansi utilities for colored output
+source "$(dirname "${BASH_SOURCE[0]}")/ansi"
+
+# Source dependent modules
+source "$(dirname "${BASH_SOURCE[0]}")/logging"
+source "$(dirname "${BASH_SOURCE[0]}")/validation"
+source "$(dirname "${BASH_SOURCE[0]}")/execution"
+source "$(dirname "${BASH_SOURCE[0]}")/errors"
+
+# ============================================================================
+# Temp File Management
+# ============================================================================
+
+# Array to track temp files for cleanup
+TEMP_FILES_FOR_CLEANUP=()
+
+add_temp_file_cleanup() {
+    local file="$1"
+    TEMP_FILES_FOR_CLEANUP+=("$file")
+    # Set up trap only once
+    if [ ${#TEMP_FILES_FOR_CLEANUP[@]} -eq 1 ]; then
+        trap 'cleanup_temp_files' EXIT INT TERM
+    fi
+}
+
+cleanup_temp_files() {
+    for file in "${TEMP_FILES_FOR_CLEANUP[@]}"; do
+        if [ -f "$file" ]; then
+            rm -f "$file" 2>/dev/null || true
+            log_info "Cleaned up temp file: $file"
+        fi
+    done
+    TEMP_FILES_FOR_CLEANUP=()
+}
+
+# ============================================================================
+# Template Processing
+# ============================================================================
+
+process_template() {
+    local template_file="$1"
+    local output_file="$2"
+    local cleanup_temp="${3:-true}"
+    local fallback_enabled="${4:-true}"
+    
+    if ! check_file_exists "$template_file" "Template file"; then
+        return 1
+    fi
+    
+    # Add file to cleanup list if it's a temp file
+    if [ "$cleanup_temp" = "true" ] && echo "$output_file" | grep -q "^/tmp/"; then
+        add_temp_file_cleanup "$output_file"
+    fi
+    
+    # Try chezmoi first if available
+    if check_command "chezmoi" "Chezmoi"; then
+        if chezmoi execute-template < "$template_file" > "$output_file" 2>/dev/null; then
+            log_success "Template processed with chezmoi: $template_file -> $output_file"
+            return 0
+        else
+            log_warn "Chezmoi template processing failed, attempting fallback"
+        fi
+    else
+        log_warn "Chezmoi not available, using fallback template processing"
+    fi
+    
+    # Fallback: simple variable substitution for basic templates
+    if [ "$fallback_enabled" = "true" ]; then
+        if process_template_fallback "$template_file" "$output_file"; then
+            log_success "Template processed with fallback: $template_file -> $output_file"
+            return 0
+        fi
+    fi
+    
+    template_error "$template_file" "false"
+    # Clean up failed output file
+    rm -f "$output_file" 2>/dev/null || true
+    return $EXIT_GENERAL_ERROR
+}
+
+process_template_fallback() {
+    local template_file="$1"
+    local output_file="$2"
+    
+    # Simple fallback: copy file as-is and replace basic variables
+    if cp "$template_file" "$output_file" 2>/dev/null; then
+        # Replace common template variables with safe defaults
+        sed -i.bak \
+            -e "s/{{ \.user }}/${USER:-unknown}/g" \
+            -e "s/{{ now\.Format \"[^\"]*\" }}/$(date '+%Y-%m-%d')/g" \
+            -e "s/{{ \.chezmoi\.hostname }}/$(hostname)/g" \
+            -e "s/{{ \.chezmoi\.os }}/$(uname -s | tr '[:upper:]' '[:lower:]')/g" \
+            "$output_file" 2>/dev/null && rm -f "${output_file}.bak"
+        
+        log_info "Applied basic template substitutions"
+        return 0
+    fi
+    
+    return 1
+}
+
+# ============================================================================
+# System Management
+# ============================================================================
+
+prompt_restart() {
+    local message="${1:-A restart is recommended to ensure all changes take effect.}"
+    
+    ansi --newline
+    ansi "$message"
+    ansi --newline
+    read -p "Restart now? (y/N): " restart_choice
+    if [[ "$restart_choice" =~ ^[Yy]$ ]]; then
+        sudo shutdown -r +1
+        ansi --green "System will restart in 1 minute..."
+        ansi --newline
+    else
+        ansi "Remember to restart when convenient to complete the setup."
+        ansi --newline
+    fi
+}
+
+# ============================================================================
+# Package Management Helpers
+# ============================================================================
+
+# Common setup for package operations
+prepare_package_operation() {
+    local description="$1"
+    log_info "Processing $description..."
+    
+    # Refresh sudo session before running package operations to avoid second prompt
+    if check_file_exists "/tmp/.bootstrap_sudo_authenticated" "sudo auth marker"; then
+        if ! silent "sudo -n true"; then
+            log_warn "sudo session expired, package installation may prompt for password"
+        fi
+    fi
+}
+
+# Execute package file with cleanup and error handling
+execute_package_file() {
+    local file_path="$1"
+    local command="$2"
+    local description="$3"
+    local is_temp_file="${4:-false}"
+    
+    if silent "$command"; then
+        log_success "$description completed"
+        [ "$is_temp_file" = "true" ] && rm -f "$file_path"
+        return 0
+    else
+        [ "$is_temp_file" = "true" ] && rm -f "$file_path"
+        log_error "Failed to install packages from $(basename "$file_path")" "false"
+        return 1
+    fi
+}
+
+# Process templated package file
+process_templated_package_file() {
+    local source_file="$1"
+    local command_template="$2"
+    local description="$3"
+    
+    local temp_file="/tmp/$(basename "$source_file" .tmpl).$$"
+    log_info "Using templated $(basename "$source_file")"
+    
+    if process_template "$source_file" "$temp_file"; then
+        local command
+        # Replace {FILE} placeholder with actual temp file path
+        command=$(echo "$command_template" | sed "s|{FILE}|$temp_file|g")
+        execute_package_file "$temp_file" "$command" "$description" "true"
+    else
+        log_error "Failed to process template" "true"
+        return 1
+    fi
+}
+
+# Process static package file
+process_static_package_file() {
+    local file_path="$1"
+    local command_template="$2"
+    local description="$3"
+    
+    log_info "Using static $(basename "$file_path")"
+    local command
+    # Replace {FILE} placeholder with actual file path
+    command=$(echo "$command_template" | sed "s|{FILE}|$file_path|g")
+    execute_package_file "$file_path" "$command" "$description" "false"
+}
+
+# ============================================================================
+# Package Management
+# ============================================================================
+
+process_brewfile() {
+    local brewfile_name="$1"
+    local description="$2"
+    local base_path="${DOTFILES_PARENT_DIR:-$PWD}"
+    
+    prepare_package_operation "$description"
+    
+    # Try templated version first
+    if check_file_exists "$base_path/${brewfile_name}.tmpl" "Templated Brewfile"; then
+        process_templated_package_file "$base_path/${brewfile_name}.tmpl" "brew bundle -d --file=\"{FILE}\"" "$description"
+    elif check_file_exists "$base_path/${brewfile_name}" "Static Brewfile"; then
+        process_static_package_file "$base_path/${brewfile_name}" "brew bundle -d --file=\"{FILE}\"" "$description"
+    else
+        log_error "Neither ${brewfile_name}.tmpl nor ${brewfile_name} found" "true"
+        return 1
+    fi
+}
+
+# Process individual package installation
+process_individual_package() {
+    local package="$1"
+    local package_type="$2"
+    local install_command="$3"
+    local check_command="$4"
+    
+    # Check if package is already installed
+    if eval "$check_command" "$package" >/dev/null 2>&1; then
+        log_info "$package_type package already installed: $package"
+        return 0
+    else
+        log_info "Installing $package_type package: $package"
+        if eval "$install_command" "$package" || true; then
+            return 0
+        else
+            installation_error "$package_type" "$package" "false"
+            return $EXIT_GENERAL_ERROR
+        fi
+    fi
+}
+
+# Parse package file and extract valid package names
+parse_package_file() {
+    local file_path="$1"
+    local packages=()
+    
+    while IFS= read -r line || [ -n "$line" ]; do
+        # Skip empty lines and comments
+        [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+        
+        # Extract package name (first word)
+        local package=$(echo "$line" | awk '{print $1}')
+        [ -n "$package" ] && packages+=("$package")
+    done < "$file_path"
+    
+    printf '%s\n' "${packages[@]}"
+}
+
+# Process package file with standard format (comments, empty lines, first word as package)
+process_package_file() {
+    local file_path="$1"
+    local package_type="$2"
+    local install_command="$3"
+    local check_command="$4"
+    local description="${5:-$package_type packages}"
+    
+    if ! check_file_exists "$file_path" "$description file"; then
+        log_warn "$description file not found: $file_path"
+        return 1
+    fi
+    
+    prepare_package_operation "$description"
+    
+    local count=0
+    local installed=0
+    local packages
+    
+    # Parse all packages from file
+    readarray -t packages < <(parse_package_file "$file_path")
+    count=${#packages[@]}
+    
+    # Process each package
+    for package in "${packages[@]}"; do
+        if process_individual_package "$package" "$package_type" "$install_command" "$check_command"; then
+            installed=$((installed + 1))
+        fi
+    done
+    
+    log_success "Processed $description: $installed/$count packages installed"
+    return 0
+}

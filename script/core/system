@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+# Source common utilities
+source "$(dirname "${BASH_SOURCE[0]}")/common"
+
+# ============================================================================
+# Dotfiles Management
+# ============================================================================
+
+
+# ============================================================================
+# System Configuration
+# ============================================================================
+
+apply_dotfiles_and_shell() {
+	# Apply dotfiles with chezmoi
+	if check_command "chezmoi" "Chezmoi"; then
+		log_info "Applying dotfiles configuration..."
+		chezmoi apply --force || log_error "Failed to apply dotfiles" "true"
+	else
+		log_error "Chezmoi not found" "true"
+	fi
+	
+	# Ensure zsh is the default shell
+	local current_shell="$SHELL"
+	local zsh_path=$(which zsh)
+	
+	if echo "$current_shell" | grep -q "zsh"; then
+		log_info "Zsh is already the default shell"
+	else
+		log_info "Setting zsh as default shell..."
+		# Add zsh to /etc/shells if not already there
+		if ! grep -q "$zsh_path" /etc/shells; then
+			echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
+		fi
+		chsh -s "$zsh_path" || log_warn "Failed to set zsh as default shell"
+	fi
+}
+
+configure_macos_preferences() {
+	# Ensure sudo session is active before running preferences
+	if check_file_exists "/tmp/.bootstrap_sudo_authenticated" "sudo auth marker"; then
+		if ! silent "sudo -n true"; then
+			log_warn "sudo session expired, re-authenticating..."
+			sudo -v || show_error "Authentication failed. Exiting." "true"
+		fi
+	fi
+	run "$(dirname "${BASH_SOURCE[0]}")/preferences"
+}
+
+# ============================================================================
+# Shell and Environment Setup
+# ============================================================================
+
+
+ensure_fonts() {
+	if check_directory_exists "${DOTFILES_PARENT_DIR:-$PWD}/fonts" "fonts directory"; then
+		silent "cp ${DOTFILES_PARENT_DIR:-$PWD}/fonts/*.ttf ~/Library/Fonts" || log_warn "Failed to install fonts"
+	else
+		log_warn "No fonts directory found"
+	fi
+}
+
+
+
+

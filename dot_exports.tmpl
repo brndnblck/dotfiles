@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# General
+export LC_ALL="en_US.UTF-8"
+export LANG="en_US"
+export EDITOR="code"
+export GIT_EDITOR=vim
+
+# RSpec
+export AUTOFEATURE=true
+export RSPEC=true
+
+# Go
+export GOPATH="$HOME/.go"
+
+# TMUX
+export DISABLE_AUTO_TITLE=true
+
+# NPM Configuration (requires XDG_CONFIG_HOME from .zshenv)
+export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
+
+# Relocate dotfiles to XDG Base Directory locations
+export PATH="$HOME/.cargo/bin:$PATH"
+export DOCKER_CONFIG="$XDG_CONFIG_HOME/docker"
+export GEMRC="$XDG_CONFIG_HOME/gem/gemrc"
+export GEM_HOME="$XDG_DATA_HOME/gem"
+export GEM_PATH="$XDG_DATA_HOME/gem"
+
+# ASDF configuration relocation
+export ASDF_CONFIG_FILE="$XDG_CONFIG_HOME/asdf/asdfrc"
+export ASDF_DATA_DIR="$XDG_DATA_HOME/asdf"
+
+# Vim XDG compliance
+export VIMINFOFILE="$XDG_CACHE_HOME/vim/viminfo"
+
+# OpenAI Credentials
+if [ -f ~/.config/openai ]; then
+    export OPENAI_API_KEY="$(< ~/.config/openai)"
+fi
+
+export LS_COLORS='di=1;35:fi=0;37:ln=1;36:ex=1;32:*.txt=0;37:*.md=0;37:*.py=1;33:*.js=1;33:*.json=1;33:*.yml=1;33:*.yaml=1;33:*.sh=1;32:*.zsh=1;32:*.bash=1;32:*.fish=1;32'
+export CLICOLOR=1
+export LSCOLORS='ExGxCxDxBxegedabagaced'
+export EZA_COLORS='di=1;35:fi=37:ln=1;36:ex=1;32:*.txt=37:*.md=37:*.py=1;33:*.js=1;33:*.json=1;33:*.yml=1;33:*.yaml=1;33:*.sh=1;32:*.zsh=1;32'

@@ -1,0 +1,226 @@
+#!/usr/bin/env bash
+
+# Dotfiles System Status Script
+# Shows comprehensive system information and package status
+
+set -euo pipefail
+
+# Check if this script is being called directly (not through main TUI)
+if [ -z "${DOTFILES_PARENT_DIR:-}" ]; then
+    echo "❌ This script should not be called directly!"
+    echo ""
+    echo "Please use the main TUI interface:"
+    echo "  ./script/main"
+    echo ""
+    echo "Or run the bootstrap first:"
+    echo "  ./script/bootstrap"
+    exit 1
+fi
+
+CURRENT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+DOTFILES_PARENT_DIR=$(dirname "$CURRENT_DIR")
+DOTFILES_DEBUG_LOG="$DOTFILES_PARENT_DIR/tmp/debug-status-$(date +%Y%m%d-%H%M%S).log"
+
+# Export for use in helper functions
+export DOTFILES_DEBUG_LOG
+export DOTFILES_PARENT_DIR
+
+# Ensure tmp directory exists
+mkdir -p "$DOTFILES_PARENT_DIR/tmp"
+
+# Import helpers
+source "$CURRENT_DIR/core/common"
+source "$CURRENT_DIR/core/ui"
+
+# Main status function
+main() {
+    show_standard_header
+    show_section_header "DIAGNOSTIC PROTOCOL ACTIVE"
+
+    # Gather all system information with spinner
+    local status_data
+
+    # Log status gathering to debug file
+    echo "[$(date '+%H:%M:%S')] GATHERING SYSTEM STATUS" >> "$DOTFILES_DEBUG_LOG"
+
+    status_data=$(gum spin --spinner dot --title "SCANNING SYSTEM COMPONENTS..." \
+        --spinner.foreground "$INTERFACE_COLOR" \
+        --title.foreground "$INTERFACE_COLOR" \
+        -- bash -c "
+        # System info (fast)
+        echo 'SYSTEM_START'
+        echo \"macOS: \$(sw_vers -productVersion)\"
+        echo \"Architecture: \$(uname -m)\"
+        echo \"Hostname: \$(hostname)\"
+        echo 'SYSTEM_END'
+        
+        # Homebrew status (potentially slow)
+        echo 'HOMEBREW_START'
+        if command -v brew >/dev/null 2>&1; then
+            echo \"Version: \$(brew --version | head -1)\"
+            echo \"Packages: \$(brew list --formula 2>/dev/null | wc -l | xargs) formulae, \$(brew list --cask 2>/dev/null | wc -l | xargs) casks\"
+            outdated_formulae=\$(brew outdated --formula 2>/dev/null | wc -l | xargs)
+            outdated_casks=\$(brew outdated --cask 2>/dev/null | wc -l | xargs)
+            echo \"Outdated: \$outdated_formulae formulae, \$outdated_casks casks\"
+        else
+            echo \"Not installed\"
+        fi
+        echo 'HOMEBREW_END'
+        
+        # Development tools (fast)
+        echo 'DEVTOOLS_START'
+        command -v git >/dev/null 2>&1 && echo \"✓ Git \$(git --version | cut -d' ' -f3)\"
+        if command -v node >/dev/null 2>&1; then
+            node_version=\$(node --version 2>/dev/null || echo \"unknown\")
+            echo \"✓ Node.js \$node_version\"
+        fi
+        command -v python3 >/dev/null 2>&1 && echo \"✓ Python \$(python3 --version | cut -d' ' -f2)\"
+        command -v rustc >/dev/null 2>&1 && echo \"✓ Rust \$(rustc --version | cut -d' ' -f2)\"
+        if command -v go >/dev/null 2>&1; then
+            go_version=\$(go version 2>/dev/null | awk '{print \$3}' | sed 's/go//' || echo \"unknown\")
+            echo \"✓ Go \$go_version\"
+        fi
+        command -v docker >/dev/null 2>&1 && echo \"✓ Docker \$(docker --version | cut -d' ' -f3 | sed 's/,\$//')\"
+        echo 'DEVTOOLS_END'
+        
+        # Dotfiles status (fast)
+        echo 'DOTFILES_START'
+        if command -v chezmoi >/dev/null 2>&1; then
+            echo \"✓ Chezmoi installed\"
+            source_path=\$(chezmoi source-path 2>/dev/null || echo \"\")
+            if [[ -n \"\$source_path\" ]]; then
+                echo \"✓ Source: \$source_path\"
+                git_status=\$(cd \"\$source_path\" && git status --porcelain 2>/dev/null | wc -l | xargs || echo \"0\")
+                if [[ \"\$git_status\" == \"0\" ]]; then
+                    echo \"✓ Git status: Clean\"
+                else
+                    echo \"⚠️  Git status: \$git_status uncommitted changes\"
+                fi
+            else
+                echo \"❌ Status: Not configured\"
+            fi
+        else
+            echo \"❌ Not installed\"
+        fi
+        echo 'DOTFILES_END'
+        
+        # Dependencies status (potentially slow with comm)
+        echo 'DEPENDENCIES_START'
+        total_deps=\$(grep -c '^brew ' \"\$DOTFILES_PARENT_DIR/dependencies/dependencies.brewfile\" 2>/dev/null || echo 0)
+        if [[ \$total_deps -eq 0 ]]; then
+            echo \"No dependencies configured\"
+        else
+            echo \"Total configured: \$total_deps formulae\"
+            if command -v brew >/dev/null 2>&1; then
+                configured_list=\$(grep '^brew ' \"\$DOTFILES_PARENT_DIR/dependencies/dependencies.brewfile\" | sed 's/^brew \"\([^\"]*\)\".*/\1/' | sort)
+                missing_list=\$(comm -23 <(echo \"\$configured_list\") <(brew list --formula | sort))
+                total_configured=\$(echo \"\$configured_list\" | wc -l | xargs)
+                missing_count=\$(echo \"\$missing_list\" | wc -l | xargs)
+                installed=\$((total_configured - missing_count))
+                echo \"Installed: \$installed/\$total_deps\"
+                if [[ -n \"\$missing_list\" ]]; then
+                    missing_array=()
+                    while IFS= read -r pkg; do
+                        [[ -n \"\$pkg\" ]] && missing_array+=(\"\$pkg\")
+                    done <<< \"\$missing_list\"
+                    if [[ \${#missing_array[@]} -gt 0 ]]; then
+                        echo \"Missing: \${missing_array[*]}\"
+                    fi
+                fi
+            fi
+        fi
+        echo 'DEPENDENCIES_END'
+        
+        # Applications status (potentially slow with comm)
+        echo 'APPLICATIONS_START'
+        cask_total=\$(grep -c '^cask ' \"\$DOTFILES_PARENT_DIR/dependencies/applications.brewfile\" 2>/dev/null || echo 0)
+        mas_total=\$(grep -c '^mas ' \"\$DOTFILES_PARENT_DIR/dependencies/applications.brewfile\" 2>/dev/null || echo 0)
+        total_apps=\$((cask_total + mas_total))
+        if [[ \$total_apps -eq 0 ]]; then
+            echo \"No applications configured\"
+        else
+            echo \"Total configured: \$total_apps (\$cask_total casks, \$mas_total App Store)\"
+            installed=0
+            missing_array=()
+            
+            # Check casks using comm
+            if [[ \$cask_total -gt 0 ]] && command -v brew >/dev/null 2>&1; then
+                configured_casks=\$(grep '^cask ' \"\$DOTFILES_PARENT_DIR/dependencies/applications.brewfile\" | sed 's/^cask \"\([^\"]*\)\".*/\1/' | sort)
+                missing_casks=\$(comm -23 <(echo \"\$configured_casks\") <(brew list --cask | sort))
+                total_casks=\$(echo \"\$configured_casks\" | wc -l | xargs)
+                missing_cask_count=\$(echo \"\$missing_casks\" | wc -l | xargs)
+                installed=\$((total_casks - missing_cask_count))
+                if [[ -n \"\$missing_casks\" ]]; then
+                    while IFS= read -r cask; do
+                        [[ -n \"\$cask\" ]] && missing_array+=(\"\$cask\")
+                    done <<< \"\$missing_casks\"
+                fi
+            fi
+            
+            # Check mas apps using comm  
+            if [[ \$mas_total -gt 0 ]] && command -v mas >/dev/null 2>&1; then
+                configured_mas_ids=\$(grep '^mas ' \"\$DOTFILES_PARENT_DIR/dependencies/applications.brewfile\" | sed 's/.*id: *\([0-9]*\).*/\1/' | sort)
+                missing_mas_ids=\$(comm -23 <(echo \"\$configured_mas_ids\") <(mas list 2>/dev/null | cut -d' ' -f1 | sort))
+                total_mas=\$(echo \"\$configured_mas_ids\" | wc -l | xargs)
+                missing_mas_count=\$(echo \"\$missing_mas_ids\" | wc -l | xargs)
+                installed=\$((installed + total_mas - missing_mas_count))
+                if [[ -n \"\$missing_mas_ids\" ]]; then
+                    while IFS= read -r app_id; do
+                        if [[ -n \"\$app_id\" ]]; then
+                            app_name=\$(grep \"id: *\$app_id\" \"\$DOTFILES_PARENT_DIR/dependencies/applications.brewfile\" | sed 's/mas \"\([^\"]*\)\".*/\1/')
+                            [[ -n \"\$app_name\" ]] && missing_array+=(\"\$app_name\")
+                        fi
+                    done <<< \"\$missing_mas_ids\"
+                fi
+            fi
+            
+            echo \"Installed: \$installed/\$total_apps\"
+            if [[ \${#missing_array[@]} -gt 0 ]]; then
+                echo \"Missing: \${missing_array[*]}\"
+            fi
+        fi
+        echo 'APPLICATIONS_END'
+    ")
+
+    # Display all sections
+    gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ CORE SYSTEM ANALYSIS:"
+    echo "$status_data" | sed -n '/SYSTEM_START/,/SYSTEM_END/p' | grep -v "SYSTEM_" | sed 's/^/  ░ /'
+
+    echo ""
+
+    # Display Homebrew info
+    gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ PACKAGE MANAGER STATUS:"
+    echo "$status_data" | sed -n '/HOMEBREW_START/,/HOMEBREW_END/p' | grep -v "HOMEBREW_" | sed 's/^/  ░ /'
+
+    echo ""
+
+    # Display Development tools
+    gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ DEVELOPMENT STACK:"
+    echo "$status_data" | sed -n '/DEVTOOLS_START/,/DEVTOOLS_END/p' | grep -v "DEVTOOLS_" | sed 's/^/  ░ /'
+
+    echo ""
+
+    # Display Dotfiles status
+    gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ CONFIGURATION MATRIX:"
+    echo "$status_data" | sed -n '/DOTFILES_START/,/DOTFILES_END/p' | grep -v "DOTFILES_" | sed 's/^/  ░ /'
+
+    echo ""
+
+    # Display Dependencies status
+    gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ DEPENDENCY TRACKING:"
+    echo "$status_data" | sed -n '/DEPENDENCIES_START/,/DEPENDENCIES_END/p' | grep -v "DEPENDENCIES_" | sed 's/^/  ░ /'
+
+    echo ""
+
+    # Display Applications status
+    gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ APPLICATION REGISTRY:"
+    echo "$status_data" | sed -n '/APPLICATIONS_START/,/APPLICATIONS_END/p' | grep -v "APPLICATIONS_" | sed 's/^/  ░ /'
+
+    show_completion "SYSTEM SCAN COMPLETE"
+    show_footer_prompt
+}
+
+# Execute if called directly
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    main "$@"
+fi

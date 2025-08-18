@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+
+# Configuration Module
+# Centralized constants, timeouts, and configuration values
+
+# ============================================================================
+# System Configuration
+# ============================================================================
+
+# Default timeout values (in seconds)
+if [[ -z "${DEFAULT_NETWORK_TIMEOUT:-}" ]]; then
+    readonly DEFAULT_NETWORK_TIMEOUT=10
+fi
+if [[ -z "${DEFAULT_SYSTEM_PAUSE_DURATION:-}" ]]; then
+    readonly DEFAULT_SYSTEM_PAUSE_DURATION=2
+fi
+if [[ -z "${DEFAULT_SUDO_TIMEOUT_MINUTES:-}" ]]; then
+    readonly DEFAULT_SUDO_TIMEOUT_MINUTES=15
+fi
+if [[ -z "${SUDO_KEEPALIVE_INTERVAL:-}" ]]; then
+    readonly SUDO_KEEPALIVE_INTERVAL=300  # 5 minutes
+fi
+
+# Exit codes for consistent error reporting
+readonly EXIT_SUCCESS=0
+readonly EXIT_GENERAL_ERROR=1
+readonly EXIT_MISSING_COMMAND=127
+readonly EXIT_PERMISSION_DENIED=126
+readonly EXIT_NETWORK_ERROR=2
+readonly EXIT_FILE_NOT_FOUND=3
+readonly EXIT_INVALID_INPUT=4
+readonly EXIT_INTERRUPTED=130
+
+# ============================================================================
+# Interface Configuration  
+# ============================================================================
+
+# Centrally managed interface configuration (with guard against multiple sourcing)
+if [ -z "${INTERFACE_WIDTH:-}" ]; then
+    readonly INTERFACE_WIDTH=72
+
+    # Amber cyberpunk color system - Alien/Blade Runner inspired
+    readonly INTERFACE_COLOR=214             # Amber primary (#FFB000)
+    readonly INTERFACE_SECONDARY=208         # Dim amber (#CC8800) 
+    readonly INTERFACE_ACCENT=51             # Neon cyan (#00FFFF) for glitch elements
+    readonly INTERFACE_ERROR=10              # Green (#00FF66) for system intrusion
+    readonly INTERFACE_BG_COLOR=0            # Pure black background
+    readonly INTERFACE_BOLD="--bold"         # Bold styling flag
+fi
+
+# ============================================================================
+# Path Configuration
+# ============================================================================
+
+# Homebrew paths for different architectures
+readonly HOMEBREW_PREFIX_ARM="/opt/homebrew"
+readonly HOMEBREW_PREFIX_INTEL="/usr/local"
+
+# Common system paths
+readonly SYSTEM_RESOLVER_DIR="/etc/resolver"
+readonly PAM_CONFIG_DIR="/etc/pam.d"
+readonly SUDOERS_DIR="/etc/sudoers.d"
+
+# Temporary file locations
+readonly SUDO_AUTH_MARKER="/tmp/.bootstrap_sudo_authenticated"
+readonly SUDO_KEEPALIVE_PID="/tmp/.bootstrap_sudo_keepalive_pid"
+readonly BOOTSTRAP_TIMEOUT_CONFIG="/etc/sudoers.d/bootstrap_timeout"
+
+# ============================================================================
+# Network Configuration
+# ============================================================================
+
+# Default URLs for connectivity testing
+readonly DEFAULT_CONNECTIVITY_URL="https://raw.githubusercontent.com"
+readonly FALLBACK_PING_HOST="github.com"
+
+# Network retry settings
+readonly NETWORK_MAX_RETRIES=1
+readonly CURL_CONNECT_TIMEOUT_MULTIPLIER=2
+
+# ============================================================================
+# Loader Configuration
+# ============================================================================
+
+# Loader animation settings
+readonly LOADER_CHARS='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+readonly LOADER_DELAY=0.02
+readonly LOADER_CHAR_COUNT=10
+
+# ============================================================================
+# Log Configuration
+# ============================================================================
+
+# Default log level and format
+readonly DEFAULT_LOG_LEVEL="INFO"
+readonly LOG_DATE_FORMAT="+%Y-%m-%dT%H:%M:%SZ"
+readonly DEBUG_LOG_DATE_FORMAT="+%H:%M:%S"
+
+# Log file paths (relative to DOTFILES_PARENT_DIR)
+readonly LOG_DIR="tmp/log"
+readonly BOOTSTRAP_LOG_FILE="bootstrap.log"

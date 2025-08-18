@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+
+# Development Environment Helper Functions
+# Idempotent setup functions for development tools and services
+
+# Function to check if a service is running
+is_service_running() {
+    local service_name="$1"
+    brew services list | grep -q "${service_name}.*started" 2>/dev/null
+}
+
+# Function to ensure a service is running
+ensure_service_running() {
+    local service_name="$1"
+    
+    if is_service_running "$service_name"; then
+        log_success "Service $service_name is already running"
+        return 0
+    fi
+    
+    log_info "Starting service $service_name..."
+    if brew services start "$service_name" 2>/dev/null; then
+        log_success "Service $service_name started successfully"
+    else
+        log_error "Failed to start service $service_name"
+        return 1
+    fi
+}
+
+# Configure nginx for development
+ensure_nginx_development() {
+    local nginx_dir="$(get_homebrew_prefix)/etc/nginx"
+    
+    # Check if nginx is installed
+    if ! check_command "nginx" "nginx web server"; then
+        log_warn "nginx not found. Skipping nginx configuration"
+        return 0
+    fi
+    
+    if ! check_directory_exists "$nginx_dir" "nginx configuration directory"; then
+        log_warn "nginx directory not found at $nginx_dir"
+        return 0
+    fi
+    
+    log_info "Configuring nginx for development..."
+    
+    # Create servers directory if it doesn't exist
+    if ! check_directory_exists "$nginx_dir/servers" "nginx servers directory"; then
+        mkdir -p "$nginx_dir/servers"
+        log_success "Created nginx servers directory"
+    else
+        log_success "nginx servers directory already exists"
+    fi
+    
+    # Copy nginx configuration if it doesn't already include servers directory
+    local nginx_conf="$nginx_dir/nginx.conf"
+    if ! grep -q "include.*servers/\*.conf" "$nginx_conf" 2>/dev/null; then
+        log_info "Updating nginx configuration..."
+        
+        # Create backup of original nginx.conf
+        if check_file_exists "$nginx_conf" "nginx configuration"; then
+            silent "cp '$nginx_conf' '$nginx_conf.backup.$(date +%Y%m%d-%H%M%S)'"
+            log_info "Created backup of nginx.conf"
+        fi
+        
+        # Copy our templated configuration if it exists
+        if check_file_exists "$HOME/.config/nginx/nginx.conf" "nginx template"; then
+            silent "cp '$HOME/.config/nginx/nginx.conf' '$nginx_conf'"
+            log_success "nginx configuration updated"
+        else
+            log_warn "nginx template not found at ~/.config/nginx/nginx.conf"
+        fi
+    else
+        log_success "nginx configuration already includes servers directory"
+    fi
+    
+    # Test nginx configuration
+    if silent "nginx -t"; then
+        log_success "nginx configuration is valid"
+    else
+        log_warn "nginx configuration has errors"
+    fi
+}
+
+# Configure dnsmasq for development
+ensure_dnsmasq_development() {
+    local dnsmasq_dir="$(get_homebrew_prefix)/etc"
+    local dnsmasq_conf="$dnsmasq_dir/dnsmasq.conf"
+    
+    # Check if dnsmasq is installed
+    if ! check_command "dnsmasq" "dnsmasq DNS server"; then
+        log_warn "dnsmasq not found. Skipping dnsmasq configuration"
+        return 0
+    fi
+    
+    log_info "Configuring dnsmasq for development..."
+    
+    # Copy dnsmasq configuration if template exists
+    if check_file_exists "$HOME/.config/dnsmasq/dnsmasq.conf" "dnsmasq template"; then
+        silent "cp '$HOME/.config/dnsmasq/dnsmasq.conf' '$dnsmasq_conf'"
+        log_success "dnsmasq configuration updated"
+    else
+        log_warn "dnsmasq template not found at ~/.config/dnsmasq/dnsmasq.conf"
+        return 0
+    fi
+    
+    # Configure system resolver for .test domains
+    log_info "Configuring system resolver for .test domains..."
+    
+    # Check if resolver is already configured
+    if check_file_exists "/etc/resolver/test" "test domain resolver" && silent "grep -q 'nameserver 127.0.0.1' /etc/resolver/test"; then
+        log_success "System resolver for .test domains is already configured"
+    else
+        # Create resolver directory if it doesn't exist
+        silent "sudo mkdir -p /etc/resolver"
+        
+        # Configure system to use dnsmasq for .test domains
+        if silent "sudo tee /etc/resolver/test > /dev/null << 'EOF'
+nameserver 127.0.0.1
+EOF"; then
+            log_success "System resolver configured for .test domains"
+        else
+            log_error "Failed to configure system resolver"
+        fi
+    fi
+}
+
+# Start development services
+ensure_development_services() {
+    log_info "Starting development services..."
+    
+    # Start nginx if configured
+    if check_command "nginx" "nginx web server"; then
+        ensure_service_running "nginx" || log_warn "Failed to start nginx"
+    fi
+    
+    # Start dnsmasq if configured
+    if check_command "dnsmasq" "dnsmasq DNS server"; then
+        ensure_service_running "dnsmasq" || log_warn "Failed to start dnsmasq"
+    fi
+}
+
+# Complete development environment setup
+ensure_development_environment() {
+    log_info "Setting up development environment..."
+    
+    ensure_nginx_development
+    ensure_dnsmasq_development
+    ensure_development_services
+    
+    log_success "Development environment setup complete!"
+    log_info "You can now use dev-init, dev-rm, dev-ls, and dev-restart functions"
+    log_info "Example: dev-init myapp 3000 (creates myapp.test -> localhost:3000)"
+}

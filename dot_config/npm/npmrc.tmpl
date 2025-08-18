@@ -1,0 +1,21 @@
+{{ if ne (env "LOCATION" | trim) "test" }}
+# setup user authentication
+//registry.npmjs.org/:_authToken={{ (onepasswordDetailsFields "sl6x2zj7g5d65eb3s6gmrygvya").username.value }}
+{{ end }}
+# Set the registry
+registry=https://registry.npmjs.org/
+
+# Set the prefix for global installations
+prefix=~/.config/npm/global
+
+# Set the log level
+loglevel=warn
+
+# Set the cache folder
+cache=/tmp/npm-cache
+
+# Set the maximum number of connections for the package manager
+maxsockets=5
+
+# Set the package-lock feature (true or false)
+package-lock=false

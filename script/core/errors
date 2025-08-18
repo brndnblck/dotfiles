@@ -1,0 +1,158 @@
+#!/usr/bin/env bash
+
+# Error Handling Utilities
+# Standardized error handling patterns and utilities
+
+# Source configuration constants
+source "$(dirname "${BASH_SOURCE[0]}")/config"
+
+# Source logging functions for error reporting
+source "$(dirname "${BASH_SOURCE[0]}")/logging"
+
+# ============================================================================
+# Standardized Error Handling Patterns
+# ============================================================================
+
+# Standard error handler with context
+handle_error() {
+    local error_type="$1"
+    local message="$2" 
+    local exit_on_error="${3:-false}"
+    local context="${4:-}"
+    
+    case "$error_type" in
+        "file_not_found")
+            log_error "File not found: $message" "$exit_on_error"
+            [ "$exit_on_error" = "true" ] && exit $EXIT_FILE_NOT_FOUND
+            ;;
+        "command_not_found")
+            log_error "Command not found: $message" "$exit_on_error"
+            [ "$exit_on_error" = "true" ] && exit $EXIT_MISSING_COMMAND
+            ;;
+        "permission_denied")
+            log_error "Permission denied: $message" "$exit_on_error"
+            [ "$exit_on_error" = "true" ] && exit $EXIT_PERMISSION_DENIED
+            ;;
+        "network_error")
+            log_error "Network error: $message" "$exit_on_error"
+            [ "$exit_on_error" = "true" ] && exit $EXIT_NETWORK_ERROR
+            ;;
+        "invalid_input")
+            log_error "Invalid input: $message" "$exit_on_error"
+            [ "$exit_on_error" = "true" ] && exit $EXIT_INVALID_INPUT
+            ;;
+        *)
+            log_error "$message" "$exit_on_error"
+            [ "$exit_on_error" = "true" ] && exit $EXIT_GENERAL_ERROR
+            ;;
+    esac
+    
+    # Add context if provided
+    [ -n "$context" ] && log_info "Context: $context"
+    
+    return $EXIT_GENERAL_ERROR
+}
+
+# Validation error with user-friendly message
+validation_error() {
+    local validation_type="$1"
+    local item="$2"
+    local exit_on_error="${3:-false}"
+    local suggestion="${4:-}"
+    
+    case "$validation_type" in
+        "file")
+            handle_error "file_not_found" "$item" "$exit_on_error" "$suggestion"
+            ;;
+        "command")
+            handle_error "command_not_found" "$item" "$exit_on_error" "$suggestion"
+            ;;
+        "network")
+            handle_error "network_error" "Cannot reach $item" "$exit_on_error" "$suggestion"
+            ;;
+        *)
+            handle_error "general" "Validation failed for $item" "$exit_on_error" "$suggestion"
+            ;;
+    esac
+}
+
+# Network operation error with retry suggestion
+network_error() {
+    local operation="$1"
+    local url="$2"
+    local exit_on_error="${3:-true}"
+    
+    log_error "Network connectivity check failed for $operation"
+    log_error "Unable to reach: $url"
+    show_error "Network connectivity required for $operation. Please check your internet connection." "$exit_on_error"
+}
+
+# Installation error with context
+installation_error() {
+    local package_type="$1"
+    local package_name="$2"
+    local exit_on_error="${3:-false}"
+    
+    log_error "Failed to install $package_type package: $package_name"
+    [ "$exit_on_error" = "true" ] && show_error "Installation failed for $package_name" "true"
+    return $EXIT_GENERAL_ERROR
+}
+
+# Template processing error
+template_error() {
+    local template_file="$1"
+    local exit_on_error="${2:-true}"
+    
+    log_error "Template processing failed: $template_file"
+    [ "$exit_on_error" = "true" ] && show_error "Failed to process template: $template_file" "true"
+    return $EXIT_GENERAL_ERROR
+}
+
+# Authentication error
+auth_error() {
+    local service="$1"
+    local message="$2"
+    local exit_on_error="${3:-true}"
+    
+    show_error "Authentication failed for $service: $message" "$exit_on_error"
+    return $EXIT_PERMISSION_DENIED
+}
+
+# Prerequisite check error
+prerequisite_error() {
+    local requirement="$1"
+    local current_value="$2"
+    local expected_value="$3"
+    local exit_on_error="${4:-false}"
+    
+    show_error "$requirement check failed. Current: $current_value, Required: $expected_value" "$exit_on_error"
+    return $EXIT_GENERAL_ERROR
+}
+
+# Safe exit function that cleans up resources
+safe_exit() {
+    local exit_code="${1:-$EXIT_SUCCESS}"
+    
+    # Cleanup temp files if available
+    if declare -f cleanup_temp_files >/dev/null 2>&1; then
+        cleanup_temp_files
+    fi
+    
+    # Cleanup sudo if available  
+    if declare -f cleanup_sudo_config >/dev/null 2>&1; then
+        cleanup_sudo_config
+    fi
+    
+    exit "$exit_code"
+}
+
+# Wrapper for critical operations that must succeed
+require_success() {
+    local operation="$1"
+    shift
+    local args=("$@")
+    
+    if ! "$operation" "${args[@]}"; then
+        handle_error "general" "Critical operation failed: $operation" "true"
+    fi
+}

@@ -1,0 +1,313 @@
+#!/usr/bin/env bash
+
+# Source common utilities
+source "$(dirname "${BASH_SOURCE[0]}")/common"
+
+# ============================================================================
+# Security and Permissions
+# ============================================================================
+
+ensure_not_root() {
+    if [ "$(id -u)" -eq 0 ]; then
+        show_error "Do not run this script as root"
+    fi
+}
+
+
+enable_touchid_sudo() {
+	ensure_sudo
+	local pam_sudo_file="/etc/pam.d/sudo"
+	local touchid_line="auth       sufficient     pam_tid.so"
+	
+	if ! check_directory_exists "/etc/pam.d" "PAM configuration directory"; then
+		show_error "PAM configuration directory not found." "true"
+	fi
+	
+	if ! check_file_exists "$pam_sudo_file" "sudo PAM configuration"; then
+		show_error "sudo PAM configuration file not found." "true"
+	fi
+	
+	if silent "sudo grep -q '^auth.*pam_tid.so' '$pam_sudo_file'"; then
+		record "TouchID for sudo is already enabled."
+		return 0
+	fi
+	silent "sudo cp '$pam_sudo_file' '${pam_sudo_file}.backup.$(date +%s)'" || true
+	local temp_file="/tmp/sudo_pam_config.$$"
+	local inserted=false
+	
+	while IFS= read -r line || [ -n "$line" ]; do
+		if [[ "$line" == "#"* ]]; then
+			echo "$line" >> "$temp_file"
+		elif [[ "$line" == "auth"* ]] && [ "$inserted" = false ]; then
+			echo "$touchid_line" >> "$temp_file"
+			echo "$line" >> "$temp_file"
+			inserted=true
+		else
+			echo "$line" >> "$temp_file"
+		fi
+	done < "$pam_sudo_file"
+	if [ "$inserted" = false ]; then
+		echo "$touchid_line" >> "$temp_file"
+	fi
+	if check_file_exists "$temp_file" "temporary PAM config" && silent "sudo cp '$temp_file' '$pam_sudo_file'"; then
+		rm -f "$temp_file" || true
+		record "TouchID for sudo has been enabled."
+	else
+		rm -f "$temp_file" || true
+		show_error "Failed to enable TouchID for sudo." "false"
+		local backup_file=$(ls "${pam_sudo_file}.backup."* 2>/dev/null | head -n1)
+		if [ -n "$backup_file" ] && check_file_exists "$backup_file" "PAM backup file"; then
+			silent "sudo cp '$backup_file' '$pam_sudo_file'" || true
+		fi
+	fi
+}
+
+ensure_disk_encryption() {
+  if [ "$(fdesetup status | head -1)" = "FileVault is Off." ]; then
+    show_error "You need to enable disk encryption before you can continue." "false"
+    return 1
+  fi
+}
+
+# ============================================================================
+# Development Tools
+# ============================================================================
+
+ensure_command_line_tools() {
+  if check_command "xcode-select" "Xcode command line tools"; then
+    record "Command Line Tools for Xcode are already installed."
+    return 0
+  fi
+  local updates_list="/tmp/softwareupdate_list.$$"
+  if silent "softwareupdate -l" > "$updates_list"; then
+    local PROD=$(grep "\*.*Command Line" "$updates_list" | tail -n 1 | cut -d'*' -f2 | tr -d ' \t\n') || true
+    rm -f "$updates_list"
+    
+    if [[ ! -z "$PROD" ]]; then
+      record "Command Line Tools for Xcode not found. Installing from softwareupdate…"
+      local progress_file="/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress"
+      touch "$progress_file"
+      silent "softwareupdate -i \"$PROD\" --verbose"
+      if check_file_exists "$progress_file" "installation progress marker"; then
+        rm -f "$progress_file"
+      fi
+      record "Command Line Tools for Xcode have been installed."
+    fi
+  else
+    rm -f "$updates_list"
+  fi
+}
+
+# ============================================================================
+# Package Manager Setup
+# ============================================================================
+
+ensure_homebrew() {
+	if check_command "brew" "Homebrew package manager"; then
+		return 0
+	else
+		setup_homebrew_env
+	fi
+	
+	log_info "Installing Homebrew..."
+	
+	# Validate network connectivity before attempting download
+	if ! validate_network_operation "Homebrew installation" "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"; then
+		return 1
+	fi
+	
+	run "/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+	
+	setup_homebrew_env
+	
+	if ! check_command "brew" "Homebrew package manager"; then
+		show_error "Homebrew installation failed" "true"
+	fi
+	
+	# Setup password manager immediately after Homebrew is available
+	ensure_password_manager
+}
+
+ensure_password_manager() {
+	# Install 1Password CLI if not present
+	if ! check_command "op" "1Password CLI"; then
+		log_info "Installing 1Password CLI..."
+		if silent "brew install --cask 1password-cli"; then
+			log_success "1Password CLI installed"
+		else
+			show_error "Failed to install 1Password CLI" "true"
+		fi
+	fi
+
+	# Check if already signed in
+	if op whoami >/dev/null 2>&1; then
+		log_info "Already signed in to 1Password"
+		return 0
+	fi
+
+	# Check for existing accounts
+	local account_count=$(op account list 2>/dev/null | wc -l || echo "0")
+	if [ "$account_count" -le 1 ]; then
+		log_info "Setting up 1Password account..."
+		echo -n "1Password Email: "
+		read -r email
+		if [ -z "$email" ]; then
+			show_error "1Password email is required. Exiting." "true"
+		fi
+		
+		echo -n "1Password Secret Key: "
+		read -r secretkey
+		if [ -z "$secretkey" ]; then
+			show_error "1Password secret key is required. Exiting." "true"
+		fi
+		
+		silent "op account add --address start.1password.com --email $email --secret-key $secretkey"
+	fi
+
+	echo -n "1Password Password: "
+	read -s password
+	echo  # Add newline after hidden input
+	
+	if [ -z "$password" ]; then
+		show_error "1Password password is required. Exiting." "true"
+	fi
+	
+	if silent "echo \"$password\" | op signin"; then
+		log_success "Successfully authenticated with 1Password"
+		return 0
+	else
+		show_error "Unable to authenticate with 1Password. Halting." "true"
+	fi
+}
+
+ensure_bootstrap_tools() {
+	setup_homebrew_env
+	
+	log_info "Installing essential bootstrap tools..."
+	if silent "brew bundle -d --file=\"${DOTFILES_PARENT_DIR:-$PWD}/dependencies/dependencies.brewfile\""; then
+		log_success "Essential bootstrap tools installed"
+	else
+		show_error "Failed to install essential bootstrap tools" "true"
+	fi
+	
+	# Set up Rust toolchain for TUI tools
+	ensure_rust_toolchain
+}
+
+ensure_rust_toolchain() {
+	if check_command "rustup-init" "Rust toolchain installer"; then
+		if ! check_command "cargo" "Rust package manager"; then
+			log_info "Initializing Rust toolchain..."
+			if silent "rustup-init -y --no-modify-path"; then
+				# Source rust environment
+				if [ -f ~/.cargo/env ]; then
+					source ~/.cargo/env
+				fi
+				log_success "Rust toolchain initialized"
+			else
+				log_warn "Failed to initialize Rust toolchain"
+			fi
+		else
+			log_info "Rust toolchain already available"
+		fi
+	else
+		log_warn "rustup-init not found, skipping Rust setup"
+	fi
+}
+
+# ============================================================================
+# App Store Authentication
+# ============================================================================
+
+ensure_mas() {
+	if ! check_command "mas" "Mac App Store CLI"; then
+		show_error "mas CLI not found. Please install bootstrap tools first." "true"
+	fi
+	
+	if silent "mas account"; then
+		log_success "App Store already authenticated"
+		return 0
+	fi
+	
+	log_info "App Store authentication required for application installation."
+	
+	local apple_id=$(defaults read MobileMeAccounts 2>/dev/null | grep -o '"AccountID" = "[^"]*"' | head -1 | sed 's/"AccountID" = "\([^"]*\)"/\1/' 2>/dev/null)
+	
+	if [ -z "$apple_id" ]; then
+		apple_id=$(osascript -e 'Tell application "System Events" to display dialog "Please enter your Apple ID:" default answer ""' -e 'text returned of result' 2>/dev/null)
+		if [ $? -ne 0 ] || [ -z "$apple_id" ]; then
+			show_error "Apple ID entry cancelled. Exiting." "true"
+		fi
+	else
+		log_info "Found Apple ID: $apple_id"
+	fi
+	
+	if silent "mas signin '$apple_id' --dialog" 2>/dev/null; then
+		log_success "App Store authenticated successfully with $apple_id"
+	else
+		log_warn "Automatic App Store authentication failed."
+		log_info "Please manually sign in to the App Store app and press Enter to continue..."
+		read -r
+		if silent "mas account"; then
+			log_success "App Store authentication verified"
+		else
+			log_error "App Store authentication could not be verified. Some apps may not install." "false"
+		fi
+	fi
+}
+
+# ============================================================================
+# System Validation
+# ============================================================================
+
+check_macos_version() {
+    local min_version="$1"
+    local current_version=$(sw_vers -productVersion)
+    
+    if ! silent "printf '%s\n%s\n' '$min_version' '$current_version' | sort -V -C"; then
+        show_error "This script requires macOS $min_version or later. Current version: $current_version" "false"
+        return 1
+    fi
+    
+    log_info "OS version check passed: $current_version"
+}
+
+check_disk_space() {
+    local min_gb="$1"
+    local available_gb=$(df -h / | awk 'NR==2 {print $4}' | sed 's/G[i]*//g')
+    
+    if [ "$available_gb" -lt "$min_gb" ]; then
+        show_error "Insufficient disk space. Required: ${min_gb}GB, Available: ${available_gb}GB" "false"
+        return 1
+    fi
+    
+    log_info "Disk space check passed: ${available_gb}GB available"
+}
+
+check_network_connectivity() {
+    local host="${1:-github.com}"
+    
+    if ! ping -c 1 "$host" >/dev/null 2>&1; then
+        show_error "No network connectivity to $host" "false"
+        return 1
+    fi
+    
+    log_info "Network connectivity check passed"
+}
+
+# ============================================================================
+# Preflight Validation
+# ============================================================================
+
+preflight_checks() {
+    check_macos_version "11.0"
+    
+    local arch=$(get_architecture)
+    log_info "Architecture: $arch"
+    
+    check_disk_space 5
+    check_network_connectivity "github.com"
+    ensure_not_root
+    
+    log_info "User permissions check passed"
+}

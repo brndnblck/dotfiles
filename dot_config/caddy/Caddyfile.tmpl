@@ -1,0 +1,16 @@
+# Global Caddyfile for personal development projects
+# Add your personal .test domains here
+#
+# Example:
+# myapp.test {
+#     reverse_proxy localhost:3000
+# }
+#
+# api.test {
+#     reverse_proxy localhost:8080
+# }
+
+# Default catch-all for undefined .test domains
+*.test {
+    respond "No service configured for {host}" 404
+}

@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+
+# Dotfiles System Setup Script
+# Handles full system installation and configuration
+
+set -euo pipefail
+
+# Check if this script is being called directly (not through main TUI)
+if [ -z "${DOTFILES_PARENT_DIR:-}" ]; then
+    echo "❌ This script should not be called directly!"
+    echo ""
+    echo "Please use the main TUI interface:"
+    echo "  ./script/main"
+    echo ""
+    echo "Or run the bootstrap first:"
+    echo "  ./script/bootstrap"
+    exit 1
+fi
+
+CURRENT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+DOTFILES_PARENT_DIR=$(dirname "$CURRENT_DIR")
+DOTFILES_LOG_FILE="$DOTFILES_PARENT_DIR/tmp/setup-$(date +%Y%m%d-%H%M%S).log"
+DOTFILES_DEBUG_LOG="$DOTFILES_PARENT_DIR/tmp/debug-setup-$(date +%Y%m%d-%H%M%S).log"
+
+# Export for use in helper functions
+export DOTFILES_DEBUG_LOG
+export DOTFILES_LOG_FILE
+export DOTFILES_PARENT_DIR
+
+# Ensure tmp directory exists
+mkdir -p "$DOTFILES_PARENT_DIR/tmp"
+
+# Import helpers
+source "$CURRENT_DIR/core/common"
+source "$CURRENT_DIR/core/system"
+source "$CURRENT_DIR/core/prerequisites"
+source "$CURRENT_DIR/core/ui"
+
+# Main setup function
+main() {
+    show_standard_header
+    # show_section_header "DEPLOYMENT PROTOCOL ACTIVE"
+
+    # Display log paths and deployment sequence
+    gum style \
+        --foreground "$INTERFACE_COLOR" \
+        --border normal \
+        --border-foreground "$INTERFACE_SECONDARY" \
+        --padding "0 1" \
+        --width "$((INTERFACE_WIDTH - 1))" \
+        "▶ DEPLOYMENT SEQUENCE:" \
+        "" \
+        "  [01] PACKAGE MANAGER BOOTSTRAP" \
+        "  [02] APPLICATION REGISTRY SYNC" \
+        "  [03] DEVELOPMENT STACK INIT" \
+        "  [04] CONFIGURATION MATRIX DEPLOY" \
+        "  [05] SYSTEM PARAMETER OVERRIDE"
+
+    echo ""
+
+    if ! gum confirm "AUTHORIZE DEPLOYMENT SEQUENCE?" \
+        --prompt.foreground "$INTERFACE_COLOR" \
+        --selected.foreground "$INTERFACE_BG_COLOR" \
+        --selected.background "$INTERFACE_COLOR" \
+        --unselected.foreground "$INTERFACE_COLOR" \
+        --affirmative "EXECUTE" \
+        --negative "ABORT"; then
+        gum style --foreground "$INTERFACE_ERROR" "DEPLOYMENT SEQUENCE ABORTED"
+        exit 0
+    fi
+
+    # Transition to progress display
+    show_standard_header
+    show_section_header "SYSTEM INIT"
+
+    # Display log paths (relative from DOTFILES_PARENT_DIR)
+    gum style --foreground "$INTERFACE_SECONDARY" "DEBUG: ${DOTFILES_DEBUG_LOG#"$DOTFILES_PARENT_DIR"/}"
+    gum style --foreground "$INTERFACE_SECONDARY" "OUTPUT: ${DOTFILES_LOG_FILE#"$DOTFILES_PARENT_DIR"/}"
+    echo ""
+
+    # Set task title for progress display
+    export TASK_TITLE="SYSTEM INIT"
+
+    # Execute tasks with progressive display
+    run_with_progressive_spinner "BOOTSTRAPPING CORE SYSTEMS..." \
+        "source '$CURRENT_DIR/core/common' && source '$CURRENT_DIR/core/prerequisites' && ensure_sudo && ensure_command_line_tools && ensure_homebrew"
+
+    run_with_progressive_spinner "DEPLOYING DEPENDENCY MATRIX..." \
+        "export DOTFILES_PARENT_DIR='$DOTFILES_PARENT_DIR' && source '$CURRENT_DIR/core/common' && source '$CURRENT_DIR/core/dependencies' && ensure_dependencies"
+
+    run_with_progressive_spinner "INSTALLING APPLICATION REGISTRY..." \
+        "export DOTFILES_PARENT_DIR='$DOTFILES_PARENT_DIR' && source '$CURRENT_DIR/core/common' && source '$CURRENT_DIR/core/dependencies' && ensure_applications"
+
+    run_with_progressive_spinner "INITIALIZING DEVELOPMENT STACK..." \
+        "export DOTFILES_PARENT_DIR='$DOTFILES_PARENT_DIR' && source '$CURRENT_DIR/core/common' && source '$CURRENT_DIR/core/dependencies' && ensure_development"
+
+    run_with_progressive_spinner "CONFIGURING SERVICE PROTOCOLS..." \
+        "export DOTFILES_PARENT_DIR='$DOTFILES_PARENT_DIR' && source '$CURRENT_DIR/core/common' && source '$CURRENT_DIR/core/development' && ensure_development_environment"
+
+    run_with_progressive_spinner "DEPLOYING CONFIGURATION MATRIX..." \
+        "if ! command -v chezmoi >/dev/null 2>&1; then brew install chezmoi; fi && chezmoi init --force --source '$DOTFILES_PARENT_DIR' && source '$CURRENT_DIR/core/system' && apply_dotfiles_and_shell"
+
+    run_with_progressive_spinner "OVERRIDING SYSTEM PARAMETERS..." \
+        "source '$CURRENT_DIR/core/prerequisites' && source '$CURRENT_DIR/core/system' && enable_touchid_sudo && configure_macos_preferences"
+
+    run_with_progressive_spinner "INSTALLING SYSTEM FONTS..." \
+        "source '$CURRENT_DIR/core/system' && ensure_fonts"
+
+    show_completion "SYSTEM INIT COMPLETE"
+
+    if gum confirm "INITIATE SYSTEM REBOOT SEQUENCE?" \
+        --prompt.foreground "$INTERFACE_COLOR" \
+        --selected.foreground "$INTERFACE_BG_COLOR" \
+        --selected.background "$INTERFACE_COLOR" \
+        --unselected.foreground "$INTERFACE_COLOR" \
+        --affirmative "EXECUTE" \
+        --negative "DEFER"; then
+        gum style --foreground "$INTERFACE_ERROR" "REBOOT SEQUENCE INITIATED - 60 SECONDS"
+        sudo shutdown -r +1
+        echo ""
+        gum style --foreground "$INTERFACE_SECONDARY" "ABORT SEQUENCE: sudo killall shutdown"
+    else
+        gum style --foreground "$INTERFACE_SECONDARY" "REBOOT SEQUENCE DEFERRED - MANUAL RESTART REQUIRED"
+    fi
+
+    show_footer_prompt
+}
+
+# Execute if called directly
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    main "$@"
+fi

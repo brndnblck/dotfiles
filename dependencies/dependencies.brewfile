@@ -1,0 +1,55 @@
+tap "homebrew/bundle"
+
+# Core Utilities
+brew "ack"
+brew "bind"              # Provides dig and host commands
+brew "bzip2"             # For compression/decompression
+brew "chezmoi"           # Dotfiles management
+brew "direnv"            # Environment variable management
+brew "caddy"             # Modern web server with automatic HTTPS
+brew "expect"            # Automation tool
+brew "eza"               # Modern ls replacement
+brew "fabric-ai"         # AI-powered CLI tool
+brew "findutils"         # GNU find, xargs, locate
+brew "gawk"              # GNU awk
+brew "gh"                # GitHub CLI
+brew "git"               # Version control
+brew "gnu-sed"           # GNU sed
+brew "gnu-tar"           # GNU tar
+brew "grep"              # Search tool
+brew "htop"              # System monitor
+brew "jq"                # JSON processor
+brew "mas"               # Mac App Store CLI
+brew "pam-reattach"      # TouchID for sudo
+brew "parallel"          # Parallel processing
+brew "starship"          # Shell prompt
+brew "terminal-notifier" # macOS notifications
+brew "tmux"              # Terminal multiplexer
+brew "tree"              # Directory tree viewer
+brew "yq"                # YAML processor
+brew "yt-dlp"            # YouTube downloader
+brew "wget2"             # Download tool
+
+# Development Environment Manager
+brew "asdf"              # Universal version manager
+brew "rustup-init"       # Rust toolchain installer
+brew "aicommits"         # AI-powered commit messages
+brew "libyaml"           # YAML library for Ruby psych extension
+
+# Platform Tools
+brew "awscli"            # AWS command line
+brew "terraform"         # Infrastructure as code
+
+# Container Tools
+brew "ctop"              # Container monitoring
+brew "dive"              # Docker image analysis
+brew "docker-squash"     # Docker image optimization
+brew "duf"               # Disk usage analyzer
+brew "k9s"               # Kubernetes TUI
+brew "krew"              # kubectl plugin manager
+brew "kubectx"           # Kubernetes context switcher
+brew "lazydocker"        # Docker TUI
+brew "lazygit"           # Git TUI
+
+# Security Tools
+brew "bettercap"         # Network reconnaissance

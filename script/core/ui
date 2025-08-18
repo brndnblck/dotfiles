@@ -1,0 +1,170 @@
+#!/usr/bin/env bash
+
+# UI Helper Functions for Consistent Interface Elements
+
+# Show the standard header with BUILD info, divider, and ASCII art
+show_standard_header() {
+    clear
+    
+    # Build info at top
+    local git_hash=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+    gum style \
+        --foreground "$INTERFACE_SECONDARY" \
+        "$INTERFACE_BOLD" \
+        ">> BUILD: v.${git_hash}"
+    
+    # Top divider
+    colored_divider
+    
+    # ASCII art DOTFILES header
+    local title_color="${1:-$INTERFACE_SECONDARY}"
+    gum style --foreground "$title_color" << 'EOF'
+ _______  .___________.  __________   __          __________     _______.
+|       \ |           | /  /   ____||  |        /  /   ____|   /       |
+|  .--.  |`---|  |----`/  /|  |__   |  |       /  /|  |__     |   (----`
+|  |  |  |    |  |    /  / |   __|  |  |      /  / |   __|     \   \    
+|  '--'  |    |  |   /  /  |  |     |  `----./  /  |  |____.----)   |   
+|_______/     |__|  /__/   |__|     |_______/__/   |_______|_______/    
+                                                                           
+EOF
+    
+    echo ""
+}
+
+# Show section header with title and divider
+show_section_header() {
+    local title="$1"
+    
+    gum style \
+        --foreground "$INTERFACE_SECONDARY" \
+        "$INTERFACE_BOLD" \
+        ">> ${title}"
+    
+    colored_divider
+    echo ""
+}
+
+# Show completion message with dividers
+show_completion() {
+    local message="$1"
+    
+    echo ""
+    gum style \
+        --foreground "$INTERFACE_SECONDARY" \
+        "$INTERFACE_BOLD" \
+        --align center \
+        ">> ${message}"
+    
+    colored_divider
+}
+
+# Show footer with return prompt
+show_footer_prompt() {
+    # Wait for user input with blinking cursor on prompt
+    echo ""
+    gum input --placeholder "" \
+        --cursor.foreground "$INTERFACE_COLOR" \
+        --prompt.foreground "$INTERFACE_SECONDARY" \
+        --prompt "▶ PRESS ENTER TO RETURN TO COMMAND INTERFACE "
+}
+
+# Simple progressive task tracker
+COMPLETED_TASKS=()
+
+# Execute command with simple progressive display
+run_with_progressive_spinner() {
+    local message="$1"
+    shift
+    local command="$*"
+    
+    log_output "Starting: $message"
+    
+    # Log command to debug file
+    echo "[$(date '+%H:%M:%S')] COMMAND: $command" >> "$DOTFILES_DEBUG_LOG"
+    
+    # Show the current task with animated spinner in amber
+    if gum spin --spinner dot --title " $message" \
+        --spinner.foreground "$INTERFACE_COLOR" \
+        --title.foreground "$INTERFACE_COLOR" \
+        -- bash -c "$command >> '${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}' 2>&1"; then
+        
+        # Add to completed tasks
+        COMPLETED_TASKS+=("$message")
+        
+        # Show the completed task (gum spin clears its line, so we just print the checkmark)
+        echo "░ ✓ $message"
+        
+        # Also capture command output to debug log
+        echo "[$(date '+%H:%M:%S')] COMMAND OUTPUT:" >> "$DOTFILES_DEBUG_LOG"
+        tail -n 50 "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}" >> "$DOTFILES_DEBUG_LOG"
+        echo "[$(date '+%H:%M:%S')] END COMMAND OUTPUT" >> "$DOTFILES_DEBUG_LOG"
+        
+        log_output "Completed: $message"
+        return 0
+    else
+        # Log failure details to debug log
+        echo "[$(date '+%H:%M:%S')] COMMAND FAILED: $command" >> "$DOTFILES_DEBUG_LOG"
+        echo "[$(date '+%H:%M:%S')] ERROR OUTPUT:" >> "$DOTFILES_DEBUG_LOG"
+        tail -n 50 "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}" >> "$DOTFILES_DEBUG_LOG"
+        echo "[$(date '+%H:%M:%S')] END ERROR OUTPUT" >> "$DOTFILES_DEBUG_LOG"
+        
+        log_output "Failed: $message"
+        return 1
+    fi
+}
+
+# Execute command with simple spinner (for status and other scripts)
+run_with_spinner() {
+    local message="$1"
+    shift
+    local command="$*"
+    
+    log_output "Starting: $message"
+    
+    # Log command to debug file
+    echo "[$(date '+%H:%M:%S')] COMMAND: $command" >> "$DOTFILES_DEBUG_LOG"
+    
+    if gum spin --spinner dot --title " $message" \
+        --spinner.foreground "$INTERFACE_COLOR" \
+        --title.foreground "$INTERFACE_COLOR" \
+        -- bash -c "$command >> '${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}' 2>&1; echo \$? > /tmp/exit_code_\$\$"; then
+        
+        # Also capture command output to debug log
+        echo "[$(date '+%H:%M:%S')] COMMAND OUTPUT:" >> "$DOTFILES_DEBUG_LOG"
+        tail -n 50 "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}" >> "$DOTFILES_DEBUG_LOG"
+        echo "[$(date '+%H:%M:%S')] END COMMAND OUTPUT" >> "$DOTFILES_DEBUG_LOG"
+        
+        log_output "Completed: $message"
+        return 0
+    else
+        # Log failure details to debug log
+        echo "[$(date '+%H:%M:%S')] COMMAND FAILED: $command" >> "$DOTFILES_DEBUG_LOG"
+        echo "[$(date '+%H:%M:%S')] ERROR OUTPUT:" >> "$DOTFILES_DEBUG_LOG"
+        tail -n 50 "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}" >> "$DOTFILES_DEBUG_LOG"
+        echo "[$(date '+%H:%M:%S')] END ERROR OUTPUT" >> "$DOTFILES_DEBUG_LOG"
+        
+        log_output "Failed: $message"
+        return 1
+    fi
+}
+
+# Log output to file
+log_output() {
+    echo "[$(date '+%H:%M:%S')] $1" >> "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}"
+}
+
+# Show exit screen
+show_exit_screen() {
+    clear
+    show_standard_header
+    show_section_header "SYSTEM OPERATIONS"
+    
+    # Disconnection messages
+    gum style --foreground "$INTERFACE_COLOR" "DISCONNECTING..."
+    sleep 1
+    echo ""
+    gum style --foreground "$INTERFACE_SECONDARY" "/// SESSION TERMINATED [X]"
+    echo ""
+    
+    exit 0
+}

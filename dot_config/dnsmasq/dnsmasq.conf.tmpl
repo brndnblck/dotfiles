@@ -1,0 +1,18 @@
+# Configuration for .test domains
+address=/.test/127.0.0.1
+
+# Only bind to localhost
+listen-address=127.0.0.1
+
+# Don't read /etc/hosts
+no-hosts
+
+# Don't read upstream servers from /etc/resolv.conf
+no-resolv
+
+# Set upstream DNS servers
+server=8.8.8.8
+server=8.8.4.4
+
+# Cache size
+cache-size=1000

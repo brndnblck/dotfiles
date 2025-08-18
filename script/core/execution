@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+
+# Command Execution Module
+# Functions for running commands, silent execution, and loading indicators
+
+# Source ansi utilities for colored output
+source "$(dirname "${BASH_SOURCE[0]}")/ansi"
+
+# Source logging functions (needed for recording command execution)
+source "$(dirname "${BASH_SOURCE[0]}")/logging"
+
+# ============================================================================
+# Command Execution
+# ============================================================================
+
+run() {
+	record "INFO" "Running: $1"
+	if eval "$1"; then
+		record "INFO" "Command succeeded: $1"
+		return 0
+	else
+		record "ERROR" "Command failed: $1"
+		show_error "Command failed: $1"
+		return 1
+	fi
+}
+
+silent() {
+	record "INFO" "Running (silent): $1"
+	
+	# Use DOTFILES_DEBUG_LOG if set, otherwise fall back to default location
+	local debug_log="${DOTFILES_DEBUG_LOG:-${DOTFILES_PARENT_DIR:-$PWD}/tmp/debug-$(date +%Y%m%d-%H%M%S).log}"
+	mkdir -p "$(dirname "$debug_log")"
+	
+	# Log the command being executed
+	echo "[$(date '+%H:%M:%S')] COMMAND (silent): $1" >> "$debug_log"
+	
+	if eval "$1" >> "$debug_log" 2>&1; then
+		record "INFO" "Command succeeded (silent): $1"
+		echo "[$(date '+%H:%M:%S')] SUCCESS (silent): $1" >> "$debug_log"
+		return 0
+	else
+		local exit_code=$?
+		record "ERROR" "Command failed (silent): $1 (exit code: $exit_code)"
+		echo "[$(date '+%H:%M:%S')] FAILED (silent): $1 (exit code: $exit_code)" >> "$debug_log"
+		return $exit_code
+	fi
+}
+
+show_loader() {
+    ($1) &
+    local pid=$!
+    [ -n "$2" ] && message="$2" || message='Please wait...'
+    local length=${#message}
+    local i=0
+    local loader='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+    ansi --hide-cursor --no-restore
+    
+    # Handle interrupts in loader
+    trap 'kill $pid 2>/dev/null; ansi --show-cursor; exit 130' INT TERM
+    
+    while ps a | awk '{print $1}' | grep -q "${pid}"; do
+        i=$(( (i+1) % 10 ))
+        ansi --blue-intense $(printf "\r   ${loader:$i:1}") >/dev/tty
+        ansi --bold --no-restore >/dev/tty
+        if [ -n "$message" ]; then
+            printf " $message" >/dev/tty
+        else
+            printf ' Please wait...' >/dev/tty
+        fi
+        ansi --reset-attrib >/dev/tty
+        sleep .02
+    done
+
+    # Reset trap
+    trap - INT TERM
+    
+    ansi --green --bold --no-restore >/dev/tty
+    printf " \r✓ " >/dev/tty
+    ansi --white --faint --no-restore >/dev/tty
+    printf " $message\n" >/dev/tty
+    ansi --reset-attrib --reset-color
+    ansi --show-cursor
+}

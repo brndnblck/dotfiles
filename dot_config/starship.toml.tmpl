@@ -1,0 +1,234 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+format = """$os$time$username$hostname$directory$git_branch$git_status$python$character"""
+
+palette = 'dream'
+
+[palettes.dream]
+color_purple = '#a52aff'
+color_blue = '#2b4fff'
+color_cyan = '#28b9ff'
+color_magenta = '#2883ff'
+color_bright_purple = '#ba5aff'
+color_bright_blue = '#5c78ff'
+color_bright_cyan = '#5ac8ff'
+color_bright_magenta = '#5ea2ff'
+color_dark = '#121212'
+color_light = '#f1f1f1'
+
+[character]
+success_symbol = " [](bright-black bold)"
+error_symbol = " [](bold red)"
+
+[os]
+format = '[$symbol](green bold)'   
+disabled = false
+
+[os.symbols]
+AlmaLinux = " "
+Alpaquita = " "
+Alpine = ""
+Amazon = ""
+Android = " "
+Arch = "󰣇"
+Artix = " "
+CentOS = " "
+Debian = " "
+DragonFly = " "
+Emscripten = " "
+EndeavourOS = " "
+Fedora = " "
+FreeBSD = " "
+Garuda = "󰛓 "
+Gentoo = " "
+HardenedBSD = "󰞌"
+Illumos = "󰈸"
+Kali = " "
+Linux = " "
+Mabox = " "
+Macos = " "
+Manjaro = " "
+Mariner = " "
+MidnightBSD = ""
+Mint = " "
+NetBSD = " "
+NixOS = " "
+OpenBSD = "󰈺 "
+openSUSE = " "
+OracleLinux = "󰌷 "
+Pop = " "
+Raspbian = " "
+Redhat = "󱄛"
+RedHatEnterprise = "󱄛"
+Redox = "󰀘 "
+RockyLinux = " "
+Solus = "󰠳 "
+SUSE = " "
+Ubuntu = " "
+Unknown = ""
+Void = " "
+Windows = "󰍲"
+
+[username]
+format = '[//](bright-black bold) [$user](green) '
+disabled = false
+show_always = true
+
+[directory]
+truncation_length = 3
+truncation_symbol = '…/'
+home_symbol = '󱂶 '
+read_only = '  '
+format = '[//](bright-black bold) [$path]($style)[$read_only]($read_only_style) '
+style = 'cyan'
+
+[directory.substitutions]
+"Documents" = "󰈙 "
+"Downloads" = " "
+"Music" = "󰝚 "
+"Pictures" = " "
+"Developer" = "󰲋 "
+
+[git_branch]
+symbol = ' '
+format = '[//](bright-black bold) [$symbol\[$branch\]]($style)'
+style = 'green'
+
+[git_status]
+disabled = true
+format = '[ $all_status $ahead_behind]($style)'
+style = 'green'
+conflicted = '󱂴'
+up_to_date = ''
+untracked = '󰌸 '
+ahead = '${count}'
+diverged = '${ahead_count}⇣${behind_count}'
+behind = '${count}'
+stashed = ' '
+modified = ' '
+staged = '[++\($count\)](bold cyan)'
+renamed = '󰑕 '
+deleted = ' '
+
+[kubernetes]
+format = 'via [󱃾 $context\($namespace\)](purple) '
+disabled = false
+
+[aws]
+symbol = "  "
+
+[buf]
+symbol = " "
+
+[c]
+symbol = " "
+
+[conda]
+symbol = " "
+
+[crystal]
+symbol = " "
+
+[dart]
+symbol = " "
+
+[docker_context]
+symbol = " "
+
+[fennel]
+symbol = " "
+
+[fossil_branch]
+symbol = " "
+
+[golang]
+symbol = " "
+
+[guix_shell]
+symbol = " "
+
+[haskell]
+symbol = " "
+
+[haxe]
+symbol = " "
+
+[hg_branch]
+symbol = " "
+
+[hostname]
+ssh_only = true
+ssh_symbol = "󰌘 "
+format = '[@$hostname](green) '
+
+[java]
+symbol = " "
+
+[julia]
+symbol = " "
+
+[kotlin]
+symbol = " "
+
+[lua]
+symbol = " "
+
+[memory_usage]
+symbol = "󰍛 "
+
+[meson]
+symbol = "󰔷 "
+
+[nim]
+symbol = "󰆥 "
+
+[nix_shell]
+symbol = " "
+
+[nodejs]
+symbol = " "
+
+[ocaml]
+symbol = " "
+
+[package]
+symbol = "󰏗 "
+
+[perl]
+symbol = " "
+
+[php]
+symbol = " "
+
+[pijul_channel]
+symbol = " "
+
+[python]
+symbol = " "
+format = '[//](bright-black bold) [${symbol} (${version} )(\($virtualenv\) )]($style)'
+
+[rlang]
+symbol = "󰟔 "
+
+[ruby]
+symbol = " "
+
+[rust]
+symbol = "󱘗 "
+
+[scala]
+symbol = " "
+
+[swift]
+symbol = " "
+
+[zig]
+symbol = " "
+
+[time]
+disabled = false
+time_format = "%R"
+format = '[$time ](green)($style)'
+
+[line_break]
+disabled = false

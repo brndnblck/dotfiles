@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+
+# Logging and Output Module
+# Centralized logging, display, and message handling functions
+
+# Source configuration constants
+source "$(dirname "${BASH_SOURCE[0]}")/config"
+
+# Source ansi utilities for colored output
+source "$(dirname "${BASH_SOURCE[0]}")/ansi"
+
+# ============================================================================
+# Logging and Output
+# ============================================================================
+
+handle_message() {
+    local level="$1"
+    local message="$2"
+    local exit_on_error="${3:-true}"
+    local display="${4:-true}"
+    
+    # Log to file
+    case "$level" in
+        "info")
+            record "INFO" "$message"
+            ;;
+        "success")
+            record "SUCCESS" "$message"
+            ;;
+        "warn")
+            record "WARN" "$message"
+            ;;
+        "error")
+            record "ERROR" "$message"
+            ;;
+        "test")
+            record "TEST" "$message"
+            ;;
+    esac
+    
+    # Display to user only if requested
+    if [ "$display" = "true" ]; then
+        case "$level" in
+            "info")
+                ansi --blue --bold --no-restore
+                echo "INFO: $message"
+                ansi --reset-color
+                ;;
+            "success")
+                ansi --green --bold --no-restore
+                echo "✓ SUCCESS: $message"
+                ansi --reset-color
+                ;;
+            "warn")
+                ansi --yellow --bold --no-restore
+                echo "⚠ WARNING: $message"
+                ansi --reset-color >&2
+                ;;
+            "error")
+                ansi --newline
+                ansi --red --bold --no-restore
+                echo "✗ ERROR: $message"
+                ansi --reset-color --newline
+                ;;
+            "test")
+                ansi --magenta --bold --no-restore
+                echo "TEST: $message"
+                ansi --reset-color
+                ;;
+        esac
+    fi
+    
+    # Handle exit on error
+    if [ "$level" = "error" ] && [ "$exit_on_error" = "true" ]; then
+        exit 1
+    fi
+}
+
+show_info() { handle_message "info" "$1"; }
+show_success() { handle_message "success" "$1"; }
+show_warn() { handle_message "warn" "$1"; }
+show_error() { handle_message "error" "$1" "${2:-true}"; }
+
+log_info() { handle_message "info" "$1" "false" "false"; }
+log_success() { handle_message "success" "$1" "false" "false"; }
+log_warn() { handle_message "warn" "$1" "false" "false"; }
+log_error() { handle_message "error" "$1" "${2:-false}" "false"; }
+
+record() {
+    local level="${1:-$DEFAULT_LOG_LEVEL}"
+    shift
+    local log_dir="${DOTFILES_PARENT_DIR:-$PWD}/$LOG_DIR"
+    mkdir -p "$log_dir"
+    echo "$(date -u "$LOG_DATE_FORMAT") $level: $@" >> "$log_dir/$BOOTSTRAP_LOG_FILE" 2>&1
+}
+
+show_header() {
+    local message="$1"
+    local color="${2:-blue}"
+    
+    ansi --${color} --bold --no-restore --newline
+    echo "$message"
+    ansi --reset-color --newline
+}

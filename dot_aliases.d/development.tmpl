@@ -1,0 +1,106 @@
+# Ruby
+alias rake="noglob rake"
+alias bundle="noglob bundle"
+
+# Bundler
+alias bi="bundle install -j8"
+alias bu="bundle update"
+alias be="bundle exec"
+alias bv="bundle viz"
+
+# Python
+alias python="python3"
+alias pip="pip3"
+alias pys="python3 -m http.server"
+alias ipy="ipython"
+alias jn="jupyter notebook"
+
+# Virtualenv
+alias venv="python3 -m venv"
+alias vact="source bin/activate"
+alias vdeact="deactivate"
+alias vrm="rm -rf bin include lib lib64 share pyvenv.cfg"
+
+# Node Package Manager
+alias ni="npm install"
+alias ns="npm start"
+alias nt="npm test"
+alias nr="npm run"
+alias nu="npm update"
+alias nun="npm uninstall"
+alias nin="npm init"
+alias np="npm publish"
+
+# Rust
+alias ca="cargo add"
+alias cb="cargo build"
+alias cc="cargo check"
+alias cf="cargo fmt"
+alias cg="cargo generate"
+alias ci="cargo install"
+alias cl="cargo clippy"
+alias cn="cargo new"
+alias co="cargo outdated"
+alias cr="cargo run"
+alias cs="cargo search"
+alias ct="cargo test"
+alias cu="cargo update"
+alias cv="cargo version"
+alias cw="cargo watch"
+
+# Go
+alias g="go"
+alias gb="go build"
+alias gr="go run"
+alias gt="go test"
+alias gi="go install"
+alias gf="go fmt"
+alias gd="go doc"
+alias gg="go get"
+alias gm="go mod tidy"
+
+# Make
+alias m="make"
+alias mc="make clean"
+alias mi="make install"
+alias mt="make test"
+alias md="make dist"
+alias mdcl="make distclean"
+
+# Caddy
+alias dev-start="sudo caddy start --config {{ if eq .chezmoi.arch "arm64" }}/opt/homebrew{{ else }}/usr/local{{ end }}/etc/Caddyfile"
+alias dev-stop="sudo caddy stop"
+alias dev-restart="sudo caddy reload --config {{ if eq .chezmoi.arch "arm64" }}/opt/homebrew{{ else }}/usr/local{{ end }}/etc/Caddyfile"
+alias dev-config="$EDITOR {{ if eq .chezmoi.arch "arm64" }}/opt/homebrew{{ else }}/usr/local{{ end }}/etc/Caddyfile"
+alias dev-logs="sudo caddy logs"
+alias dev-run="caddy run"
+alias dev-local="caddy run --config Caddyfile"
+alias dev-fmt="caddy fmt --overwrite"
+
+# Direnv
+alias da="direnv allow"
+alias dr="direnv reload"
+alias dd="direnv deny"
+alias ds="direnv status"
+alias de="direnv edit"
+alias dx="direnv exec"
+
+# asdf
+alias asv="asdf current"
+alias asi="asdf install"
+alias asg="asdf global"
+alias asl="asdf local"
+alias asp="asdf list"
+alias aspa="asdf list all"
+alias aspi="asdf plugin list"
+alias aspia="asdf plugin list all"
+alias aspu="asdf plugin update --all"
+
+# AI Tools
+alias fabric="fabric-ai"
+
+# File listing with colors
+alias ls="eza --color=always --icons"
+alias ll="eza -la --color=always --icons --group-directories-first"
+alias la="eza -a --color=always --icons"
+alias lt="eza --tree --color=always --icons"

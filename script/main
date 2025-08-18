@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+# Main TUI Interface using gum for visual feedback
+# Executes bootstrap scripts with rich visual elements and silent logging
+
+set -euo pipefail
+
+# Check if gum is available
+if ! command -v gum > /dev/null 2>&1; then
+    echo "❌ gum TUI tool not found!"
+    echo ""
+    echo "Please run the minimal bootstrap first:"
+    echo "  ./script/bootstrap"
+    echo ""
+    echo "Or install gum manually:"
+    echo "  brew install gum"
+    exit 1
+fi
+
+CURRENT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+
+# Use existing variables from bootstrap if available, otherwise define them
+if [ -z "${DOTFILES_PARENT_DIR:-}" ]; then
+    DOTFILES_PARENT_DIR=$(dirname "$CURRENT_DIR")
+    export DOTFILES_PARENT_DIR
+fi
+
+if [ -z "${DOTFILES_LOG_FILE:-}" ]; then
+    DOTFILES_LOG_FILE="$DOTFILES_PARENT_DIR/tmp/main-$(date +%Y%m%d-%H%M%S).log"
+    export DOTFILES_LOG_FILE
+fi
+
+if [ -z "${DOTFILES_DEBUG_LOG:-}" ]; then
+    DOTFILES_DEBUG_LOG="$DOTFILES_PARENT_DIR/tmp/debug-main-$(date +%Y%m%d-%H%M%S).log"
+    export DOTFILES_DEBUG_LOG
+fi
+
+# Ensure tmp directory exists
+mkdir -p "$DOTFILES_PARENT_DIR/tmp"
+
+# Import helpers
+source "$CURRENT_DIR/core/common"
+source "$CURRENT_DIR/core/system"
+source "$CURRENT_DIR/core/prerequisites"
+source "$CURRENT_DIR/core/ui"
+
+# Main menu using gum
+main_menu() {
+    while true; do
+        show_standard_header
+        show_section_header "SYSTEM OPERATIONS"
+
+        # Menu with hostile, machine-like options
+        local choice
+        choice=$(gum choose \
+            "[01] INIT SYSTEM" \
+            "[02] UPDATE AND SYNCHRONIZE" \
+            "[03] RUN SYSTEM SCAN" \
+            "[04] TERMINATE SESSION" \
+            --height 6 \
+            --cursor.foreground "$INTERFACE_COLOR" \
+            --item.foreground "$INTERFACE_SECONDARY" \
+            --selected.foreground "$INTERFACE_BG_COLOR" \
+            --selected.background "$INTERFACE_COLOR" \
+            --header="")
+
+        echo ""
+
+        # Bottom divider
+        colored_divider
+
+        case "$choice" in
+            "[01] INIT SYSTEM")
+                # system_pause "ACCESSING DEPLOYMENT MODULE" 1
+                "$CURRENT_DIR/setup"
+                ;;
+            "[02] UPDATE AND SYNCHRONIZE")
+                # system_pause "INITIATING SYNC PROTOCOL" 1
+                "$CURRENT_DIR/update"
+                ;;
+            "[03] RUN SYSTEM SCAN")
+                "$CURRENT_DIR/status"
+                ;;
+            "[04] TERMINATE SESSION")
+                show_exit_screen
+                ;;
+        esac
+    done
+}
+
+# Start the application
+log_output "Starting TUI interface"
+main_menu
