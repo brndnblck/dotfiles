@@ -7,11 +7,20 @@ show_standard_header() {
     clear
     
     # Build info at top
+    local git_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
     local git_hash=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+    local version_string
+    if [ -n "$git_tag" ]; then
+        # Extract version number from tag (remove 'v' prefix if present)
+        local version_num=$(echo "$git_tag" | sed 's/^v//')
+        version_string="v${version_num}.${git_hash}"
+    else
+        version_string="v.${git_hash}"
+    fi
     gum style \
         --foreground "$INTERFACE_SECONDARY" \
         "$INTERFACE_BOLD" \
-        ">> BUILD: v.${git_hash}"
+        ">> BUILD: ${version_string}"
     
     # Top divider
     colored_divider

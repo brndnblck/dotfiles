@@ -22,14 +22,30 @@ if [[ -z "${SUDO_KEEPALIVE_INTERVAL:-}" ]]; then
 fi
 
 # Exit codes for consistent error reporting
-readonly EXIT_SUCCESS=0
-readonly EXIT_GENERAL_ERROR=1
-readonly EXIT_MISSING_COMMAND=127
-readonly EXIT_PERMISSION_DENIED=126
-readonly EXIT_NETWORK_ERROR=2
-readonly EXIT_FILE_NOT_FOUND=3
-readonly EXIT_INVALID_INPUT=4
-readonly EXIT_INTERRUPTED=130
+if [[ -z "${EXIT_SUCCESS:-}" ]]; then
+    readonly EXIT_SUCCESS=0
+fi
+if [[ -z "${EXIT_GENERAL_ERROR:-}" ]]; then
+    readonly EXIT_GENERAL_ERROR=1
+fi
+if [[ -z "${EXIT_MISSING_COMMAND:-}" ]]; then
+    readonly EXIT_MISSING_COMMAND=127
+fi
+if [[ -z "${EXIT_PERMISSION_DENIED:-}" ]]; then
+    readonly EXIT_PERMISSION_DENIED=126
+fi
+if [[ -z "${EXIT_NETWORK_ERROR:-}" ]]; then
+    readonly EXIT_NETWORK_ERROR=2
+fi
+if [[ -z "${EXIT_FILE_NOT_FOUND:-}" ]]; then
+    readonly EXIT_FILE_NOT_FOUND=3
+fi
+if [[ -z "${EXIT_INVALID_INPUT:-}" ]]; then
+    readonly EXIT_INVALID_INPUT=4
+fi
+if [[ -z "${EXIT_INTERRUPTED:-}" ]]; then
+    readonly EXIT_INTERRUPTED=130
+fi
 
 # ============================================================================
 # Interface Configuration  
@@ -53,49 +69,89 @@ fi
 # ============================================================================
 
 # Homebrew paths for different architectures
-readonly HOMEBREW_PREFIX_ARM="/opt/homebrew"
-readonly HOMEBREW_PREFIX_INTEL="/usr/local"
+if [[ -z "${HOMEBREW_PREFIX_ARM:-}" ]]; then
+    readonly HOMEBREW_PREFIX_ARM="/opt/homebrew"
+fi
+if [[ -z "${HOMEBREW_PREFIX_INTEL:-}" ]]; then
+    readonly HOMEBREW_PREFIX_INTEL="/usr/local"
+fi
 
 # Common system paths
-readonly SYSTEM_RESOLVER_DIR="/etc/resolver"
-readonly PAM_CONFIG_DIR="/etc/pam.d"
-readonly SUDOERS_DIR="/etc/sudoers.d"
+if [[ -z "${SYSTEM_RESOLVER_DIR:-}" ]]; then
+    readonly SYSTEM_RESOLVER_DIR="/etc/resolver"
+fi
+if [[ -z "${PAM_CONFIG_DIR:-}" ]]; then
+    readonly PAM_CONFIG_DIR="/etc/pam.d"
+fi
+if [[ -z "${SUDOERS_DIR:-}" ]]; then
+    readonly SUDOERS_DIR="/etc/sudoers.d"
+fi
 
 # Temporary file locations
-readonly SUDO_AUTH_MARKER="/tmp/.bootstrap_sudo_authenticated"
-readonly SUDO_KEEPALIVE_PID="/tmp/.bootstrap_sudo_keepalive_pid"
-readonly BOOTSTRAP_TIMEOUT_CONFIG="/etc/sudoers.d/bootstrap_timeout"
+if [[ -z "${SUDO_AUTH_MARKER:-}" ]]; then
+    readonly SUDO_AUTH_MARKER="/tmp/.bootstrap_sudo_authenticated"
+fi
+if [[ -z "${SUDO_KEEPALIVE_PID:-}" ]]; then
+    readonly SUDO_KEEPALIVE_PID="/tmp/.bootstrap_sudo_keepalive_pid"
+fi
+if [[ -z "${BOOTSTRAP_TIMEOUT_CONFIG:-}" ]]; then
+    readonly BOOTSTRAP_TIMEOUT_CONFIG="/etc/sudoers.d/bootstrap_timeout"
+fi
 
 # ============================================================================
 # Network Configuration
 # ============================================================================
 
 # Default URLs for connectivity testing
-readonly DEFAULT_CONNECTIVITY_URL="https://raw.githubusercontent.com"
-readonly FALLBACK_PING_HOST="github.com"
+if [[ -z "${DEFAULT_CONNECTIVITY_URL:-}" ]]; then
+    readonly DEFAULT_CONNECTIVITY_URL="https://raw.githubusercontent.com"
+fi
+if [[ -z "${FALLBACK_PING_HOST:-}" ]]; then
+    readonly FALLBACK_PING_HOST="github.com"
+fi
 
 # Network retry settings
-readonly NETWORK_MAX_RETRIES=1
-readonly CURL_CONNECT_TIMEOUT_MULTIPLIER=2
+if [[ -z "${NETWORK_MAX_RETRIES:-}" ]]; then
+    readonly NETWORK_MAX_RETRIES=1
+fi
+if [[ -z "${CURL_CONNECT_TIMEOUT_MULTIPLIER:-}" ]]; then
+    readonly CURL_CONNECT_TIMEOUT_MULTIPLIER=2
+fi
 
 # ============================================================================
 # Loader Configuration
 # ============================================================================
 
 # Loader animation settings
-readonly LOADER_CHARS='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
-readonly LOADER_DELAY=0.02
-readonly LOADER_CHAR_COUNT=10
+if [[ -z "${LOADER_CHARS:-}" ]]; then
+    readonly LOADER_CHARS='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+fi
+if [[ -z "${LOADER_DELAY:-}" ]]; then
+    readonly LOADER_DELAY=0.02
+fi
+if [[ -z "${LOADER_CHAR_COUNT:-}" ]]; then
+    readonly LOADER_CHAR_COUNT=10
+fi
 
 # ============================================================================
 # Log Configuration
 # ============================================================================
 
 # Default log level and format
-readonly DEFAULT_LOG_LEVEL="INFO"
-readonly LOG_DATE_FORMAT="+%Y-%m-%dT%H:%M:%SZ"
-readonly DEBUG_LOG_DATE_FORMAT="+%H:%M:%S"
+if [[ -z "${DEFAULT_LOG_LEVEL:-}" ]]; then
+    readonly DEFAULT_LOG_LEVEL="INFO"
+fi
+if [[ -z "${LOG_DATE_FORMAT:-}" ]]; then
+    readonly LOG_DATE_FORMAT="+%Y-%m-%dT%H:%M:%SZ"
+fi
+if [[ -z "${DEBUG_LOG_DATE_FORMAT:-}" ]]; then
+    readonly DEBUG_LOG_DATE_FORMAT="+%H:%M:%S"
+fi
 
 # Log file paths (relative to DOTFILES_PARENT_DIR)
-readonly LOG_DIR="tmp/log"
-readonly BOOTSTRAP_LOG_FILE="bootstrap.log"
+if [[ -z "${LOG_DIR:-}" ]]; then
+    readonly LOG_DIR="tmp/log"
+fi
+if [[ -z "${BOOTSTRAP_LOG_FILE:-}" ]]; then
+    readonly BOOTSTRAP_LOG_FILE="bootstrap.log"
+fi
