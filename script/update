@@ -110,7 +110,7 @@ main() {
 
     # Update development tools
     run_with_progressive_spinner "UPDATING DEVELOPMENT STACK..." \
-        "export DOTFILES_PARENT_DIR='$DOTFILES_PARENT_DIR' && source '$CURRENT_DIR/core/common' && source '$CURRENT_DIR/core/dependencies' && ensure_development"
+        "export DOTFILES_PARENT_DIR='$DOTFILES_PARENT_DIR' && source '$CURRENT_DIR/core/common' && source '$CURRENT_DIR/core/dependencies' && update_development"
 
     # Sync package dependencies and applications
     run_with_progressive_spinner "SYNCHRONIZING PACKAGE DEPENDENCIES..." \

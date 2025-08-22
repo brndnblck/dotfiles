@@ -19,29 +19,196 @@ ensure_applications() {
 # Development Environment Setup
 # ============================================================================
 
+# Source asdf environment
+source_asdf_env() {
+	# Source asdf to ensure it's available in PATH
+	if [ -f "$HOME/.asdf/asdf.sh" ]; then
+		source "$HOME/.asdf/asdf.sh"
+	elif [ -f "$(brew --prefix asdf)/libexec/asdf.sh" ]; then
+		source "$(brew --prefix asdf)/libexec/asdf.sh"
+	fi
+}
+
+# Wait for npm to be available after asdf Node.js setup with retry logic
+wait_for_npm_availability() {
+	local max_retries=10
+	local retry_interval=2
+	local retry_count=0
+	
+	log_info "Checking npm availability after Node.js installation..."
+	
+	while [ $retry_count -lt $max_retries ]; do
+		# Re-source asdf environment and reshim
+		source_asdf_env
+		silent "asdf reshim nodejs" 2>/dev/null || true
+		
+		# Check if npm is now available
+		if command -v npm >/dev/null 2>&1; then
+			log_success "npm is now available"
+			return 0
+		fi
+		
+		retry_count=$((retry_count + 1))
+		log_info "npm not yet available, retrying in ${retry_interval}s... (attempt $retry_count/$max_retries)"
+		sleep $retry_interval
+	done
+	
+	log_error "npm is not available after $max_retries attempts"
+	return 1
+}
+
+# Install or update asdf plugins and versions
+setup_asdf_tools() {
+	local is_update_mode="${1:-false}"
+	
+	if ! check_command "asdf" "asdf version manager"; then
+		log_warn "asdf not found, skipping language version management"
+		return 1
+	fi
+	
+	# Source asdf environment first
+	source_asdf_env
+	
+	# Add plugins (skip if already exist)
+	for plugin in ruby python nodejs golang; do
+		if ! asdf plugin list | grep -q "^${plugin}$"; then
+			log_info "Adding asdf plugin: $plugin"
+			if silent "asdf plugin add $plugin"; then
+				# Verify plugin was actually installed
+				if asdf plugin list | grep -q "^${plugin}$"; then
+					log_success "Successfully added asdf plugin: $plugin"
+				else
+					log_error "Plugin $plugin was not installed correctly"
+					continue
+				fi
+			else
+				log_error "Failed to add asdf plugin: $plugin"
+				continue
+			fi
+		else
+			log_info "asdf plugin $plugin already installed"
+		fi
+	done
+	
+	# Update plugin repositories to get latest versions
+	silent "asdf plugin update --all" || true
+	
+	# Install and set latest stable versions
+	for tool in ruby python nodejs golang; do
+		log_info "Processing $tool..."
+		
+		# Get latest stable version
+		local latest_version
+		latest_version=$(asdf latest "$tool" 2>/dev/null) || {
+			log_error "Could not determine latest stable version for $tool"
+			continue
+		}
+		
+		if [ -n "$latest_version" ]; then
+			# Check if this version is already installed
+			if ! asdf list "$tool" 2>/dev/null | grep -q "$latest_version"; then
+				log_info "Installing $tool $latest_version..."
+				if silent "asdf install $tool $latest_version"; then
+					log_success "Successfully installed $tool $latest_version"
+					
+					# Verify installation
+					if ! asdf list "$tool" 2>/dev/null | grep -q "$latest_version"; then
+						log_error "$tool $latest_version installation failed verification"
+						continue
+					fi
+				else
+					log_error "Failed to install $tool $latest_version"
+					continue
+				fi
+			else
+				log_info "$tool $latest_version already installed"
+			fi
+			
+			# Set as global default
+			log_info "Setting $tool $latest_version as global default..."
+			if silent "asdf global $tool $latest_version"; then
+				log_success "Set $tool $latest_version as global default"
+			else
+				log_error "Failed to set $tool $latest_version as global default"
+				continue
+			fi
+			
+			# Clean up old versions if in update mode
+			if [ "$is_update_mode" = "true" ]; then
+				cleanup_old_asdf_versions "$tool" "$latest_version"
+			fi
+		fi
+	done
+	
+	# Reshim all tools to ensure executables are available
+	log_info "Refreshing asdf shims..."
+	if silent "asdf reshim"; then
+		log_success "asdf shims refreshed successfully"
+	else
+		log_error "Failed to refresh asdf shims"
+		return 1
+	fi
+}
+
+# Clean up old asdf versions with safety checks and confirmation
+cleanup_old_asdf_versions() {
+	local tool="$1"
+	local latest_version="$2"
+	
+	# Safety check: ensure we have a valid latest version
+	if [ -z "$latest_version" ]; then
+		log_error "Cannot cleanup versions: latest_version is empty for $tool"
+		return 1
+	fi
+	
+	# Safety check: ensure latest version is actually installed
+	if ! asdf list "$tool" 2>/dev/null | grep -q "^[[:space:]]*$latest_version$"; then
+		log_error "Cannot cleanup versions: latest version $latest_version is not installed for $tool"
+		return 1
+	fi
+	
+	local installed_versions
+	installed_versions=$(asdf list "$tool" 2>/dev/null | grep -v '\*' | sed 's/^[[:space:]]*//' | grep -v "^$latest_version$") || return 0
+	
+	if [ -z "$installed_versions" ]; then
+		log_info "No old versions of $tool to clean up"
+		return 0
+	fi
+	
+	# Display versions that will be removed
+	log_info "Found old versions of $tool that can be removed:"
+	echo "$installed_versions" | while read -r version; do
+		if [ -n "$version" ]; then
+			log_info "  - $version"
+		fi
+	done
+	
+	log_info "Current version: $latest_version (will be kept)"
+	
+	# Interactive confirmation for safety
+	if [ "${DOTFILES_AUTO_CLEANUP:-false}" != "true" ]; then
+		log_info "Cleanup can be automated by setting DOTFILES_AUTO_CLEANUP=true"
+		return 0
+	fi
+	
+	# Proceed with cleanup
+	echo "$installed_versions" | while read -r version; do
+		if [ -n "$version" ] && [ "$version" != "$latest_version" ]; then
+			log_info "Removing old $tool version: $version"
+			if silent "asdf uninstall $tool $version"; then
+				log_success "Successfully removed $tool $version"
+			else
+				log_error "Failed to remove $tool $version"
+			fi
+		fi
+	done
+}
+
 ensure_development() {
 	setup_homebrew_env
-
-	if check_command "asdf" "asdf version manager"; then
-		silent "asdf plugin add ruby" || true
-		silent "asdf plugin add python" || true
-		silent "asdf plugin add nodejs" || true
-		silent "asdf plugin add golang" || true
-		
-		# Install and set latest stable versions dynamically
-		for tool in ruby python nodejs golang; do
-			log_info "Installing latest stable $tool..."
-			local latest_version=$(silent "asdf latest $tool")
-			
-			if [ -n "$latest_version" ]; then
-				log_info "Installing $tool $latest_version..."
-				silent "asdf install $tool $latest_version" || true
-				silent "asdf global $tool $latest_version" || true
-			else
-				log_warn "Could not determine latest stable version for $tool"
-			fi
-		done
-	fi
+	
+	# Setup asdf tools (first install mode)
+	setup_asdf_tools "false"
 
 	if check_command "rustup" "Rust toolchain manager"; then
 		if ! silent "rustup toolchain list | grep -q stable"; then
@@ -70,28 +237,21 @@ ensure_development() {
 	fi
 	
 	# Install npm packages from dependencies file
-	# First ensure asdf environment is loaded
+	# First ensure asdf environment is loaded and npm is available
 	if check_command "asdf" "asdf version manager"; then
-		# Source asdf to ensure npm is available in PATH
-		if [ -f "$HOME/.asdf/asdf.sh" ]; then
-			source "$HOME/.asdf/asdf.sh"
-		elif [ -f "$(brew --prefix asdf)/libexec/asdf.sh" ]; then
-			source "$(brew --prefix asdf)/libexec/asdf.sh"
+		# Wait for npm to be available after Node.js installation
+		if wait_for_npm_availability; then
+			process_package_file \
+				"${DOTFILES_PARENT_DIR:-$PWD}/dependencies/npm.packages" \
+				"npm" \
+				"silent \"npm install -g\"" \
+				"npm list -g {} >/dev/null 2>&1" \
+				"Node.js npm packages"
+		else
+			log_error "npm is not available. Skipping npm package installation."
 		fi
-		
-		# Reshim to ensure npm is available
-		silent "asdf reshim nodejs" || true
-	fi
-	
-	if check_command "npm" "Node package manager"; then
-		process_package_file \
-			"${DOTFILES_PARENT_DIR:-$PWD}/dependencies/npm.packages" \
-			"npm" \
-			"silent \"npm install -g\"" \
-			"npm list -g {} >/dev/null 2>&1" \
-			"Node.js npm packages"
 	else
-		log_warn "npm not found. Make sure Node.js is properly installed via asdf."
+		log_warn "asdf not found. Skipping npm package installation."
 	fi
 }
 
@@ -102,5 +262,43 @@ ensure_development() {
 ensure_updated() {
 	silent "brew upgrade"
 	silent "mas upgrade"
+}
+
+# Update development environment with cleanup
+update_development() {
+	setup_homebrew_env
+	
+	# Setup asdf tools (update mode with cleanup)
+	setup_asdf_tools "true"
+	
+	if check_command "rustup" "Rust toolchain manager"; then
+		log_info "Updating Rust toolchains..."
+		silent "rustup update" || true
+		
+		# Install cargo packages from dependencies file
+		process_package_file \
+			"${DOTFILES_PARENT_DIR:-$PWD}/dependencies/cargo.packages" \
+			"cargo" \
+			"silent \"cargo install\"" \
+			"cargo install --list | grep -q '^{} v'" \
+			"Rust cargo packages"
+	fi
+	
+	# Install npm packages from dependencies file
+	if check_command "asdf" "asdf version manager"; then
+		# Wait for npm to be available after Node.js updates
+		if wait_for_npm_availability; then
+			process_package_file \
+				"${DOTFILES_PARENT_DIR:-$PWD}/dependencies/npm.packages" \
+				"npm" \
+				"silent \"npm install -g\"" \
+				"npm list -g {} >/dev/null 2>&1" \
+				"Node.js npm packages"
+		else
+			log_error "npm is not available. Skipping npm package installation."
+		fi
+	else
+		log_warn "asdf not found. Skipping npm package installation."
+	fi
 }
 
