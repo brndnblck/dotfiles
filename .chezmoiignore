@@ -1,5 +1,6 @@
 .github/*
 .shellcheckrc
+CLAUDE.md
 dependencies/
 fonts/
 install.sh
@@ -7,5 +8,4 @@ LICENSE.md
 Makefile
 README.md
 script/
-TESTING.md
 tmp/

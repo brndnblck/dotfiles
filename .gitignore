@@ -1,7 +1,5 @@
-tmp/
-.DS_Store
 *.lock.json
-
-# Claude Code project files
 .claude/
+.DS_Store
 CLAUDE.md
+tmp/

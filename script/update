@@ -101,10 +101,44 @@ main() {
 
     # Update dotfiles and sync configuration
     if command -v chezmoi > /dev/null 2>&1; then
-        run_with_progressive_spinner "SYNCHRONIZING CONFIGURATION MATRIX..." \
-            "chezmoi update"
+        # Check if chezmoi is properly initialized
+        if ! chezmoi source-path >/dev/null 2>&1; then
+            log_info "Chezmoi not properly initialized, setting up..."
+            run_with_progressive_spinner "INITIALIZING CONFIGURATION MATRIX..." \
+                "chezmoi init --force --source '$DOTFILES_PARENT_DIR'"
+        else
+            # Verify the source path is correct
+            current_source=$(chezmoi source-path 2>/dev/null || echo "")
+            if [ -n "$current_source" ] && [ "$current_source" != "$DOTFILES_PARENT_DIR" ]; then
+                # Check if it's a symlink pointing to our dotfiles
+                if [ -L "$current_source" ] && [ "$(readlink "$current_source")" = "$DOTFILES_PARENT_DIR" ]; then
+                    # Symlink is correct, proceed
+                    :
+                else
+                    log_info "Chezmoi source path mismatch, reinitializing..."
+                    run_with_progressive_spinner "REINITIALIZING CONFIGURATION MATRIX..." \
+                        "chezmoi init --force --source '$DOTFILES_PARENT_DIR'"
+                fi
+            fi
+        fi
+        
+        # Try update first (if in a git repo), fall back to apply if needed
+        if [ -d "$DOTFILES_PARENT_DIR/.git" ]; then
+            # We're in a git repository, try to update
+            if ! run_with_progressive_spinner "SYNCHRONIZING CONFIGURATION MATRIX..." \
+                "chezmoi update 2>/dev/null"; then
+                # Update failed, fall back to apply
+                log_info "Update failed, applying current configuration..."
+                run_with_progressive_spinner "APPLYING CONFIGURATION MATRIX..." \
+                    "chezmoi apply --force"
+            fi
+        else
+            # Not a git repository, just apply
+            run_with_progressive_spinner "APPLYING CONFIGURATION MATRIX..." \
+                "chezmoi apply --force"
+        fi
 
-        run_with_progressive_spinner "APPLYING CONFIGURATION CHANGES..." \
+        run_with_progressive_spinner "REFRESHING SHELL ENVIRONMENT..." \
             "source '$CURRENT_DIR/core/system' && apply_dotfiles_and_shell"
     fi
 
