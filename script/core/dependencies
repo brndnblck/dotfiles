@@ -289,7 +289,7 @@ ensure_development() {
 		process_package_file \
 			"${DOTFILES_PARENT_DIR:-$PWD}/dependencies/cargo.packages" \
 			"cargo" \
-			"silent \"cargo install\"" \
+			"silent \"cargo install {}\"" \
 			"cargo install --list | grep -q '^{} v'" \
 			"Rust cargo packages"
 	fi
@@ -302,7 +302,7 @@ ensure_development() {
 			process_package_file \
 				"${DOTFILES_PARENT_DIR:-$PWD}/dependencies/npm.packages" \
 				"npm" \
-				"silent \"npm install -g\"" \
+				"silent \"npm install -g {}\"" \
 				"npm list -g {} >/dev/null 2>&1" \
 				"Node.js npm packages"
 		else
@@ -338,7 +338,7 @@ update_development() {
 		process_package_file \
 			"${DOTFILES_PARENT_DIR:-$PWD}/dependencies/cargo.packages" \
 			"cargo" \
-			"silent \"cargo install\"" \
+			"silent \"cargo install {}\"" \
 			"cargo install --list | grep -q '^{} v'" \
 			"Rust cargo packages"
 	fi
@@ -350,7 +350,7 @@ update_development() {
 			process_package_file \
 				"${DOTFILES_PARENT_DIR:-$PWD}/dependencies/npm.packages" \
 				"npm" \
-				"silent \"npm install -g\"" \
+				"silent \"npm install -g {}\"" \
 				"npm list -g {} >/dev/null 2>&1" \
 				"Node.js npm packages"
 		else

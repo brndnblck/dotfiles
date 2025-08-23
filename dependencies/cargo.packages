@@ -1,6 +1,3 @@
-# Cargo packages to install
-# Format: one package per line, comments supported
-
 # Working packages that compile successfully
 basalt-tui
 bandwhich
@@ -29,17 +26,3 @@ cargo-edit   # Cargo subcommands for editing Cargo.toml
 bottom       # System monitor (btm command)
 du-dust      # Disk usage analyzer (correct package name)
 procs        # Better ps command
-
-# Temporarily disabled due to compilation issues:
-# kdash        # Kubernetes dashboard - has compilation errors
-# trippy       # Network diagnostic tool - has compilation errors
-
-# Removed packages (not found in crates.io):
-# chmod-cli    # Not found in registry
-# mcp-probe    # Not found in registry  
-# wiper        # Not found in registry
-# hexpatch     # Not found in registry
-# Valkyrie00/homebrew-bbrew/bbre  # Invalid format
-
-# Git repositories (use cargo install --git URL manually if needed):
-# https://github.com/shenmian/tracker
