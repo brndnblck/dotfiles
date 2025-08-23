@@ -124,14 +124,9 @@ setup_asdf_tools() {
 				log_info "$tool $latest_version already installed"
 			fi
 			
-			# Set as global default
-			log_info "Setting $tool $latest_version as global default..."
-			if silent "asdf global $tool $latest_version"; then
-				log_success "Set $tool $latest_version as global default"
-			else
-				log_error "Failed to set $tool $latest_version as global default"
-				continue
-			fi
+			# Install the version but don't try to set it globally here
+			# The global ~/.tool-versions will be updated by update_tool_versions_file()
+			log_info "Version $tool $latest_version is ready for global use"
 			
 			# Clean up old versions if in update mode
 			if [ "$is_update_mode" = "true" ]; then
@@ -146,6 +141,69 @@ setup_asdf_tools() {
 		log_success "asdf shims refreshed successfully"
 	else
 		log_error "Failed to refresh asdf shims"
+		return 1
+	fi
+	
+	# Update ~/.tool-versions file with latest versions
+	update_tool_versions_file
+}
+
+# Update ~/.tool-versions file with current global versions
+update_tool_versions_file() {
+	local tool_versions_file="$HOME/.tool-versions"
+	
+	log_info "Updating $tool_versions_file with latest versions..."
+	
+	# Create or clear the file
+	> "$tool_versions_file"
+	
+	# Add each tool's latest version to the file
+	for tool in ruby python nodejs golang; do
+		local version=""
+		
+		# First, try to get the latest installed version
+		local installed_versions
+		installed_versions=$(asdf list "$tool" 2>/dev/null | tail -1 | sed 's/^[[:space:]]*//')
+		
+		if [ -n "$installed_versions" ] && [ "$installed_versions" != "No versions installed" ]; then
+			# Use the last (usually latest) installed version
+			version="$installed_versions"
+			log_info "Using installed version for $tool: $version"
+		else
+			# No installed version, get the latest available
+			log_info "No installed version for $tool, fetching latest..."
+			version=$(asdf latest "$tool" 2>/dev/null)
+			
+			if [ -n "$version" ]; then
+				log_info "Latest version for $tool is $version"
+			fi
+		fi
+		
+		# Add to .tool-versions if we have a valid version
+		if [ -n "$version" ] && [ "$version" != "No" ] && [ "$version" != "Version" ]; then
+			echo "$tool $version" >> "$tool_versions_file"
+			log_success "Added $tool $version to .tool-versions"
+		else
+			log_warn "Could not determine version for $tool"
+			# Try to at least add the latest version as fallback
+			local fallback_version
+			fallback_version=$(asdf latest "$tool" 2>/dev/null)
+			if [ -n "$fallback_version" ]; then
+				echo "$tool $fallback_version" >> "$tool_versions_file"
+				log_success "Added $tool $fallback_version to .tool-versions (fallback)"
+			fi
+		fi
+	done
+	
+	# Verify the file was created and has content
+	if [ -f "$tool_versions_file" ] && [ -s "$tool_versions_file" ]; then
+		log_success "Successfully updated $tool_versions_file"
+		log_info "Contents:"
+		while IFS= read -r line; do
+			log_info "  $line"
+		done < "$tool_versions_file"
+	else
+		log_error "Failed to create $tool_versions_file or file is empty"
 		return 1
 	fi
 }
@@ -269,6 +327,7 @@ update_development() {
 	setup_homebrew_env
 	
 	# Setup asdf tools (update mode with cleanup)
+	# This will also call update_tool_versions_file internally
 	setup_asdf_tools "true"
 	
 	if check_command "rustup" "Rust toolchain manager"; then
