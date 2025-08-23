@@ -102,13 +102,13 @@ main() {
     # Update dotfiles and sync configuration
     if command -v chezmoi > /dev/null 2>&1; then
         # Check if chezmoi is properly initialized
-        if ! chezmoi source-path >/dev/null 2>&1; then
+        if ! chezmoi source-path > /dev/null 2>&1; then
             log_info "Chezmoi not properly initialized, setting up..."
             run_with_progressive_spinner "INITIALIZING CONFIGURATION MATRIX..." \
                 "chezmoi init --force --source '$DOTFILES_PARENT_DIR'"
         else
             # Verify the source path is correct
-            current_source=$(chezmoi source-path 2>/dev/null || echo "")
+            current_source=$(chezmoi source-path 2> /dev/null || echo "")
             if [ -n "$current_source" ] && [ "$current_source" != "$DOTFILES_PARENT_DIR" ]; then
                 # Check if it's a symlink pointing to our dotfiles
                 if [ -L "$current_source" ] && [ "$(readlink "$current_source")" = "$DOTFILES_PARENT_DIR" ]; then
@@ -121,7 +121,7 @@ main() {
                 fi
             fi
         fi
-        
+
         # Try update first (if in a git repo), fall back to apply if needed
         if [ -d "$DOTFILES_PARENT_DIR/.git" ]; then
             # We're in a git repository, try to update
