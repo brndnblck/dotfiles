@@ -55,11 +55,11 @@ fi
 if [ -z "${INTERFACE_WIDTH:-}" ]; then
     readonly INTERFACE_WIDTH=72
 
-    # Amber cyberpunk color system - Alien/Blade Runner inspired
+    # Amber color theme for terminal interface
     readonly INTERFACE_COLOR=214             # Amber primary (#FFB000)
     readonly INTERFACE_SECONDARY=208         # Dim amber (#CC8800) 
-    readonly INTERFACE_ACCENT=51             # Neon cyan (#00FFFF) for glitch elements
-    readonly INTERFACE_ERROR=10              # Green (#00FF66) for system intrusion
+    readonly INTERFACE_ACCENT=51             # Cyan accent color (#00FFFF)
+    readonly INTERFACE_ERROR=10              # Green for error messages (#00FF66)
     readonly INTERFACE_BG_COLOR=0            # Pure black background
     readonly INTERFACE_BOLD="--bold"         # Bold styling flag
 fi

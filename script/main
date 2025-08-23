@@ -50,12 +50,12 @@ main_menu() {
         show_standard_header
         show_section_header "SYSTEM OPERATIONS"
 
-        # Menu with hostile, machine-like options
+        # Menu options
         local choice
         choice=$(gum choose \
             "[01] INIT SYSTEM" \
-            "[02] UPDATE AND SYNCHRONIZE" \
-            "[03] RUN SYSTEM SCAN" \
+            "[02] UPDATE AND SYNC" \
+            "[03] SYSTEM STATUS" \
             "[04] TERMINATE SESSION" \
             --height 6 \
             --cursor.foreground "$INTERFACE_COLOR" \
@@ -64,21 +64,14 @@ main_menu() {
             --selected.background "$INTERFACE_COLOR" \
             --header="")
 
-        echo ""
-
-        # Bottom divider
-        colored_divider
-
         case "$choice" in
             "[01] INIT SYSTEM")
-                # system_pause "ACCESSING DEPLOYMENT MODULE" 1
                 "$CURRENT_DIR/setup"
                 ;;
-            "[02] UPDATE AND SYNCHRONIZE")
-                # system_pause "INITIATING SYNC PROTOCOL" 1
+            "[02] UPDATE AND SYNC")
                 "$CURRENT_DIR/update"
                 ;;
-            "[03] RUN SYSTEM SCAN")
+            "[03] SYSTEM STATUS")
                 "$CURRENT_DIR/status"
                 ;;
             "[04] TERMINATE SESSION")

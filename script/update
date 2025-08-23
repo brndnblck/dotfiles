@@ -38,7 +38,7 @@ source "$CURRENT_DIR/core/ui"
 # Main update function
 main() {
     show_standard_header
-    show_section_header "SYSTEM UPDATE INITIATED"
+    show_section_header "SYSTEM UPDATE"
 
     # Display log paths and update sequence
     gum style \
@@ -49,12 +49,12 @@ main() {
         --width "$((INTERFACE_WIDTH - 1))" \
         "▶ UPDATE SEQUENCE:" \
         "" \
-        "  [01] PACKAGE REGISTRY SYNCHRONIZATION" \
-        "  [02] SYSTEM COMPONENT UPGRADES" \
-        "  [03] APPLICATION BINARY UPDATES" \
-        "  [04] CONFIGURATION MATRIX SYNC" \
-        "  [05] DEVELOPMENT STACK REFRESH" \
-        "  [06] SHELL ENVIRONMENT UPDATES"
+        "  [01] PACKAGE UPDATES" \
+        "  [02] SYSTEM UPGRADES" \
+        "  [03] APPLICATION UPDATES" \
+        "  [04] CONFIGURATION SYNC" \
+        "  [05] DEVELOPMENT TOOLS" \
+        "  [06] SHELL ENVIRONMENT"
 
     echo ""
 
@@ -83,19 +83,19 @@ main() {
 
     # Update Homebrew
     if command -v brew > /dev/null 2>&1; then
-        run_with_progressive_spinner "SYNCHRONIZING PACKAGE REGISTRY..." \
+        run_with_progressive_spinner "UPDATING PACKAGE REGISTRY..." \
             "brew update"
 
-        run_with_progressive_spinner "UPGRADING SYSTEM COMPONENTS..." \
+        run_with_progressive_spinner "UPGRADING PACKAGES..." \
             "brew upgrade"
 
-        run_with_progressive_spinner "UPGRADING APPLICATION BINARIES..." \
+        run_with_progressive_spinner "UPGRADING APPLICATIONS..." \
             "brew upgrade --cask"
     fi
 
     # Update Mac App Store apps
     if command -v mas > /dev/null 2>&1; then
-        run_with_progressive_spinner "UPDATING APPLICATION STORE REGISTRY..." \
+        run_with_progressive_spinner "UPDATING APP STORE APPS..." \
             "mas upgrade"
     fi
 
@@ -104,7 +104,7 @@ main() {
         # Check if chezmoi is properly initialized
         if ! chezmoi source-path > /dev/null 2>&1; then
             log_info "Chezmoi not properly initialized, setting up..."
-            run_with_progressive_spinner "INITIALIZING CONFIGURATION MATRIX..." \
+            run_with_progressive_spinner "INITIALIZING DOTFILE CONFIG..." \
                 "chezmoi init --force --source '$DOTFILES_PARENT_DIR'"
         else
             # Verify the source path is correct
@@ -116,7 +116,7 @@ main() {
                     :
                 else
                     log_info "Chezmoi source path mismatch, reinitializing..."
-                    run_with_progressive_spinner "REINITIALIZING CONFIGURATION MATRIX..." \
+                    run_with_progressive_spinner "REINITIALIZING DOTFILE CONFIG..." \
                         "chezmoi init --force --source '$DOTFILES_PARENT_DIR'"
                 fi
             fi
@@ -125,16 +125,16 @@ main() {
         # Try update first (if in a git repo), fall back to apply if needed
         if [ -d "$DOTFILES_PARENT_DIR/.git" ]; then
             # We're in a git repository, try to update
-            if ! run_with_progressive_spinner "SYNCHRONIZING CONFIGURATION MATRIX..." \
+            if ! run_with_progressive_spinner "SYNCING DOTFILE CONFIG..." \
                 "chezmoi update 2>/dev/null"; then
                 # Update failed, fall back to apply
                 log_info "Update failed, applying current configuration..."
-                run_with_progressive_spinner "APPLYING CONFIGURATION MATRIX..." \
+                run_with_progressive_spinner "APPLYING DOTFILE CONFIG..." \
                     "chezmoi apply --force"
             fi
         else
             # Not a git repository, just apply
-            run_with_progressive_spinner "APPLYING CONFIGURATION MATRIX..." \
+            run_with_progressive_spinner "APPLYING DOTFILE CONFIG..." \
                 "chezmoi apply --force"
         fi
 

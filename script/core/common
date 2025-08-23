@@ -32,7 +32,7 @@ colored_divider() {
     gum style --foreground "$INTERFACE_SECONDARY" "$(printf "${char}%.0s" $(seq 1 "$width"))"
 }
 
-# Amber cyberpunk utility functions
+# System utility functions
 system_pause() {
     local message="${1:-WORKING}"
     local duration="${2:-$DEFAULT_SYSTEM_PAUSE_DURATION}"

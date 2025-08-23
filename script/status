@@ -35,7 +35,7 @@ source "$CURRENT_DIR/core/ui"
 # Main status function
 main() {
     show_standard_header
-    show_section_header "DIAGNOSTIC PROTOCOL ACTIVE"
+    show_section_header "SYSTEM STATUS"
 
     # Gather all system information with spinner
     local status_data
@@ -183,40 +183,40 @@ main() {
     ")
 
     # Display all sections
-    gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ CORE SYSTEM ANALYSIS:"
+    gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ SYSTEM INFO:"
     echo "$status_data" | sed -n '/SYSTEM_START/,/SYSTEM_END/p' | grep -v "SYSTEM_" | sed 's/^/  ░ /'
 
     echo ""
 
     # Display Homebrew info
-    gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ PACKAGE MANAGER STATUS:"
+    gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ PACKAGE MANAGER:"
     echo "$status_data" | sed -n '/HOMEBREW_START/,/HOMEBREW_END/p' | grep -v "HOMEBREW_" | sed 's/^/  ░ /'
 
     echo ""
 
     # Display Development tools
-    gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ DEVELOPMENT STACK:"
+    gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ DEVELOPMENT TOOLS:"
     echo "$status_data" | sed -n '/DEVTOOLS_START/,/DEVTOOLS_END/p' | grep -v "DEVTOOLS_" | sed 's/^/  ░ /'
 
     echo ""
 
     # Display Dotfiles status
-    gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ CONFIGURATION MATRIX:"
+    gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ DOTFILE CONFIG:"
     echo "$status_data" | sed -n '/DOTFILES_START/,/DOTFILES_END/p' | grep -v "DOTFILES_" | sed 's/^/  ░ /'
 
     echo ""
 
     # Display Dependencies status
-    gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ DEPENDENCY TRACKING:"
+    gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ DEPENDENCIES:"
     echo "$status_data" | sed -n '/DEPENDENCIES_START/,/DEPENDENCIES_END/p' | grep -v "DEPENDENCIES_" | sed 's/^/  ░ /'
 
     echo ""
 
     # Display Applications status
-    gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ APPLICATION REGISTRY:"
+    gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ APPLICATIONS:"
     echo "$status_data" | sed -n '/APPLICATIONS_START/,/APPLICATIONS_END/p' | grep -v "APPLICATIONS_" | sed 's/^/  ░ /'
 
-    show_completion "SYSTEM SCAN COMPLETE"
+    show_completion "STATUS CHECK COMPLETE"
     show_footer_prompt
 }
 
