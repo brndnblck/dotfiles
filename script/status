@@ -118,7 +118,11 @@ main() {
                 configured_list=\$(grep '^brew ' \"\$DOTFILES_PARENT_DIR/dependencies/dependencies.brewfile\" | sed 's/^brew \"\([^\"]*\)\".*/\1/' | sort)
                 missing_list=\$(comm -23 <(echo \"\$configured_list\") <(brew list --formula | sort))
                 total_configured=\$(echo \"\$configured_list\" | wc -l | xargs)
-                missing_count=\$(echo \"\$missing_list\" | wc -l | xargs)
+                if [[ -n \"\$missing_list\" ]]; then
+                    missing_count=\$(echo \"\$missing_list\" | wc -l | xargs)
+                else
+                    missing_count=0
+                fi
                 installed=\$((total_configured - missing_count))
                 echo \"Installed: \$installed/\$total_deps\"
                 if [[ -n \"\$missing_list\" ]]; then
@@ -151,7 +155,11 @@ main() {
                 configured_casks=\$(grep '^cask ' \"\$DOTFILES_PARENT_DIR/dependencies/applications.brewfile\" | sed 's/^cask \"\([^\"]*\)\".*/\1/' | sort)
                 missing_casks=\$(comm -23 <(echo \"\$configured_casks\") <(brew list --cask | sort))
                 total_casks=\$(echo \"\$configured_casks\" | wc -l | xargs)
-                missing_cask_count=\$(echo \"\$missing_casks\" | wc -l | xargs)
+                if [[ -n \"\$missing_casks\" ]]; then
+                    missing_cask_count=\$(echo \"\$missing_casks\" | wc -l | xargs)
+                else
+                    missing_cask_count=0
+                fi
                 installed=\$((total_casks - missing_cask_count))
                 if [[ -n \"\$missing_casks\" ]]; then
                     while IFS= read -r cask; do
@@ -165,7 +173,11 @@ main() {
                 configured_mas_ids=\$(grep '^mas ' \"\$DOTFILES_PARENT_DIR/dependencies/applications.brewfile\" | sed 's/.*id: *\([0-9]*\).*/\1/' | sort)
                 missing_mas_ids=\$(comm -23 <(echo \"\$configured_mas_ids\") <(mas list 2>/dev/null | cut -d' ' -f1 | sort))
                 total_mas=\$(echo \"\$configured_mas_ids\" | wc -l | xargs)
-                missing_mas_count=\$(echo \"\$missing_mas_ids\" | wc -l | xargs)
+                if [[ -n \"\$missing_mas_ids\" ]]; then
+                    missing_mas_count=\$(echo \"\$missing_mas_ids\" | wc -l | xargs)
+                else
+                    missing_mas_count=0
+                fi
                 installed=\$((installed + total_mas - missing_mas_count))
                 if [[ -n \"\$missing_mas_ids\" ]]; then
                     while IFS= read -r app_id; do

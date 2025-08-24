@@ -32,7 +32,7 @@ brew "wget2"             # Download tool
 
 # Development Environment Manager
 brew "asdf"              # Universal version manager
-brew "rustup-init"       # Rust toolchain installer
+brew "rustup"            # Rust toolchain installer
 brew "aicommits"         # AI-powered commit messages
 brew "libyaml"           # YAML library for Ruby psych extension
 

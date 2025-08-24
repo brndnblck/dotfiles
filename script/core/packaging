@@ -222,13 +222,17 @@ process_individual_package() {
     local install_command="$3"
     local check_command="$4"
     
+    # Resolve template placeholders
+    local resolved_install_cmd="${install_command//\{\}/$package}"
+    local resolved_check_cmd="${check_command//\{\}/$package}"
+    
     # Check if package is already installed
-    if eval "$check_command" "$package" >/dev/null 2>&1; then
+    if eval "$resolved_check_cmd" >/dev/null 2>&1; then
         log_info "$package_type package already installed: $package"
         return 0
     else
         log_info "Installing $package_type package: $package"
-        if eval "$install_command" "$package" || true; then
+        if eval "$resolved_install_cmd" || true; then
             return 0
         else
             installation_error "$package_type" "$package" "false"
