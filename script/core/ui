@@ -37,7 +37,7 @@ show_standard_header() {
                                                                            
 EOF
     
-    echo ""
+    ansi --newline
 }
 
 # Show section header with title and divider
@@ -50,14 +50,14 @@ show_section_header() {
         ">> ${title}"
     
     colored_divider
-    echo ""
+    ansi --newline
 }
 
 # Show completion message with dividers
 show_completion() {
     local message="$1"
     
-    echo ""
+    ansi --newline
     gum style \
         --foreground "$INTERFACE_SECONDARY" \
         "$INTERFACE_BOLD" \
@@ -70,7 +70,7 @@ show_completion() {
 # Show footer with return prompt
 show_footer_prompt() {
     # Wait for user input with blinking cursor on prompt
-    echo ""
+    ansi --newline
     gum input --placeholder "" \
         --cursor.foreground "$INTERFACE_COLOR" \
         --prompt.foreground "$INTERFACE_SECONDARY" \
@@ -89,7 +89,7 @@ run_with_progressive_spinner() {
     log_output "Starting: $message"
     
     # Log command to debug file
-    echo "[$(date '+%H:%M:%S')] COMMAND: $command" >> "$DOTFILES_DEBUG_LOG"
+    record "DEBUG" "COMMAND: $command"
     
     # Show the current task with animated spinner in amber
     if gum spin --spinner dot --title " $message" \
@@ -104,18 +104,18 @@ run_with_progressive_spinner() {
         echo "░ ✓ $message"
         
         # Also capture command output to debug log
-        echo "[$(date '+%H:%M:%S')] COMMAND OUTPUT:" >> "$DOTFILES_DEBUG_LOG"
+        record "DEBUG" "COMMAND OUTPUT:"
         tail -n 50 "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}" >> "$DOTFILES_DEBUG_LOG"
-        echo "[$(date '+%H:%M:%S')] END COMMAND OUTPUT" >> "$DOTFILES_DEBUG_LOG"
+        record "DEBUG" "END COMMAND OUTPUT"
         
         log_output "Completed: $message"
         return 0
     else
         # Log failure details to debug log
-        echo "[$(date '+%H:%M:%S')] COMMAND FAILED: $command" >> "$DOTFILES_DEBUG_LOG"
-        echo "[$(date '+%H:%M:%S')] ERROR OUTPUT:" >> "$DOTFILES_DEBUG_LOG"
+        record "DEBUG" "COMMAND FAILED: $command"
+        record "DEBUG" "ERROR OUTPUT:"
         tail -n 50 "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}" >> "$DOTFILES_DEBUG_LOG"
-        echo "[$(date '+%H:%M:%S')] END ERROR OUTPUT" >> "$DOTFILES_DEBUG_LOG"
+        record "DEBUG" "END ERROR OUTPUT"
         
         log_output "Failed: $message"
         return 1
@@ -131,7 +131,7 @@ run_with_spinner() {
     log_output "Starting: $message"
     
     # Log command to debug file
-    echo "[$(date '+%H:%M:%S')] COMMAND: $command" >> "$DOTFILES_DEBUG_LOG"
+    record "DEBUG" "COMMAND: $command"
     
     if gum spin --spinner dot --title " $message" \
         --spinner.foreground "$INTERFACE_COLOR" \
@@ -139,18 +139,18 @@ run_with_spinner() {
         -- bash -c "$command >> '${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}' 2>&1; echo \$? > /tmp/exit_code_\$\$"; then
         
         # Also capture command output to debug log
-        echo "[$(date '+%H:%M:%S')] COMMAND OUTPUT:" >> "$DOTFILES_DEBUG_LOG"
+        record "DEBUG" "COMMAND OUTPUT:"
         tail -n 50 "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}" >> "$DOTFILES_DEBUG_LOG"
-        echo "[$(date '+%H:%M:%S')] END COMMAND OUTPUT" >> "$DOTFILES_DEBUG_LOG"
+        record "DEBUG" "END COMMAND OUTPUT"
         
         log_output "Completed: $message"
         return 0
     else
         # Log failure details to debug log
-        echo "[$(date '+%H:%M:%S')] COMMAND FAILED: $command" >> "$DOTFILES_DEBUG_LOG"
-        echo "[$(date '+%H:%M:%S')] ERROR OUTPUT:" >> "$DOTFILES_DEBUG_LOG"
+        record "DEBUG" "COMMAND FAILED: $command"
+        record "DEBUG" "ERROR OUTPUT:"
         tail -n 50 "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}" >> "$DOTFILES_DEBUG_LOG"
-        echo "[$(date '+%H:%M:%S')] END ERROR OUTPUT" >> "$DOTFILES_DEBUG_LOG"
+        record "DEBUG" "END ERROR OUTPUT"
         
         log_output "Failed: $message"
         return 1
@@ -171,9 +171,9 @@ show_exit_screen() {
     # Disconnection messages
     gum style --foreground "$INTERFACE_COLOR" "DISCONNECTING..."
     sleep 1
-    echo ""
+    ansi --newline
     gum style --foreground "$INTERFACE_SECONDARY" "/// SESSION TERMINATED [X]"
-    echo ""
+    ansi --newline
     
     exit 0
 }

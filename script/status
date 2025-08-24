@@ -5,19 +5,22 @@
 
 set -euo pipefail
 
+CURRENT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+
+# Source ansi helper for consistent output formatting
+source "$CURRENT_DIR/core/ansi"
+
 # Check if this script is being called directly (not through main TUI)
 if [ -z "${DOTFILES_PARENT_DIR:-}" ]; then
-    echo "❌ This script should not be called directly!"
-    echo ""
-    echo "Please use the main TUI interface:"
-    echo "  ./script/main"
-    echo ""
-    echo "Or run the bootstrap first:"
-    echo "  ./script/bootstrap"
+    ansi --red --bold "⚠ This script should not be called directly!" --newline
+    ansi --newline
+    ansi "Please use the main TUI interface:" --newline
+    ansi "  ./script/main" --newline
+    ansi --newline
+    ansi "Or run the bootstrap first:" --newline
+    ansi "  ./script/bootstrap" --newline
     exit 1
 fi
-
-CURRENT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 DOTFILES_PARENT_DIR=$(dirname "$CURRENT_DIR")
 DOTFILES_DEBUG_LOG="$DOTFILES_PARENT_DIR/tmp/debug-status-$(date +%Y%m%d-%H%M%S).log"
 
@@ -41,7 +44,7 @@ main() {
     local status_data
 
     # Log status gathering to debug file
-    echo "[$(date '+%H:%M:%S')] GATHERING SYSTEM STATUS" >> "$DOTFILES_DEBUG_LOG"
+    record "DEBUG" "GATHERING SYSTEM STATUS"
 
     status_data=$(gum spin --spinner dot --title "SCANNING SYSTEM COMPONENTS..." \
         --spinner.foreground "$INTERFACE_COLOR" \
@@ -186,31 +189,31 @@ main() {
     gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ SYSTEM INFO:"
     echo "$status_data" | sed -n '/SYSTEM_START/,/SYSTEM_END/p' | grep -v "SYSTEM_" | sed 's/^/  ░ /'
 
-    echo ""
+    ansi --newline
 
     # Display Homebrew info
     gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ PACKAGE MANAGER:"
     echo "$status_data" | sed -n '/HOMEBREW_START/,/HOMEBREW_END/p' | grep -v "HOMEBREW_" | sed 's/^/  ░ /'
 
-    echo ""
+    ansi --newline
 
     # Display Development tools
     gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ DEVELOPMENT TOOLS:"
     echo "$status_data" | sed -n '/DEVTOOLS_START/,/DEVTOOLS_END/p' | grep -v "DEVTOOLS_" | sed 's/^/  ░ /'
 
-    echo ""
+    ansi --newline
 
     # Display Dotfiles status
     gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ DOTFILE CONFIG:"
     echo "$status_data" | sed -n '/DOTFILES_START/,/DOTFILES_END/p' | grep -v "DOTFILES_" | sed 's/^/  ░ /'
 
-    echo ""
+    ansi --newline
 
     # Display Dependencies status
     gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ DEPENDENCIES:"
     echo "$status_data" | sed -n '/DEPENDENCIES_START/,/DEPENDENCIES_END/p' | grep -v "DEPENDENCIES_" | sed 's/^/  ░ /'
 
-    echo ""
+    ansi --newline
 
     # Display Applications status
     gum style --foreground "$INTERFACE_SECONDARY" --bold "▶ APPLICATIONS:"

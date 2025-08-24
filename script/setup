@@ -5,19 +5,22 @@
 
 set -euo pipefail
 
+CURRENT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+
+# Source ansi helper for consistent output formatting
+source "$CURRENT_DIR/core/ansi"
+
 # Check if this script is being called directly (not through main TUI)
 if [ -z "${DOTFILES_PARENT_DIR:-}" ]; then
-    echo "❌ This script should not be called directly!"
-    echo ""
-    echo "Please use the main TUI interface:"
-    echo "  ./script/main"
-    echo ""
-    echo "Or run the bootstrap first:"
-    echo "  ./script/bootstrap"
+    ansi --red --bold "⚠ This script should not be called directly!" --newline
+    ansi --newline
+    ansi "Please use the main TUI interface:" --newline
+    ansi "  ./script/main" --newline
+    ansi --newline
+    ansi "Or run the bootstrap first:" --newline
+    ansi "  ./script/bootstrap" --newline
     exit 1
 fi
-
-CURRENT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 DOTFILES_PARENT_DIR=$(dirname "$CURRENT_DIR")
 DOTFILES_LOG_FILE="$DOTFILES_PARENT_DIR/tmp/setup-$(date +%Y%m%d-%H%M%S).log"
 DOTFILES_DEBUG_LOG="$DOTFILES_PARENT_DIR/tmp/debug-setup-$(date +%Y%m%d-%H%M%S).log"
@@ -56,7 +59,7 @@ main() {
         "  [04] DOTFILE CONFIGURATION" \
         "  [05] SYSTEM PREFERENCES"
 
-    echo ""
+    ansi --newline
 
     if ! gum confirm "AUTHORIZE SETUP SEQUENCE?" \
         --prompt.foreground "$INTERFACE_COLOR" \
@@ -76,7 +79,7 @@ main() {
     # Display log paths (relative from DOTFILES_PARENT_DIR)
     gum style --foreground "$INTERFACE_SECONDARY" "DEBUG: ${DOTFILES_DEBUG_LOG#"$DOTFILES_PARENT_DIR"/}"
     gum style --foreground "$INTERFACE_SECONDARY" "OUTPUT: ${DOTFILES_LOG_FILE#"$DOTFILES_PARENT_DIR"/}"
-    echo ""
+    ansi --newline
 
     # Set task title for progress display
     export TASK_TITLE="SYSTEM INIT"
@@ -117,7 +120,7 @@ main() {
         --negative "DEFER"; then
         gum style --foreground "$INTERFACE_ERROR" "REBOOT SEQUENCE INITIATED - 60 SECONDS"
         sudo shutdown -r +1
-        echo ""
+        ansi --newline
         gum style --foreground "$INTERFACE_SECONDARY" "ABORT SEQUENCE: sudo killall shutdown"
     else
         gum style --foreground "$INTERFACE_SECONDARY" "REBOOT SEQUENCE DEFERRED - MANUAL RESTART REQUIRED"

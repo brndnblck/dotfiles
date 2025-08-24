@@ -89,18 +89,61 @@ define run_bats_tests_common
 		$(call warning_message,No test files found in $(TEST_DIR)); \
 		exit 0; \
 	fi
-	@echo ""
+	@"$(ANSI)" --newline
+endef
+
+# Unified test runner function - eliminates duplication between test and test-verbose
+define run_bats_tests
+	@tmpfile=$$(mktemp) && \
+	$(FIND_TEST_FILES) > "$$tmpfile" && \
+	exit_code=0; \
+	while IFS= read -r test_file; do \
+		if [ -n "$$test_file" ] && [ -f "$$test_file" ]; then \
+			filename=$$(basename "$$test_file"); \
+			if [ "$(1)" = "verbose" ]; then \
+				"$(ANSI)" --newline; \
+				printf "Running $$filename (verbose)..."; \
+				"$(ANSI)" --newline; \
+				for i in $$(seq $$(expr 10 - $${#filename})); do printf " "; done; \
+				if "$(BATS_PATH)" --show-output-of-passing-tests "$$test_file"; then \
+					"$(ANSI)" --green --bold "✓ $$filename completed"; \
+				else \
+					"$(ANSI)" --red --bold "✗ $$filename failed"; \
+					exit_code=1; \
+				fi; \
+				"$(ANSI)" --newline; \
+			else \
+				printf "\nRunning $$filename..."; \
+				for i in $$(seq $$(expr 15 - $${#filename})); do printf " "; done; \
+				if "$(BATS_PATH)" "$$test_file" >/dev/null 2>&1; then \
+					"$(ANSI)" --green --bold "✓ $$filename passed"; \
+				else \
+					"$(ANSI)" --red --bold "✗ $$filename failed"; \
+					exit_code=1; \
+				fi; \
+			fi; \
+		fi; \
+	done < "$$tmpfile"; \
+	rm -f "$$tmpfile"; \
+	"$(ANSI)" --newline; \
+	"$(ANSI)" --newline; \
+	if [ $$exit_code -eq 0 ]; then \
+		$(call success_message,All tests passed!,true); \
+	else \
+		$(call error_message,Some tests failed!,true); \
+		exit 1; \
+	fi
 endef
 
 help: ## Show this help message
 	@"$(ANSI)" --green --bold "Dotfiles Testing and Development"
-	@echo ""
+	@"$(ANSI)" --newline
 	@"$(ANSI)" --yellow "Available targets:"
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-12s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
-	@echo ""
+	@"$(ANSI)" --newline
 	@"$(ANSI)" --yellow "Test files found:"
 	@printf "%s\n" $(TEST_FILES_RAW) | grep -v '^$$' | while IFS= read -r file; do [ -n "$$file" ] && echo "  - $$(basename "$$file")"; done
-	@echo ""
+	@"$(ANSI)" --newline
 	@"$(ANSI)" --yellow "Shell scripts found: $(call count_lines,$(SHELL_SCRIPTS_RAW)) files"
 
 setup: ## Initialize git submodules and install dependencies
@@ -114,63 +157,12 @@ setup: ## Initialize git submodules and install dependencies
 test: ## Run all bats tests
 	$(call run_header,Running bats tests)
 	$(call run_bats_tests_common)
-	@tmpfile=$$(mktemp) && \
-	$(FIND_TEST_FILES) > "$$tmpfile" && \
-	exit_code=0; \
-	while IFS= read -r test_file; do \
-		if [ -n "$$test_file" ] && [ -f "$$test_file" ]; then \
-			filename=$$(basename "$$test_file"); \
-			printf "\nRunning $$filename..."; \
-			for i in $$(seq $$(expr 15 - $${#filename})); do printf " "; done; \
-			if "$(BATS_PATH)" "$$test_file" >/dev/null 2>&1; then \
-				"$(ANSI)" --green --bold "✓ $$filename passed"; \
-			else \
-				"$(ANSI)" --red --bold "✗ $$filename failed"; \
-				exit_code=1; \
-			fi; \
-		fi; \
-	done < "$$tmpfile"; \
-	rm -f "$$tmpfile"; \
-	"$(ANSI)" --newline; \
-	"$(ANSI)" --newline; \
-	if [ $$exit_code -eq 0 ]; then \
-		$(call success_message,All tests passed!,true); \
-	else \
-		$(call error_message,Some tests failed!,true); \
-		exit 1; \
-	fi
+	$(call run_bats_tests,normal)
 
 test-verbose: ## Run tests with verbose output
 	$(call run_header,Running bats tests (verbose))
 	$(call run_bats_tests_common)
-	@tmpfile=$$(mktemp) && \
-	$(FIND_TEST_FILES) > "$$tmpfile" && \
-	exit_code=0; \
-	while IFS= read -r test_file; do \
-		if [ -n "$$test_file" ] && [ -f "$$test_file" ]; then \
-			filename=$$(basename "$$test_file"); \
-			"$(ANSI)" --newline; \
-			printf "Running $$filename (verbose)..."; \
-			"$(ANSI)" --newline; \
-			for i in $$(seq $$(expr 10 - $${#filename})); do printf " "; done; \
-			if "$(BATS_PATH)" --show-output-of-passing-tests "$$test_file"; then \
-				"$(ANSI)" --green --bold "✓ $$filename completed"; \
-			else \
-				"$(ANSI)" --red --bold "✗ $$filename failed"; \
-				exit_code=1; \
-			fi; \
-			"$(ANSI)" --newline; \
-		fi; \
-	done < "$$tmpfile"; \
-	rm -f "$$tmpfile"; \
-	"$(ANSI)" --newline; \
-	"$(ANSI)" --newline; \
-	if [ $$exit_code -eq 0 ]; then \
-		$(call success_message,All tests passed!,true); \
-	else \
-		$(call error_message,Some tests failed!,true); \
-		exit 1; \
-	fi
+	$(call run_bats_tests,verbose)
 
 test-single: ## Run a single test file (usage: make test-single FILE=bootstrap.bats)
 	@if [ -z "$(FILE)" ]; then \

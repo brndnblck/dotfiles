@@ -27,7 +27,7 @@ log_info "Bootstrap log: tmp/$(basename "$DOTFILES_LOG_FILE")"
 
 # Run prerequisite checks using helpers
 log_info "Running prerequisite checks..."
-check_macos_version "10.15" # Require Catalina or later
+check_macos_version "13.0" # Require Catalina or later
 ensure_disk_encryption
 ensure_command_line_tools
 ensure_homebrew
