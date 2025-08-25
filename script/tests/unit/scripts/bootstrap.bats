@@ -3,18 +3,19 @@
 # BDD Tests for script/bootstrap
 # Validates minimal bootstrap functionality and prerequisite checks
 
-load helper
-load mocks
+# Load helpers using correct relative path
+load "../../helpers/helper"
+load "$TESTS_DIR/helpers/mocks"
 
 setup() {
     test_setup
     setup_advanced_mocks
     
     # Copy the actual bootstrap script to test location
-    cp "${BATS_TEST_DIRNAME}/../../script/bootstrap" "$DOTFILES_PARENT_DIR/script/bootstrap"
+    cp "$PROJECT_ROOT/script/bootstrap" "$DOTFILES_PARENT_DIR/script/bootstrap"
     
     # Copy helper scripts
-    cp -r "${BATS_TEST_DIRNAME}/../../script/core" "$DOTFILES_PARENT_DIR/script/"
+    cp -r "$PROJECT_ROOT/script/core" "$DOTFILES_PARENT_DIR/script/"
 }
 
 teardown() {

@@ -392,3 +392,127 @@ EOF
             ;;
     esac
 }
+
+# =============================================================================
+# MOCK FACTORIES - Eliminate duplicate mock creation across test files
+# =============================================================================
+
+# System information mocks (used in status, bootstrap, update tests)
+create_system_mocks() {
+    local os_version="${1:-15.0}"
+    local architecture="${2:-arm64}"
+    local hostname="${3:-test-macbook-pro.local}"
+    
+    # Enhanced sw_vers mock
+    cat > "$MOCK_BREW_PREFIX/bin/sw_vers" << EOF
+#!/bin/bash
+case "\$1" in
+    "-productVersion")
+        echo "$os_version"
+        ;;
+    *)
+        echo "ProductName:	macOS"
+        echo "ProductVersion:	$os_version"  
+        echo "BuildVersion:	24A335"
+        ;;
+esac
+EOF
+    chmod +x "$MOCK_BREW_PREFIX/bin/sw_vers"
+    
+    create_mock_script "uname" 0 "$architecture"
+    create_mock_script "hostname" 0 "$hostname"
+}
+
+# Development tools mock factory
+create_dev_tools_mocks() {
+    local git_version="${1:-2.42.0}"
+    local node_version="${2:-v20.5.0}" 
+    local python_version="${3:-3.11.4}"
+    
+    # Git with status support
+    cat > "$MOCK_BREW_PREFIX/bin/git" << EOF
+#!/bin/bash
+case "\$1" in
+    "--version")
+        echo "git version $git_version"
+        ;;
+    "status")
+        if [[ "\$2" == "--porcelain" ]]; then
+            echo ""  # Clean status
+        fi
+        ;;
+    *)
+        echo "Mock git: \$*"
+        ;;
+esac
+EOF
+    chmod +x "$MOCK_BREW_PREFIX/bin/git"
+    
+    create_mock_script "node" 0 "$node_version" "--version"
+    create_mock_script "python3" 0 "Python $python_version" "--version"
+    create_mock_script "rustc" 0 "rustc 1.71.0 (8ede3aae2 2023-07-12)" "--version"
+    create_mock_script "go" 0 "go version go1.20.5 darwin/arm64" "version"
+    create_mock_script "docker" 0 "Docker version 24.0.5, build ced0996" "--version"
+}
+
+# Package-aware brew mock factory
+create_package_aware_brew() {
+    local formulae="${1:-git curl wget node python@3.11}"
+    local casks="${2:-visual-studio-code firefox docker}"
+    local outdated_formulae="${3:-curl wget}"
+    local outdated_casks="${4:-firefox}"
+    
+    cat > "$MOCK_BREW_PREFIX/bin/brew" << EOF
+#!/bin/bash
+case "\$1" in
+    "--version")
+        echo "Homebrew 4.0.0"
+        ;;
+    "list")
+        if [[ "\$2" == "--formula" ]]; then
+            echo -e "${formulae// /\\n}"
+        elif [[ "\$2" == "--cask" ]]; then
+            echo -e "${casks// /\\n}"
+        fi
+        ;;
+    "outdated")
+        if [[ "\$2" == "--formula" && -n "$outdated_formulae" ]]; then
+            for pkg in $outdated_formulae; do
+                echo "\$pkg (old) < 8.0.0 (new)"
+            done
+        elif [[ "\$2" == "--cask" && -n "$outdated_casks" ]]; then
+            for pkg in $outdated_casks; do
+                echo "\$pkg (old) != (new)"
+            done
+        fi
+        ;;
+    "bundle")
+        echo "==> Installing packages from Brewfile"
+        ;;
+    *)
+        echo "Mock brew: \$*"
+        ;;
+esac
+EOF
+    chmod +x "$MOCK_BREW_PREFIX/bin/brew"
+}
+
+# Complete status testing mock suite
+create_status_test_mocks() {
+    create_system_mocks
+    create_dev_tools_mocks
+    create_package_aware_brew
+    
+    # Chezmoi mock
+    cat > "$MOCK_BREW_PREFIX/bin/chezmoi" << 'EOF'
+#!/bin/bash
+case "$1" in
+    "source-path")
+        echo "$DOTFILES_PARENT_DIR"
+        ;;
+esac
+EOF
+    chmod +x "$MOCK_BREW_PREFIX/bin/chezmoi"
+    
+    create_mock_script "mas" 0 "497799835 Xcode (14.3.1)\n1295203466 Microsoft Remote Desktop (10.7.7)" "list"
+}

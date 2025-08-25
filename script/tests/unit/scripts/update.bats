@@ -3,16 +3,17 @@
 # BDD Tests for script/update
 # Validates system update orchestration and package management
 
-load helper
-load mocks
+# Load helpers using correct relative path
+load "../../helpers/helper"
+load "$TESTS_DIR/helpers/mocks"
 
 setup() {
     test_setup
     setup_advanced_mocks
     
     # Copy update script and helpers
-    cp "${BATS_TEST_DIRNAME}/../../script/update" "$DOTFILES_PARENT_DIR/script/update"
-    cp -r "${BATS_TEST_DIRNAME}/../../script/core" "$DOTFILES_PARENT_DIR/script/"
+    cp "$PROJECT_ROOT/script/update" "$DOTFILES_PARENT_DIR/script/update"
+    cp -r "$PROJECT_ROOT/script/core" "$DOTFILES_PARENT_DIR/script/"
 }
 
 teardown() {

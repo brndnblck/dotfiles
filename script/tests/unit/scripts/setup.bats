@@ -3,8 +3,9 @@
 # BDD Tests for script/setup
 # Validates comprehensive system setup and configuration deployment
 
-load helper
-load mocks
+# Load helpers using correct relative path
+load "../../helpers/helper"
+load "$TESTS_DIR/helpers/mocks"
 
 describe() { true; }
 it() { true; }
@@ -19,8 +20,8 @@ setup() {
     export DOTFILES_DEBUG_LOG="$DOTFILES_PARENT_DIR/tmp/debug-setup-test.log"
     
     # Copy setup script and helpers
-    cp "${BATS_TEST_DIRNAME}/../../script/setup" "$DOTFILES_PARENT_DIR/script/setup"
-    cp -r "${BATS_TEST_DIRNAME}/../../script/core" "$DOTFILES_PARENT_DIR/script/"
+    cp "$PROJECT_ROOT/script/setup" "$DOTFILES_PARENT_DIR/script/setup"
+    cp -r "$PROJECT_ROOT/script/core" "$DOTFILES_PARENT_DIR/script/"
     
     # Create gum mock that auto-confirms
     create_gum_mock

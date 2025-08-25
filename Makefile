@@ -19,7 +19,7 @@ ANSI := script/core/ansi
 FIND_EXCLUDE_PATHS := \( -path "$(TEST_DIR)/support" -o -path "*/vendor" -o -path "*/node_modules" -o -path "*/.git" \) -prune -o
 FIND_SHELL_SCRIPTS := find "$(SCRIPT_DIR)" $(FIND_EXCLUDE_PATHS) -type f \( -name "*.sh" -o -name "*.bash" \) -print 2>/dev/null
 FIND_EXECUTABLE_SCRIPTS := find "$(SCRIPT_DIR)" $(FIND_EXCLUDE_PATHS) -type f -perm +111 -exec file {} \; 2>/dev/null | grep -E "(shell|bash)" | cut -d: -f1
-FIND_TEST_FILES := find "$(TEST_DIR)" -name "*.bats" -maxdepth 1 2>/dev/null
+FIND_TEST_FILES := find "$(TEST_DIR)" -name "*.bats" 2>/dev/null | grep -v "/support/"
 
 # Find all shell scripts to process (excluding vendor directories)
 SHELL_SCRIPTS_RAW := $(shell $(FIND_SHELL_SCRIPTS))
@@ -29,7 +29,7 @@ SHELL_SCRIPTS_RAW += $(shell $(FIND_EXECUTABLE_SCRIPTS))
 HELPER_SCRIPTS_RAW := $(shell find "$(SCRIPT_DIR)/core" -type f -print0 2>/dev/null | tr '\0' '\n')
 
 # Test files - only in test directory root, not in subdirectories like support
-TEST_FILES_RAW := $(shell $(FIND_TEST_FILES) -print0 | tr '\0' '\n')
+TEST_FILES_RAW := $(shell $(FIND_TEST_FILES))
 
 # Helper functions
 count_lines = $(shell echo "$(1)" | grep -c '^' 2>/dev/null || echo 0)
@@ -104,17 +104,20 @@ define run_bats_tests
 				"$(ANSI)" --newline; \
 				printf "Running $$filename (verbose)..."; \
 				"$(ANSI)" --newline; \
-				for i in $$(seq $$(expr 10 - $${#filename})); do printf " "; done; \
-				if "$(BATS_PATH)" --show-output-of-passing-tests "$$test_file"; then \
+				for i in $$(seq $$(expr 25 - $${#filename})); do printf " "; done; \
+				"$(ANSI)" --newline; \
+				if "$(BATS_PATH)" --show-output-of-passing-tests "$$test_file" | grep -v '^[0-9][0-9]*\.\.[0-9][0-9]*$$'; then \
+					"$(ANSI)" --newline; \
 					"$(ANSI)" --green --bold "✓ $$filename completed"; \
 				else \
+					"$(ANSI)" --newline; \
 					"$(ANSI)" --red --bold "✗ $$filename failed"; \
 					exit_code=1; \
 				fi; \
 				"$(ANSI)" --newline; \
 			else \
 				printf "\nRunning $$filename..."; \
-				for i in $$(seq $$(expr 15 - $${#filename})); do printf " "; done; \
+				for i in $$(seq $$(expr 25 - $${#filename})); do printf " "; done; \
 				if "$(BATS_PATH)" "$$test_file" >/dev/null 2>&1; then \
 					"$(ANSI)" --green --bold "✓ $$filename passed"; \
 				else \

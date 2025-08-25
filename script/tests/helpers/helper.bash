@@ -3,12 +3,23 @@
 # Test helper functions for the dotfiles project
 # Provides common setup, teardown, and utility functions for bats tests
 
-# Load bats ecosystem libraries
-load "support/bats-support/load"
-load "support/bats-assert/load"
+# Load bats ecosystem libraries using absolute paths from project root
+# Find the tests directory by walking up from BATS_TEST_DIRNAME until we find 'helpers' and 'support'
+CURRENT_DIR="${BATS_TEST_DIRNAME}"
+while [[ "$CURRENT_DIR" != "/" ]]; do
+    if [[ -d "$CURRENT_DIR/helpers" && -d "$CURRENT_DIR/support" ]]; then
+        TESTS_DIR="$CURRENT_DIR"
+        break
+    fi
+    CURRENT_DIR="$(dirname "$CURRENT_DIR")"
+done
+
+# Load support libraries with absolute paths
+load "$TESTS_DIR/support/bats-support/load"
+load "$TESTS_DIR/support/bats-assert/load"
 
 # Test environment variables - use project tmp/tests directory
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 export PROJECT_ROOT
 export TEST_TEMP_DIR="$PROJECT_ROOT/tmp/tests/dotfiles-test-$$"
 export DOTFILES_PARENT_DIR="$TEST_TEMP_DIR/dotfiles"
@@ -64,13 +75,15 @@ teardown_test_environment() {
 
     # Clean up any other test-related background processes
     # Only target specific patterns and avoid the current test process
-    local test_pids
-    mapfile -t test_pids < <(pgrep -f "dotfiles.*bootstrap.*sudo" 2> /dev/null || true)
-    for pid in "${test_pids[@]}"; do
-        if [ -n "$pid" ] && [ "$pid" != "$$" ] && [ "$pid" != "$PPID" ] && kill -0 "$pid" 2> /dev/null; then
-            kill "$pid" 2> /dev/null || true
-        fi
-    done
+    local test_pids pid
+    test_pids=$(pgrep -f "dotfiles.*bootstrap.*sudo" 2> /dev/null || true)
+    if [ -n "$test_pids" ]; then
+        for pid in $test_pids; do
+            if [ -n "$pid" ] && [ "$pid" != "$$" ] && [ "$pid" != "$PPID" ] && kill -0 "$pid" 2> /dev/null; then
+                kill "$pid" 2> /dev/null || true
+            fi
+        done
+    fi
 
     # Clean up sudo authentication marker
     rm -f "/tmp/.bootstrap_sudo_authenticated"
@@ -267,13 +280,14 @@ setup_script_test() {
 # Copy required scripts and helpers to test environment
 copy_test_scripts() {
     local script_name="$1"
-    if [ -f "${BATS_TEST_DIRNAME}/../../script/$script_name" ]; then
-        cp "${BATS_TEST_DIRNAME}/../../script/$script_name" "$DOTFILES_PARENT_DIR/script/$script_name"
+    # Use PROJECT_ROOT instead of relative paths to handle reorganized test structure
+    if [ -f "$PROJECT_ROOT/script/$script_name" ]; then
+        cp "$PROJECT_ROOT/script/$script_name" "$DOTFILES_PARENT_DIR/script/$script_name"
     fi
 
     # Always copy helpers directory
-    if [ -d "${BATS_TEST_DIRNAME}/../../script/core" ]; then
-        cp -r "${BATS_TEST_DIRNAME}/../../script/core" "$DOTFILES_PARENT_DIR/script/"
+    if [ -d "$PROJECT_ROOT/script/core" ]; then
+        cp -r "$PROJECT_ROOT/script/core" "$DOTFILES_PARENT_DIR/script/"
     fi
 }
 
@@ -457,6 +471,74 @@ remove_command_from_path() {
     local command_name="$1"
     PATH=$(echo "$PATH" | tr ':' '\n' | grep -v "$command_name" | tr '\n' ':')
     export PATH
+}
+
+# =============================================================================
+# STANDARDIZED SETUP PATTERNS - Eliminate 90% of setup/teardown duplication
+# =============================================================================
+
+# Standard script test setup - replaces most common setup pattern
+setup_for_script() {
+    local script_name="$1"
+    local include_core="${2:-true}"
+    
+    test_setup
+    setup_advanced_mocks
+    
+    # Copy the main script under test
+    if [ -f "$PROJECT_ROOT/script/$script_name" ]; then
+        cp "$PROJECT_ROOT/script/$script_name" "$DOTFILES_PARENT_DIR/script/$script_name"
+    fi
+    
+    # Copy core helpers if needed (default: yes)
+    if [ "$include_core" = "true" ] && [ -d "$PROJECT_ROOT/script/core" ]; then
+        cp -r "$PROJECT_ROOT/script/core" "$DOTFILES_PARENT_DIR/script/"
+    fi
+    
+    # Set up environment for specific scripts
+    setup_script_environment "$script_name"
+}
+
+# Environment setup for specific script types
+setup_script_environment() {
+    local script_name="$1"
+    export DOTFILES_PARENT_DIR="$DOTFILES_PARENT_DIR"
+    
+    case "$script_name" in
+        "setup")
+            export DOTFILES_LOG_FILE="$DOTFILES_PARENT_DIR/tmp/setup-test.log"
+            export DOTFILES_DEBUG_LOG="$DOTFILES_PARENT_DIR/tmp/debug-setup-test.log"
+            ;;
+        "status")
+            export DOTFILES_DEBUG_LOG="$DOTFILES_PARENT_DIR/tmp/debug-status-test.log"
+            ;;
+        "update")
+            export DOTFILES_LOG_FILE="$DOTFILES_PARENT_DIR/tmp/update-test.log"
+            export DOTFILES_DEBUG_LOG="$DOTFILES_PARENT_DIR/tmp/debug-update-test.log"
+            ;;
+        *)
+            export DOTFILES_LOG_FILE="$DOTFILES_PARENT_DIR/tmp/test-$(date +%Y%m%d-%H%M%S).log"
+            export DOTFILES_DEBUG_LOG="$DOTFILES_PARENT_DIR/tmp/debug-test-$(date +%Y%m%d-%H%M%S).log"
+            ;;
+    esac
+}
+
+# UI test setup pattern 
+setup_for_ui_script() {
+    local script_name="$1"
+    setup_for_script "$script_name"
+    
+    # Create additional mock scripts often needed by UI tests
+    create_test_script "setup" 'echo "Setup script executed"'
+    create_test_script "update" 'echo "Update script executed"'  
+    create_test_script "status" 'echo "Status script executed"'
+}
+
+# Business logic test setup (no script copying needed)
+setup_for_business_logic() {
+    test_setup
+    setup_advanced_mocks
+    setup_script_environment "business_logic"
 }
 
 # =============================================================================

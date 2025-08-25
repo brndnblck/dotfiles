@@ -3,8 +3,9 @@
 # BDD Tests for UI Functions
 # Validates UI components, version display, and interface elements
 
-load helper
-load mocks
+# Load helpers using correct relative path
+load "../../helpers/helper"
+load "$TESTS_DIR/helpers/mocks"
 
 describe() { true; }
 it() { true; }

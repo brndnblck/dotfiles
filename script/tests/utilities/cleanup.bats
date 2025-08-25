@@ -3,15 +3,16 @@
 # BDD Tests for EXIT trap handling and cleanup orchestration
 # Validates that all cleanup functions work together properly
 
-load helper
-load mocks
+# Load helpers using correct relative path
+load "../helpers/helper"
+load "$TESTS_DIR/helpers/mocks"
 
 setup() {
     test_setup
     setup_advanced_mocks
     
     # Copy helper files
-    cp -r "${BATS_TEST_DIRNAME}/../../script/core" "$DOTFILES_PARENT_DIR/script/"
+    cp -r "${BATS_TEST_DIRNAME}/../../../script/core" "$DOTFILES_PARENT_DIR/script/"
 }
 
 teardown() {

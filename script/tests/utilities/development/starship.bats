@@ -3,8 +3,9 @@
 # BDD Tests for Starship Shell Prompt Configuration
 # Validates starship prompt customization, theming, and performance
 
-load helper
-load mocks
+# Load helpers using correct relative path
+load "../../helpers/helper"
+load "../../helpers/mocks"
 
 describe() { true; }
 it() { true; }
@@ -14,7 +15,8 @@ setup() {
     
     # Create mock starship configuration file
     mkdir -p "$DOTFILES_PARENT_DIR/dot_config"
-    cp "${BATS_TEST_DIRNAME}/../../dot_config/starship.toml.tmpl" "$DOTFILES_PARENT_DIR/dot_config/starship.toml.tmpl"
+    # Copy template from project root using PROJECT_ROOT
+    cp "$PROJECT_ROOT/dot_config/starship.toml.tmpl" "$DOTFILES_PARENT_DIR/dot_config/starship.toml.tmpl"
     
     # Create processed config file (as chezmoi would)
     mkdir -p "$DOTFILES_PARENT_DIR/.config"
