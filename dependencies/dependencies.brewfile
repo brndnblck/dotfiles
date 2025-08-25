@@ -34,6 +34,7 @@ brew "wget2"             # Download tool
 brew "asdf"              # Universal version manager
 brew "rustup"            # Rust toolchain installer
 brew "aicommits"         # AI-powered commit messages
+brew "sst/tap/opencode"   # AI-powered code assistant
 brew "libyaml"           # YAML library for Ruby psych extension
 
 # Platform Tools

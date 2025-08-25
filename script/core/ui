@@ -108,7 +108,7 @@ run_with_progressive_spinner() {
         
         # Also capture command output to debug log
         debug_log "COMMAND OUTPUT:"
-        tail -n 50 "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}" >> "$DOTFILES_DEBUG_LOG"
+        tail -n 50 "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}" >> "$(get_debug_log_file)"
         debug_log "END COMMAND OUTPUT"
         
         info_log "Completed: $message"
@@ -117,7 +117,7 @@ run_with_progressive_spinner() {
         # Log failure details to debug log
         debug_log "COMMAND FAILED: $command"
         debug_log "ERROR OUTPUT:"
-        tail -n 50 "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}" >> "$DOTFILES_DEBUG_LOG"
+        tail -n 50 "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}" >> "$(get_debug_log_file)"
         debug_log "END ERROR OUTPUT"
         
         error_log "Failed: $message"
@@ -143,7 +143,7 @@ run_with_spinner() {
         
         # Also capture command output to debug log
         debug_log "COMMAND OUTPUT:"
-        tail -n 50 "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}" >> "$DOTFILES_DEBUG_LOG"
+        tail -n 50 "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}" >> "$(get_debug_log_file)"
         debug_log "END COMMAND OUTPUT"
         
         info_log "Completed: $message"
@@ -152,7 +152,7 @@ run_with_spinner() {
         # Log failure details to debug log
         debug_log "COMMAND FAILED: $command"
         debug_log "ERROR OUTPUT:"
-        tail -n 50 "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}" >> "$DOTFILES_DEBUG_LOG"
+        tail -n 50 "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}" >> "$(get_debug_log_file)"
         debug_log "END ERROR OUTPUT"
         
         error_log "Failed: $message"

@@ -5,13 +5,13 @@
 
 load_test_helpers() {
     local helper_names=("${@:-helper mocks}")
-    
+
     # Find tests directory - handle empty BATS_TEST_DIRNAME and prevent infinite loops
     local CURRENT_DIR="${BATS_TEST_DIRNAME:-$(dirname "${BASH_SOURCE[1]}")}"
     local TESTS_DIR=""
     local iteration_count=0
-    local max_iterations=20  # Prevent infinite loops
-    
+    local max_iterations=20 # Prevent infinite loops
+
     while [[ "$CURRENT_DIR" != "/" && $iteration_count -lt $max_iterations ]]; do
         if [[ -d "$CURRENT_DIR/helpers" ]]; then
             TESTS_DIR="$CURRENT_DIR"
@@ -65,7 +65,7 @@ load_test_helpers() {
             echo "WARNING: Helper not found: $TESTS_DIR/helpers/${helper_name}" >&2
         fi
     done
-    
+
     # Export for use in tests
     export TESTS_DIR
 }

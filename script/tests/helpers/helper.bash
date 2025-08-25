@@ -481,20 +481,20 @@ remove_command_from_path() {
 setup_for_script() {
     local script_name="$1"
     local include_core="${2:-true}"
-    
+
     test_setup
     setup_advanced_mocks
-    
+
     # Copy the main script under test
     if [ -f "$PROJECT_ROOT/script/$script_name" ]; then
         cp "$PROJECT_ROOT/script/$script_name" "$DOTFILES_PARENT_DIR/script/$script_name"
     fi
-    
+
     # Copy core helpers if needed (default: yes)
     if [ "$include_core" = "true" ] && [ -d "$PROJECT_ROOT/script/core" ]; then
         cp -r "$PROJECT_ROOT/script/core" "$DOTFILES_PARENT_DIR/script/"
     fi
-    
+
     # Set up environment for specific scripts
     setup_script_environment "$script_name"
 }
@@ -503,7 +503,7 @@ setup_for_script() {
 setup_script_environment() {
     local script_name="$1"
     export DOTFILES_PARENT_DIR="$DOTFILES_PARENT_DIR"
-    
+
     case "$script_name" in
         "setup")
             export DOTFILES_LOG_FILE="$DOTFILES_PARENT_DIR/tmp/setup-test.log"
@@ -523,14 +523,14 @@ setup_script_environment() {
     esac
 }
 
-# UI test setup pattern 
+# UI test setup pattern
 setup_for_ui_script() {
     local script_name="$1"
     setup_for_script "$script_name"
-    
+
     # Create additional mock scripts often needed by UI tests
     create_test_script "setup" 'echo "Setup script executed"'
-    create_test_script "update" 'echo "Update script executed"'  
+    create_test_script "update" 'echo "Update script executed"'
     create_test_script "status" 'echo "Status script executed"'
 }
 

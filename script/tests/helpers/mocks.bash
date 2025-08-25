@@ -402,7 +402,7 @@ create_system_mocks() {
     local os_version="${1:-15.0}"
     local architecture="${2:-arm64}"
     local hostname="${3:-test-macbook-pro.local}"
-    
+
     # Enhanced sw_vers mock
     cat > "$MOCK_BREW_PREFIX/bin/sw_vers" << EOF
 #!/bin/bash
@@ -418,7 +418,7 @@ case "\$1" in
 esac
 EOF
     chmod +x "$MOCK_BREW_PREFIX/bin/sw_vers"
-    
+
     create_mock_script "uname" 0 "$architecture"
     create_mock_script "hostname" 0 "$hostname"
 }
@@ -426,9 +426,9 @@ EOF
 # Development tools mock factory
 create_dev_tools_mocks() {
     local git_version="${1:-2.42.0}"
-    local node_version="${2:-v20.5.0}" 
+    local node_version="${2:-v20.5.0}"
     local python_version="${3:-3.11.4}"
-    
+
     # Git with status support
     cat > "$MOCK_BREW_PREFIX/bin/git" << EOF
 #!/bin/bash
@@ -447,7 +447,7 @@ case "\$1" in
 esac
 EOF
     chmod +x "$MOCK_BREW_PREFIX/bin/git"
-    
+
     create_mock_script "node" 0 "$node_version" "--version"
     create_mock_script "python3" 0 "Python $python_version" "--version"
     create_mock_script "rustc" 0 "rustc 1.71.0 (8ede3aae2 2023-07-12)" "--version"
@@ -461,7 +461,7 @@ create_package_aware_brew() {
     local casks="${2:-visual-studio-code firefox docker}"
     local outdated_formulae="${3:-curl wget}"
     local outdated_casks="${4:-firefox}"
-    
+
     cat > "$MOCK_BREW_PREFIX/bin/brew" << EOF
 #!/bin/bash
 case "\$1" in
@@ -502,7 +502,7 @@ create_status_test_mocks() {
     create_system_mocks
     create_dev_tools_mocks
     create_package_aware_brew
-    
+
     # Chezmoi mock
     cat > "$MOCK_BREW_PREFIX/bin/chezmoi" << 'EOF'
 #!/bin/bash
@@ -513,6 +513,6 @@ case "$1" in
 esac
 EOF
     chmod +x "$MOCK_BREW_PREFIX/bin/chezmoi"
-    
+
     create_mock_script "mas" 0 "497799835 Xcode (14.3.1)\n1295203466 Microsoft Remote Desktop (10.7.7)" "list"
 }

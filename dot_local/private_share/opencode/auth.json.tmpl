@@ -1,0 +1,18 @@
+{
+{{- if env "OPENAI_API_KEY" }}
+  "openai": {
+    "type": "api",
+    "key": "{{ env "OPENAI_API_KEY" }}"
+  },
+{{- end }}
+{{- if env "ANTHROPIC_API_KEY" }}
+  "anthropic": {
+    "type": "api", 
+    "key": "{{ env "ANTHROPIC_API_KEY" }}"
+  },
+{{- end }}
+  "ollama": {
+    "type": "api",
+    "key": "ollama"
+  }
+}

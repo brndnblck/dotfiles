@@ -12,7 +12,7 @@ create_system_info_mocks() {
     local os_version="${1:-15.0}"
     local architecture="${2:-arm64}"
     local hostname="${3:-test-macbook-pro.local}"
-    
+
     # sw_vers with configurable version
     cat > "$MOCK_BREW_PREFIX/bin/sw_vers" << EOF
 #!/bin/bash
@@ -28,10 +28,10 @@ case "\$1" in
 esac
 EOF
     chmod +x "$MOCK_BREW_PREFIX/bin/sw_vers"
-    
+
     # uname with configurable architecture
     create_mock_script "uname" 0 "$architecture"
-    
+
     # hostname
     create_mock_script "hostname" 0 "$hostname"
 }
@@ -44,7 +44,7 @@ create_dev_tools_mocks() {
     local rust_version="${4:-1.71.0}"
     local go_version="${5:-1.20.5}"
     local docker_version="${6:-24.0.5}"
-    
+
     # Git
     cat > "$MOCK_BREW_PREFIX/bin/git" << EOF
 #!/bin/bash
@@ -63,16 +63,16 @@ case "\$1" in
 esac
 EOF
     chmod +x "$MOCK_BREW_PREFIX/bin/git"
-    
+
     # Node.js
     create_mock_script "node" 0 "$node_version" "--version"
-    
+
     # Python
     create_mock_script "python3" 0 "Python $python_version" "--version"
-    
+
     # Rust
     create_mock_script "rustc" 0 "rustc $rust_version (8ede3aae2 2023-07-12)" "--version"
-    
+
     # Go
     cat > "$MOCK_BREW_PREFIX/bin/go" << EOF
 #!/bin/bash
@@ -83,7 +83,7 @@ case "\$1" in
 esac
 EOF
     chmod +x "$MOCK_BREW_PREFIX/bin/go"
-    
+
     # Docker
     create_mock_script "docker" 0 "Docker version $docker_version, build ced0996" "--version"
 }
@@ -94,7 +94,7 @@ create_package_aware_brew_mock() {
     local cask_list="${2:-visual-studio-code firefox docker}"
     local outdated_formulae="${3:-curl wget}"
     local outdated_casks="${4:-firefox}"
-    
+
     cat > "$MOCK_BREW_PREFIX/bin/brew" << EOF
 #!/bin/bash
 case "\$1" in
@@ -139,8 +139,8 @@ EOF
 
 # Gum mock with standardized behaviors (used in all UI tests)
 create_standardized_gum_mock() {
-    local default_choice="${1:-first}"  # "first", "abort", "confirm"
-    
+    local default_choice="${1:-first}" # "first", "abort", "confirm"
+
     cat > "$MOCK_BREW_PREFIX/bin/gum" << EOF
 #!/bin/bash
 case "\$1" in
@@ -223,7 +223,7 @@ setup_status_test_mocks() {
     create_dev_tools_mocks
     create_package_aware_brew_mock
     create_standardized_gum_mock
-    
+
     # Enhanced chezmoi mock
     cat > "$MOCK_BREW_PREFIX/bin/chezmoi" << EOF
 #!/bin/bash
@@ -237,7 +237,7 @@ case "\$1" in
 esac
 EOF
     chmod +x "$MOCK_BREW_PREFIX/bin/chezmoi"
-    
+
     # MAS mock
     create_mock_script "mas" 0 "497799835 Xcode (14.3.1)\\n1295203466 Microsoft Remote Desktop (10.7.7)" "list"
 }
@@ -252,7 +252,7 @@ setup_ui_test_mocks() {
 setup_bootstrap_test_mocks() {
     setup_macos_mocks
     create_standardized_gum_mock "confirm"
-    
+
     # Add bootstrap-specific mocks
     create_mock_script "fdesetup" 0 "FileVault is On."
 }
@@ -272,7 +272,7 @@ setup_bootstrap_test_mocks() {
 #     setup_status_test_mocks
 # }
 
-# BEFORE (in main.bats): 
+# BEFORE (in main.bats):
 # Long setup with individual mock creation
 
 # AFTER (in main.bats):

@@ -7,9 +7,9 @@
 create_brewfile_fixture() {
     local fixture_type="${1:-minimal}"
     local target_file="${2:-$DOTFILES_PARENT_DIR/dependencies/dependencies.brewfile}"
-    
+
     mkdir -p "$(dirname "$target_file")"
-    
+
     case "$fixture_type" in
         "minimal")
             cat > "$target_file" << 'EOF'
@@ -49,9 +49,9 @@ EOF
 create_applications_fixture() {
     local fixture_type="${1:-minimal}"
     local target_file="${2:-$DOTFILES_PARENT_DIR/dependencies/applications.brewfile}"
-    
+
     mkdir -p "$(dirname "$target_file")"
-    
+
     case "$fixture_type" in
         "minimal")
             cat > "$target_file" << 'EOF'
@@ -84,7 +84,7 @@ EOF
 # Create package list fixtures (what's "installed")
 create_installed_packages_fixture() {
     local type="$1"
-    
+
     case "$type" in
         "brew-formula")
             echo -e "git\ncurl\nwget\njq\nnode"
@@ -129,8 +129,8 @@ case "$1" in
 esac
 EOF
     chmod +x "$MOCK_BREW_PREFIX/bin/brew"
-    
-    # Mock npm with controlled responses  
+
+    # Mock npm with controlled responses
     cat > "$MOCK_BREW_PREFIX/bin/npm" << 'EOF'
 #!/bin/bash
 case "$1" in
@@ -142,7 +142,7 @@ case "$1" in
 esac
 EOF
     chmod +x "$MOCK_BREW_PREFIX/bin/npm"
-    
+
     # Mock cargo with controlled responses
     cat > "$MOCK_BREW_PREFIX/bin/cargo" << 'EOF'
 #!/bin/bash
@@ -155,7 +155,7 @@ case "$1" in
 esac
 EOF
     chmod +x "$MOCK_BREW_PREFIX/bin/cargo"
-    
+
     # Mock mas with controlled responses
     cat > "$MOCK_BREW_PREFIX/bin/mas" << 'EOF'
 #!/bin/bash
@@ -172,7 +172,7 @@ EOF
 test_config_processing() {
     local config_content="$1"
     local expected_result="$2"
-    
+
     # Test that our processing logic works correctly
     # This tests OUR code, not the config format itself
     echo "$config_content" | our_config_parser
@@ -181,19 +181,19 @@ test_config_processing() {
 # Validate test focuses on our business logic
 assert_tests_our_logic() {
     local test_name="$1"
-    
+
     # Helper to ensure tests focus on our interfaces/behaviors
     # Not on third-party tool functionality
     if [[ "$test_name" =~ (brew|npm|cargo|git).*version ]]; then
         echo "WARNING: Test '$test_name' may be testing third-party tool behavior"
         return 1
     fi
-    
+
     if [[ "$test_name" =~ should.*work|should.*exist ]]; then
         echo "WARNING: Test '$test_name' may be testing obvious functionality"
         return 1
     fi
-    
+
     return 0
 }
 
@@ -201,9 +201,9 @@ assert_tests_our_logic() {
 create_sample_brewfile() {
     local target_file="$1"
     local type="${2:-dependencies}"
-    
+
     mkdir -p "$(dirname "$target_file")"
-    
+
     case "$type" in
         "dependencies")
             # Create a brewfile with both formulae and casks for comprehensive testing
