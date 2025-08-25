@@ -115,7 +115,7 @@ log_success() { echo "SUCCESS: $1"; }
 source "$CURRENT_DIR/helpers/common"
 source "$CURRENT_DIR/helpers/prerequisites"
 
-log_info "Running prerequisite checks..."
+info_log "Running prerequisite checks..."
 check_macos_version "10.15"
 ensure_disk_encryption
 EOF
@@ -220,11 +220,11 @@ log_info() { echo "INFO: $1"; }
 log_success() { echo "SUCCESS: $1"; }
 
 if ! check_command "gum" "Gum TUI tool"; then
-    log_info "Installing gum TUI tool..."
+    info_log "Installing gum TUI tool..."
     echo "Mock: brew install gum"
-    log_success "gum installed successfully"
+    success_log "gum installed successfully"
 else
-    log_info "gum already available"
+    info_log "gum already available"
 fi
 EOF
     chmod +x "$DOTFILES_PARENT_DIR/script/bootstrap"
@@ -250,7 +250,7 @@ CURRENT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 
 log_success() { echo "SUCCESS: $1"; }
 
-log_success "Bootstrap complete! Launching main interface..."
+success_log "Bootstrap complete! Launching main interface..."
 
 exec "$CURRENT_DIR/main"
 EOF

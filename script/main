@@ -28,14 +28,10 @@ if [ -z "${DOTFILES_PARENT_DIR:-}" ]; then
     export DOTFILES_PARENT_DIR
 fi
 
-if [ -z "${DOTFILES_LOG_FILE:-}" ]; then
-    DOTFILES_LOG_FILE="$DOTFILES_PARENT_DIR/tmp/main-$(date +%Y%m%d-%H%M%S).log"
-    export DOTFILES_LOG_FILE
-fi
-
-if [ -z "${DOTFILES_DEBUG_LOG:-}" ]; then
-    DOTFILES_DEBUG_LOG="$DOTFILES_PARENT_DIR/tmp/debug-main-$(date +%Y%m%d-%H%M%S).log"
-    export DOTFILES_DEBUG_LOG
+# Set session ID for unified debug logging
+if [ -z "${DOTFILES_SESSION_ID:-}" ]; then
+    DOTFILES_SESSION_ID="main-$(date +%Y%m%d-%H%M%S)"
+    export DOTFILES_SESSION_ID
 fi
 
 # Ensure tmp directory exists
@@ -85,5 +81,5 @@ main_menu() {
 }
 
 # Start the application
-log_output "Starting TUI interface"
+info_log "Starting TUI interface"
 main_menu

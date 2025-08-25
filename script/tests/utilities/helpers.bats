@@ -51,9 +51,9 @@ export DOTFILES_PARENT_DIR="$(pwd)"
 source "script/core/common"
 
 # Test different log levels
-log_info "This is an info message" || true
-log_success "This is a success message" || true  
-log_warn "This is a warning message" || true
+info_log "This is an info message" || true
+success_log "This is a success message" || true  
+warn_log "This is a warning message" || true
 
 echo "Logging test completed"
 EOF
@@ -436,7 +436,7 @@ cleanup_sudo_config() {
     if [ -f "$sudo_file" ]; then
         echo "Mock: Removed sudo timeout configuration"
         rm -f "$sudo_file" 2>/dev/null || true
-        log_info "Cleaned up sudo timeout configuration"
+        info_log "Cleaned up sudo timeout configuration"
     fi
 }
 
@@ -448,9 +448,9 @@ stop_sudo_keepalive() {
             echo "Mock: Killed sudo keepalive process $pid"
         fi
         rm -f "/tmp/.bootstrap_sudo_keepalive_pid"
-        log_info "sudo keep-alive stopped"
+        info_log "sudo keep-alive stopped"
     else
-        log_info "sudo keep-alive stopped"
+        info_log "sudo keep-alive stopped"
     fi
 }
 
@@ -1141,7 +1141,7 @@ enhanced_cleanup_temp_files() {
     for file in "${TEMP_FILES_FOR_CLEANUP[@]}"; do
         if [ -f "$file" ]; then
             if rm -f "$file" 2>/dev/null; then
-                log_info "Cleaned up temp file: $file"
+                info_log "Cleaned up temp file: $file"
                 cleaned_count=$((cleaned_count + 1))
             else
                 echo "WARNING: Failed to remove file: $file"
@@ -1215,7 +1215,7 @@ enhanced_stop_sudo_keepalive() {
             echo "Empty PID file found"
         fi
         rm -f "/tmp/.bootstrap_sudo_keepalive_pid"
-        log_info "sudo keep-alive stopped"
+        info_log "sudo keep-alive stopped"
     else
         echo "No sudo keepalive PID file found"
     fi

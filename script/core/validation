@@ -85,6 +85,6 @@ validate_network_operation() {
         return $EXIT_NETWORK_ERROR
     fi
     
-    log_info "Network connectivity verified for $operation"
+    info_log "Network connectivity verified for $operation"
     return $EXIT_SUCCESS
 }

@@ -28,7 +28,7 @@ enable_touchid_sudo() {
 	fi
 	
 	if silent "sudo grep -q '^auth.*pam_tid.so' '$pam_sudo_file'"; then
-		record "TouchID for sudo is already enabled."
+		info_log "TouchID for sudo is already enabled."
 		return 0
 	fi
 	silent "sudo cp '$pam_sudo_file' '${pam_sudo_file}.backup.$(date +%s)'" || true
@@ -51,7 +51,7 @@ enable_touchid_sudo() {
 	fi
 	if check_file_exists "$temp_file" "temporary PAM config" && silent "sudo cp '$temp_file' '$pam_sudo_file'"; then
 		rm -f "$temp_file" || true
-		record "TouchID for sudo has been enabled."
+		info_log "TouchID for sudo has been enabled."
 	else
 		rm -f "$temp_file" || true
 		show_error "Failed to enable TouchID for sudo." "false"
@@ -75,7 +75,7 @@ ensure_disk_encryption() {
 
 ensure_command_line_tools() {
   if check_command "xcode-select" "Xcode command line tools"; then
-    record "Command Line Tools for Xcode are already installed."
+    info_log "Command Line Tools for Xcode are already installed."
     return 0
   fi
   local updates_list="/tmp/softwareupdate_list.$$"
@@ -84,14 +84,14 @@ ensure_command_line_tools() {
     rm -f "$updates_list"
     
     if [[ ! -z "$PROD" ]]; then
-      record "Command Line Tools for Xcode not found. Installing from softwareupdate…"
+      info_log "Command Line Tools for Xcode not found. Installing from softwareupdate…"
       local progress_file="/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress"
       touch "$progress_file"
       silent "softwareupdate -i \"$PROD\" --verbose"
       if check_file_exists "$progress_file" "installation progress marker"; then
         rm -f "$progress_file"
       fi
-      record "Command Line Tools for Xcode have been installed."
+      info_log "Command Line Tools for Xcode have been installed."
     fi
   else
     rm -f "$updates_list"
@@ -109,7 +109,7 @@ ensure_homebrew() {
 		setup_homebrew_env
 	fi
 	
-	log_info "Installing Homebrew..."
+	info_log "Installing Homebrew..."
 	
 	# Validate network connectivity before attempting download
 	if ! validate_network_operation "Homebrew installation" "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"; then
@@ -131,9 +131,9 @@ ensure_homebrew() {
 ensure_password_manager() {
 	# Install 1Password CLI if not present
 	if ! check_command "op" "1Password CLI"; then
-		log_info "Installing 1Password CLI..."
+		info_log "Installing 1Password CLI..."
 		if silent "brew install --cask 1password-cli"; then
-			log_success "1Password CLI installed"
+			success_log "1Password CLI installed"
 		else
 			show_error "Failed to install 1Password CLI" "true"
 		fi
@@ -141,14 +141,14 @@ ensure_password_manager() {
 
 	# Check if already signed in
 	if op whoami >/dev/null 2>&1; then
-		log_info "Already signed in to 1Password"
+		info_log "Already signed in to 1Password"
 		return 0
 	fi
 
 	# Check for existing accounts
 	local account_count=$(op account list 2>/dev/null | wc -l || echo "0")
 	if [ "$account_count" -le 1 ]; then
-		log_info "Setting up 1Password account..."
+		info_log "Setting up 1Password account..."
 		echo -n "1Password Email: "
 		read -r email
 		if [ -z "$email" ]; then
@@ -173,7 +173,7 @@ ensure_password_manager() {
 	fi
 	
 	if silent "echo \"$password\" | op signin"; then
-		log_success "Successfully authenticated with 1Password"
+		success_log "Successfully authenticated with 1Password"
 		return 0
 	else
 		show_error "Unable to authenticate with 1Password. Halting." "true"
@@ -183,9 +183,9 @@ ensure_password_manager() {
 ensure_bootstrap_tools() {
 	setup_homebrew_env
 	
-	log_info "Installing essential bootstrap tools..."
+	info_log "Installing essential bootstrap tools..."
 	if silent "brew bundle -d --file=\"${DOTFILES_PARENT_DIR:-$PWD}/dependencies/dependencies.brewfile\""; then
-		log_success "Essential bootstrap tools installed"
+		success_log "Essential bootstrap tools installed"
 	else
 		show_error "Failed to install essential bootstrap tools" "true"
 	fi
@@ -197,21 +197,21 @@ ensure_bootstrap_tools() {
 ensure_rust_toolchain() {
 	if check_command "rustup-init" "Rust toolchain installer"; then
 		if ! check_command "cargo" "Rust package manager"; then
-			log_info "Initializing Rust toolchain..."
+			info_log "Initializing Rust toolchain..."
 			if silent "rustup-init -y --no-modify-path"; then
 				# Source rust environment
 				if [ -f ~/.cargo/env ]; then
 					source ~/.cargo/env
 				fi
-				log_success "Rust toolchain initialized"
+				success_log "Rust toolchain initialized"
 			else
-				log_warn "Failed to initialize Rust toolchain"
+				warn_log "Failed to initialize Rust toolchain"
 			fi
 		else
-			log_info "Rust toolchain already available"
+			info_log "Rust toolchain already available"
 		fi
 	else
-		log_warn "rustup-init not found, skipping Rust setup"
+		warn_log "rustup-init not found, skipping Rust setup"
 	fi
 }
 
@@ -225,11 +225,11 @@ ensure_mas() {
 	fi
 	
 	if silent "mas account"; then
-		log_success "App Store already authenticated"
+		success_log "App Store already authenticated"
 		return 0
 	fi
 	
-	log_info "App Store authentication required for application installation."
+	info_log "App Store authentication required for application installation."
 	
 	local apple_id=$(defaults read MobileMeAccounts 2>/dev/null | grep -o '"AccountID" = "[^"]*"' | head -1 | sed 's/"AccountID" = "\([^"]*\)"/\1/' 2>/dev/null)
 	
@@ -239,19 +239,19 @@ ensure_mas() {
 			show_error "Apple ID entry cancelled. Exiting." "true"
 		fi
 	else
-		log_info "Found Apple ID: $apple_id"
+		info_log "Found Apple ID: $apple_id"
 	fi
 	
 	if silent "mas signin '$apple_id' --dialog" 2>/dev/null; then
-		log_success "App Store authenticated successfully with $apple_id"
+		success_log "App Store authenticated successfully with $apple_id"
 	else
-		log_warn "Automatic App Store authentication failed."
-		log_info "Please manually sign in to the App Store app and press Enter to continue..."
+		warn_log "Automatic App Store authentication failed."
+		info_log "Please manually sign in to the App Store app and press Enter to continue..."
 		read -r
 		if silent "mas account"; then
-			log_success "App Store authentication verified"
+			success_log "App Store authentication verified"
 		else
-			log_error "App Store authentication could not be verified. Some apps may not install." "false"
+			error_log "App Store authentication could not be verified. Some apps may not install." "false"
 		fi
 	fi
 }
@@ -269,7 +269,7 @@ check_macos_version() {
         return 1
     fi
     
-    log_info "OS version check passed: $current_version"
+    info_log "OS version check passed: $current_version"
 }
 
 check_disk_space() {
@@ -281,7 +281,7 @@ check_disk_space() {
         return 1
     fi
     
-    log_info "Disk space check passed: ${available_gb}GB available"
+    info_log "Disk space check passed: ${available_gb}GB available"
 }
 
 check_network_connectivity() {
@@ -292,7 +292,7 @@ check_network_connectivity() {
         return 1
     fi
     
-    log_info "Network connectivity check passed"
+    info_log "Network connectivity check passed"
 }
 
 # ============================================================================
@@ -303,11 +303,11 @@ preflight_checks() {
     check_macos_version "11.0"
     
     local arch=$(get_architecture)
-    log_info "Architecture: $arch"
+    info_log "Architecture: $arch"
     
     check_disk_space 5
     check_network_connectivity "github.com"
     ensure_not_root
     
-    log_info "User permissions check passed"
+    info_log "User permissions check passed"
 }

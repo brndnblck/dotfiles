@@ -22,18 +22,18 @@ if [ -z "${DOTFILES_PARENT_DIR:-}" ]; then
     exit 1
 fi
 DOTFILES_PARENT_DIR=$(dirname "$CURRENT_DIR")
-DOTFILES_LOG_FILE="$DOTFILES_PARENT_DIR/tmp/setup-$(date +%Y%m%d-%H%M%S).log"
-DOTFILES_DEBUG_LOG="$DOTFILES_PARENT_DIR/tmp/debug-setup-$(date +%Y%m%d-%H%M%S).log"
+# Set session ID for unified debug logging
+DOTFILES_SESSION_ID="setup-$(date +%Y%m%d-%H%M%S)"
 
 # Export for use in helper functions
-export DOTFILES_DEBUG_LOG
-export DOTFILES_LOG_FILE
+export DOTFILES_SESSION_ID
 export DOTFILES_PARENT_DIR
 
 # Ensure tmp directory exists
 mkdir -p "$DOTFILES_PARENT_DIR/tmp"
 
 # Import helpers
+source "$CURRENT_DIR/core/logging"
 source "$CURRENT_DIR/core/common"
 source "$CURRENT_DIR/core/system"
 source "$CURRENT_DIR/core/prerequisites"
@@ -76,9 +76,8 @@ main() {
     show_standard_header
     show_section_header "SYSTEM INIT"
 
-    # Display log paths (relative from DOTFILES_PARENT_DIR)
-    gum style --foreground "$INTERFACE_SECONDARY" "DEBUG: ${DOTFILES_DEBUG_LOG#"$DOTFILES_PARENT_DIR"/}"
-    gum style --foreground "$INTERFACE_SECONDARY" "OUTPUT: ${DOTFILES_LOG_FILE#"$DOTFILES_PARENT_DIR"/}"
+    # Display debug log path
+    gum style --foreground "$INTERFACE_SECONDARY" "DEBUG LOG: $(get_debug_log_path)"
     ansi --newline
 
     # Set task title for progress display

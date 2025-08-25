@@ -152,6 +152,4 @@ fi
 if [[ -z "${LOG_DIR:-}" ]]; then
     readonly LOG_DIR="tmp/log"
 fi
-if [[ -z "${BOOTSTRAP_LOG_FILE:-}" ]]; then
-    readonly BOOTSTRAP_LOG_FILE="bootstrap.log"
-fi
+# BOOTSTRAP_LOG_FILE removed - using unified debug log

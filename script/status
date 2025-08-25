@@ -44,7 +44,7 @@ main() {
     local status_data
 
     # Log status gathering to debug file
-    record "DEBUG" "GATHERING SYSTEM STATUS"
+    debug_log "GATHERING SYSTEM STATUS"
 
     status_data=$(gum spin --spinner dot --title "SCANNING SYSTEM COMPONENTS..." \
         --spinner.foreground "$INTERFACE_COLOR" \

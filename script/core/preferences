@@ -5,7 +5,7 @@ set -euo pipefail
 # Source utilities
 source "$(dirname "${BASH_SOURCE[0]}")/common"
 
-log_info "Configuring macOS system preferences..."
+info_log "Configuring macOS system preferences..."
 
 # General System Preferences
 
@@ -75,7 +75,7 @@ defaults write com.apple.TextEdit PlainTextEncodingForWrite -int 4
 # iTerm2 Preferences (if iTerm2 is installed)
 
 if check_directory_exists "/Applications/iTerm.app" "iTerm2 application"; then
-    log_info "Configuring iTerm2 preferences..."
+    info_log "Configuring iTerm2 preferences..."
 
     # Don't display the annoying prompt when quitting iTerm
     defaults write com.googlecode.iterm2 PromptOnQuit -bool false
@@ -98,14 +98,14 @@ fi
 # Brave Browser (if Brave is installed)
 
 if check_directory_exists "/Applications/Brave Browser.app" "Brave Browser application"; then
-    log_info "Configuring Brave Browser preferences..."
+    info_log "Configuring Brave Browser preferences..."
 
     # Disable Brave's external protocol prompt
     defaults write com.brave.Browser ExternalProtocolDialogShowAlwaysOpenCheckbox -bool true
 fi
 
 # Create useful symlinks
-log_info "Creating useful symlinks..."
+info_log "Creating useful symlinks..."
 
 if [ ! -L ~/iCloud ]; then
     silent "ln -s ~/Library/Mobile\ Documents/com\~apple\~CloudDocs/ ~/iCloud" || true
@@ -127,11 +127,11 @@ if check_directory_exists "/Applications/Sublime Text.app" "Sublime Text applica
 fi
 
 # Restart affected applications
-log_info "Restarting affected applications..."
+info_log "Restarting affected applications..."
 for app in "Dock" "Finder" "SystemUIServer"; do
     killall "$app" > /dev/null 2>&1 || true
 done
 
-log_info "OS preferences configured successfully!"
+info_log "OS preferences configured successfully!"
 
 # Note: Some changes may require a logout/login or restart to take full effect

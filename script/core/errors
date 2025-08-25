@@ -22,33 +22,33 @@ handle_error() {
     
     case "$error_type" in
         "file_not_found")
-            log_error "File not found: $message" "$exit_on_error"
+            error_log "File not found: $message" "$exit_on_error"
             [ "$exit_on_error" = "true" ] && exit $EXIT_FILE_NOT_FOUND
             ;;
         "command_not_found")
-            log_error "Command not found: $message" "$exit_on_error"
+            error_log "Command not found: $message" "$exit_on_error"
             [ "$exit_on_error" = "true" ] && exit $EXIT_MISSING_COMMAND
             ;;
         "permission_denied")
-            log_error "Permission denied: $message" "$exit_on_error"
+            error_log "Permission denied: $message" "$exit_on_error"
             [ "$exit_on_error" = "true" ] && exit $EXIT_PERMISSION_DENIED
             ;;
         "network_error")
-            log_error "Network error: $message" "$exit_on_error"
+            error_log "Network error: $message" "$exit_on_error"
             [ "$exit_on_error" = "true" ] && exit $EXIT_NETWORK_ERROR
             ;;
         "invalid_input")
-            log_error "Invalid input: $message" "$exit_on_error"
+            error_log "Invalid input: $message" "$exit_on_error"
             [ "$exit_on_error" = "true" ] && exit $EXIT_INVALID_INPUT
             ;;
         *)
-            log_error "$message" "$exit_on_error"
+            error_log "$message" "$exit_on_error"
             [ "$exit_on_error" = "true" ] && exit $EXIT_GENERAL_ERROR
             ;;
     esac
     
     # Add context if provided
-    [ -n "$context" ] && log_info "Context: $context"
+    [ -n "$context" ] && info_log "Context: $context"
     
     return $EXIT_GENERAL_ERROR
 }
@@ -82,8 +82,8 @@ network_error() {
     local url="$2"
     local exit_on_error="${3:-true}"
     
-    log_error "Network connectivity check failed for $operation"
-    log_error "Unable to reach: $url"
+    error_log "Network connectivity check failed for $operation"
+    error_log "Unable to reach: $url"
     show_error "Network connectivity required for $operation. Please check your internet connection." "$exit_on_error"
 }
 
@@ -93,7 +93,7 @@ installation_error() {
     local package_name="$2"
     local exit_on_error="${3:-false}"
     
-    log_error "Failed to install $package_type package: $package_name"
+    error_log "Failed to install $package_type package: $package_name"
     [ "$exit_on_error" = "true" ] && show_error "Installation failed for $package_name" "true"
     return $EXIT_GENERAL_ERROR
 }
@@ -103,7 +103,7 @@ template_error() {
     local template_file="$1"
     local exit_on_error="${2:-true}"
     
-    log_error "Template processing failed: $template_file"
+    error_log "Template processing failed: $template_file"
     [ "$exit_on_error" = "true" ] && show_error "Failed to process template: $template_file" "true"
     return $EXIT_GENERAL_ERROR
 }

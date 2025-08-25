@@ -15,10 +15,10 @@ source "$(dirname "${BASH_SOURCE[0]}")/common"
 apply_dotfiles_and_shell() {
 	# Apply dotfiles with chezmoi
 	if check_command "chezmoi" "Chezmoi"; then
-		log_info "Applying dotfiles configuration..."
-		chezmoi apply --force || log_error "Failed to apply dotfiles" "true"
+		info_log "Applying dotfiles configuration..."
+		chezmoi apply --force || error_log "Failed to apply dotfiles" "true"
 	else
-		log_error "Chezmoi not found" "true"
+		error_log "Chezmoi not found" "true"
 	fi
 	
 	# Ensure zsh is the default shell
@@ -26,14 +26,14 @@ apply_dotfiles_and_shell() {
 	local zsh_path=$(which zsh)
 	
 	if echo "$current_shell" | grep -q "zsh"; then
-		log_info "Zsh is already the default shell"
+		info_log "Zsh is already the default shell"
 	else
-		log_info "Setting zsh as default shell..."
+		info_log "Setting zsh as default shell..."
 		# Add zsh to /etc/shells if not already there
 		if ! grep -q "$zsh_path" /etc/shells; then
 			echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
 		fi
-		chsh -s "$zsh_path" || log_warn "Failed to set zsh as default shell"
+		chsh -s "$zsh_path" || warn_log "Failed to set zsh as default shell"
 	fi
 }
 
@@ -41,7 +41,7 @@ configure_macos_preferences() {
 	# Ensure sudo session is active before running preferences
 	if check_file_exists "/tmp/.bootstrap_sudo_authenticated" "sudo auth marker"; then
 		if ! silent "sudo -n true"; then
-			log_warn "sudo session expired, re-authenticating..."
+			warn_log "sudo session expired, re-authenticating..."
 			sudo -v || show_error "Authentication failed. Exiting." "true"
 		fi
 	fi
@@ -55,9 +55,9 @@ configure_macos_preferences() {
 
 ensure_fonts() {
 	if check_directory_exists "${DOTFILES_PARENT_DIR:-$PWD}/fonts" "fonts directory"; then
-		silent "cp ${DOTFILES_PARENT_DIR:-$PWD}/fonts/*.ttf ~/Library/Fonts" || log_warn "Failed to install fonts"
+		silent "cp ${DOTFILES_PARENT_DIR:-$PWD}/fonts/*.ttf ~/Library/Fonts" || warn_log "Failed to install fonts"
 	else
-		log_warn "No fonts directory found"
+		warn_log "No fonts directory found"
 	fi
 }
 

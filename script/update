@@ -22,18 +22,18 @@ if [ -z "${DOTFILES_PARENT_DIR:-}" ]; then
     exit 1
 fi
 DOTFILES_PARENT_DIR=$(dirname "$CURRENT_DIR")
-DOTFILES_LOG_FILE="$DOTFILES_PARENT_DIR/tmp/update-$(date +%Y%m%d-%H%M%S).log"
-DOTFILES_DEBUG_LOG="$DOTFILES_PARENT_DIR/tmp/debug-update-$(date +%Y%m%d-%H%M%S).log"
+# Set session ID for unified debug logging
+DOTFILES_SESSION_ID="update-$(date +%Y%m%d-%H%M%S)"
 
 # Export for use in helper functions
-export DOTFILES_DEBUG_LOG
-export DOTFILES_LOG_FILE
+export DOTFILES_SESSION_ID
 export DOTFILES_PARENT_DIR
 
 # Ensure tmp directory exists
 mkdir -p "$DOTFILES_PARENT_DIR/tmp"
 
 # Import helpers
+source "$CURRENT_DIR/core/logging"
 source "$CURRENT_DIR/core/common"
 source "$CURRENT_DIR/core/dependencies"
 source "$CURRENT_DIR/core/ui"
@@ -78,7 +78,7 @@ main() {
 
     # Display log paths (relative from DOTFILES_PARENT_DIR)
     gum style --foreground "$INTERFACE_SECONDARY" "DEBUG: ${DOTFILES_DEBUG_LOG#"$DOTFILES_PARENT_DIR"/}"
-    gum style --foreground "$INTERFACE_SECONDARY" "OUTPUT: ${DOTFILES_LOG_FILE#"$DOTFILES_PARENT_DIR"/}"
+    gum style --foreground "$INTERFACE_SECONDARY" "DEBUG LOG: $(get_debug_log_path)"
     ansi --newline
 
     # Set task title for progress display
@@ -106,7 +106,7 @@ main() {
     if command -v chezmoi > /dev/null 2>&1; then
         # Check if chezmoi is properly initialized
         if ! chezmoi source-path > /dev/null 2>&1; then
-            log_info "Chezmoi not properly initialized, setting up..."
+            info_log "Chezmoi not properly initialized, setting up..."
             run_with_progressive_spinner "INITIALIZING DOTFILE CONFIG..." \
                 "chezmoi init --force --source '$DOTFILES_PARENT_DIR'"
         else
@@ -118,7 +118,7 @@ main() {
                     # Symlink is correct, proceed
                     :
                 else
-                    log_info "Chezmoi source path mismatch, reinitializing..."
+                    info_log "Chezmoi source path mismatch, reinitializing..."
                     run_with_progressive_spinner "REINITIALIZING DOTFILE CONFIG..." \
                         "chezmoi init --force --source '$DOTFILES_PARENT_DIR'"
                 fi
@@ -131,7 +131,7 @@ main() {
             if ! run_with_progressive_spinner "SYNCING DOTFILE CONFIG..." \
                 "chezmoi update 2>/dev/null"; then
                 # Update failed, fall back to apply
-                log_info "Update failed, applying current configuration..."
+                info_log "Update failed, applying current configuration..."
                 run_with_progressive_spinner "APPLYING DOTFILE CONFIG..." \
                     "chezmoi apply --force"
             fi

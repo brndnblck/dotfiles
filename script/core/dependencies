@@ -35,7 +35,7 @@ wait_for_npm_availability() {
 	local retry_interval=2
 	local retry_count=0
 	
-	log_info "Checking npm availability after Node.js installation..."
+	info_log "Checking npm availability after Node.js installation..."
 	
 	while [ $retry_count -lt $max_retries ]; do
 		# Re-source asdf environment and reshim
@@ -44,16 +44,16 @@ wait_for_npm_availability() {
 		
 		# Check if npm is now available
 		if command -v npm >/dev/null 2>&1; then
-			log_success "npm is now available"
+			success_log "npm is now available"
 			return 0
 		fi
 		
 		retry_count=$((retry_count + 1))
-		log_info "npm not yet available, retrying in ${retry_interval}s... (attempt $retry_count/$max_retries)"
+		info_log "npm not yet available, retrying in ${retry_interval}s... (attempt $retry_count/$max_retries)"
 		sleep $retry_interval
 	done
 	
-	log_error "npm is not available after $max_retries attempts"
+	error_log "npm is not available after $max_retries attempts"
 	return 1
 }
 
@@ -62,7 +62,7 @@ setup_asdf_tools() {
 	local is_update_mode="${1:-false}"
 	
 	if ! check_command "asdf" "asdf version manager"; then
-		log_warn "asdf not found, skipping language version management"
+		warn_log "asdf not found, skipping language version management"
 		return 1
 	fi
 	
@@ -72,21 +72,21 @@ setup_asdf_tools() {
 	# Add plugins (skip if already exist)
 	for plugin in ruby python nodejs golang; do
 		if ! asdf plugin list | grep -q "^${plugin}$"; then
-			log_info "Adding asdf plugin: $plugin"
+			info_log "Adding asdf plugin: $plugin"
 			if silent "asdf plugin add $plugin"; then
 				# Verify plugin was actually installed
 				if asdf plugin list | grep -q "^${plugin}$"; then
-					log_success "Successfully added asdf plugin: $plugin"
+					success_log "Successfully added asdf plugin: $plugin"
 				else
-					log_error "Plugin $plugin was not installed correctly"
+					error_log "Plugin $plugin was not installed correctly"
 					continue
 				fi
 			else
-				log_error "Failed to add asdf plugin: $plugin"
+				error_log "Failed to add asdf plugin: $plugin"
 				continue
 			fi
 		else
-			log_info "asdf plugin $plugin already installed"
+			info_log "asdf plugin $plugin already installed"
 		fi
 	done
 	
@@ -95,38 +95,38 @@ setup_asdf_tools() {
 	
 	# Install and set latest stable versions
 	for tool in ruby python nodejs golang; do
-		log_info "Processing $tool..."
+		info_log "Processing $tool..."
 		
 		# Get latest stable version
 		local latest_version
 		latest_version=$(asdf latest "$tool" 2>/dev/null) || {
-			log_error "Could not determine latest stable version for $tool"
+			error_log "Could not determine latest stable version for $tool"
 			continue
 		}
 		
 		if [ -n "$latest_version" ]; then
 			# Check if this version is already installed
 			if ! asdf list "$tool" 2>/dev/null | grep -q "$latest_version"; then
-				log_info "Installing $tool $latest_version..."
+				info_log "Installing $tool $latest_version..."
 				if silent "asdf install $tool $latest_version"; then
-					log_success "Successfully installed $tool $latest_version"
+					success_log "Successfully installed $tool $latest_version"
 					
 					# Verify installation
 					if ! asdf list "$tool" 2>/dev/null | grep -q "$latest_version"; then
-						log_error "$tool $latest_version installation failed verification"
+						error_log "$tool $latest_version installation failed verification"
 						continue
 					fi
 				else
-					log_error "Failed to install $tool $latest_version"
+					error_log "Failed to install $tool $latest_version"
 					continue
 				fi
 			else
-				log_info "$tool $latest_version already installed"
+				info_log "$tool $latest_version already installed"
 			fi
 			
 			# Install the version but don't try to set it globally here
 			# The global ~/.tool-versions will be updated by update_tool_versions_file()
-			log_info "Version $tool $latest_version is ready for global use"
+			info_log "Version $tool $latest_version is ready for global use"
 			
 			# Clean up old versions if in update mode
 			if [ "$is_update_mode" = "true" ]; then
@@ -136,11 +136,11 @@ setup_asdf_tools() {
 	done
 	
 	# Reshim all tools to ensure executables are available
-	log_info "Refreshing asdf shims..."
+	info_log "Refreshing asdf shims..."
 	if silent "asdf reshim"; then
-		log_success "asdf shims refreshed successfully"
+		success_log "asdf shims refreshed successfully"
 	else
-		log_error "Failed to refresh asdf shims"
+		error_log "Failed to refresh asdf shims"
 		return 1
 	fi
 	
@@ -152,7 +152,7 @@ setup_asdf_tools() {
 update_tool_versions_file() {
 	local tool_versions_file="$HOME/.tool-versions"
 	
-	log_info "Updating $tool_versions_file with latest versions..."
+	info_log "Updating $tool_versions_file with latest versions..."
 	
 	# Create or clear the file
 	> "$tool_versions_file"
@@ -168,42 +168,42 @@ update_tool_versions_file() {
 		if [ -n "$installed_versions" ] && [ "$installed_versions" != "No versions installed" ]; then
 			# Use the last (usually latest) installed version
 			version="$installed_versions"
-			log_info "Using installed version for $tool: $version"
+			info_log "Using installed version for $tool: $version"
 		else
 			# No installed version, get the latest available
-			log_info "No installed version for $tool, fetching latest..."
+			info_log "No installed version for $tool, fetching latest..."
 			version=$(asdf latest "$tool" 2>/dev/null)
 			
 			if [ -n "$version" ]; then
-				log_info "Latest version for $tool is $version"
+				info_log "Latest version for $tool is $version"
 			fi
 		fi
 		
 		# Add to .tool-versions if we have a valid version
 		if [ -n "$version" ] && [ "$version" != "No" ] && [ "$version" != "Version" ]; then
 			echo "$tool $version" >> "$tool_versions_file"
-			log_success "Added $tool $version to .tool-versions"
+			success_log "Added $tool $version to .tool-versions"
 		else
-			log_warn "Could not determine version for $tool"
+			warn_log "Could not determine version for $tool"
 			# Try to at least add the latest version as fallback
 			local fallback_version
 			fallback_version=$(asdf latest "$tool" 2>/dev/null)
 			if [ -n "$fallback_version" ]; then
 				echo "$tool $fallback_version" >> "$tool_versions_file"
-				log_success "Added $tool $fallback_version to .tool-versions (fallback)"
+				success_log "Added $tool $fallback_version to .tool-versions (fallback)"
 			fi
 		fi
 	done
 	
 	# Verify the file was created and has content
 	if [ -f "$tool_versions_file" ] && [ -s "$tool_versions_file" ]; then
-		log_success "Successfully updated $tool_versions_file"
-		log_info "Contents:"
+		success_log "Successfully updated $tool_versions_file"
+		info_log "Contents:"
 		while IFS= read -r line; do
-			log_info "  $line"
+			info_log "  $line"
 		done < "$tool_versions_file"
 	else
-		log_error "Failed to create $tool_versions_file or file is empty"
+		error_log "Failed to create $tool_versions_file or file is empty"
 		return 1
 	fi
 }
@@ -215,13 +215,13 @@ cleanup_old_asdf_versions() {
 	
 	# Safety check: ensure we have a valid latest version
 	if [ -z "$latest_version" ]; then
-		log_error "Cannot cleanup versions: latest_version is empty for $tool"
+		error_log "Cannot cleanup versions: latest_version is empty for $tool"
 		return 1
 	fi
 	
 	# Safety check: ensure latest version is actually installed
 	if ! asdf list "$tool" 2>/dev/null | grep -q "^[[:space:]]*$latest_version$"; then
-		log_error "Cannot cleanup versions: latest version $latest_version is not installed for $tool"
+		error_log "Cannot cleanup versions: latest version $latest_version is not installed for $tool"
 		return 1
 	fi
 	
@@ -229,34 +229,34 @@ cleanup_old_asdf_versions() {
 	installed_versions=$(asdf list "$tool" 2>/dev/null | grep -v '\*' | sed 's/^[[:space:]]*//' | grep -v "^$latest_version$") || return 0
 	
 	if [ -z "$installed_versions" ]; then
-		log_info "No old versions of $tool to clean up"
+		info_log "No old versions of $tool to clean up"
 		return 0
 	fi
 	
 	# Display versions that will be removed
-	log_info "Found old versions of $tool that can be removed:"
+	info_log "Found old versions of $tool that can be removed:"
 	echo "$installed_versions" | while read -r version; do
 		if [ -n "$version" ]; then
-			log_info "  - $version"
+			info_log "  - $version"
 		fi
 	done
 	
-	log_info "Current version: $latest_version (will be kept)"
+	info_log "Current version: $latest_version (will be kept)"
 	
 	# Interactive confirmation for safety
 	if [ "${DOTFILES_AUTO_CLEANUP:-false}" != "true" ]; then
-		log_info "Cleanup can be automated by setting DOTFILES_AUTO_CLEANUP=true"
+		info_log "Cleanup can be automated by setting DOTFILES_AUTO_CLEANUP=true"
 		return 0
 	fi
 	
 	# Proceed with cleanup
 	echo "$installed_versions" | while read -r version; do
 		if [ -n "$version" ] && [ "$version" != "$latest_version" ]; then
-			log_info "Removing old $tool version: $version"
+			info_log "Removing old $tool version: $version"
 			if silent "asdf uninstall $tool $version"; then
-				log_success "Successfully removed $tool $version"
+				success_log "Successfully removed $tool $version"
 			else
-				log_error "Failed to remove $tool $version"
+				error_log "Failed to remove $tool $version"
 			fi
 		fi
 	done
@@ -270,17 +270,17 @@ ensure_development() {
 
 	if check_command "rustup" "Rust toolchain manager"; then
 		if ! silent "rustup toolchain list | grep -q stable"; then
-			log_info "Installing Rust stable toolchain..."
+			info_log "Installing Rust stable toolchain..."
 			silent "rustup install stable" || true
 		else
-			log_info "Rust stable toolchain is already installed"
+			info_log "Rust stable toolchain is already installed"
 		fi
 		
 		if ! silent "rustup toolchain list | grep -q nightly"; then
-			log_info "Installing Rust nightly toolchain..."
+			info_log "Installing Rust nightly toolchain..."
 			silent "rustup install nightly" || true
 		else
-			log_info "Rust nightly toolchain is already installed"
+			info_log "Rust nightly toolchain is already installed"
 		fi
 		
 		silent "rustup default stable" || true
@@ -306,10 +306,10 @@ ensure_development() {
 				"npm list -g {} >/dev/null 2>&1" \
 				"Node.js npm packages"
 		else
-			log_error "npm is not available. Skipping npm package installation."
+			error_log "npm is not available. Skipping npm package installation."
 		fi
 	else
-		log_warn "asdf not found. Skipping npm package installation."
+		warn_log "asdf not found. Skipping npm package installation."
 	fi
 }
 
@@ -331,7 +331,7 @@ update_development() {
 	setup_asdf_tools "true"
 	
 	if check_command "rustup" "Rust toolchain manager"; then
-		log_info "Updating Rust toolchains..."
+		info_log "Updating Rust toolchains..."
 		silent "rustup update" || true
 		
 		# Install cargo packages from dependencies file
@@ -354,10 +354,10 @@ update_development() {
 				"npm list -g {} >/dev/null 2>&1" \
 				"Node.js npm packages"
 		else
-			log_error "npm is not available. Skipping npm package installation."
+			error_log "npm is not available. Skipping npm package installation."
 		fi
 	else
-		log_warn "asdf not found. Skipping npm package installation."
+		warn_log "asdf not found. Skipping npm package installation."
 	fi
 }
 

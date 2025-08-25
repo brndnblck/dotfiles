@@ -1,104 +1,46 @@
 #!/usr/bin/env bash
 
-# Logging and Output Module
-# Centralized logging, display, and message handling functions
-
-# Source configuration constants
-source "$(dirname "${BASH_SOURCE[0]}")/config"
-
-# Source ansi utilities for colored output
-source "$(dirname "${BASH_SOURCE[0]}")/ansi"
+# Unified Session Debug Logging Module
+# All logging (commands, output, bootstrap) goes to single session-specific debug log
 
 # ============================================================================
-# Logging and Output
+# Unified Debug Logging
 # ============================================================================
 
-handle_message() {
+# Get or create session-specific debug log file
+get_debug_log_file() {
+    if [ -z "${DOTFILES_DEBUG_LOG:-}" ]; then
+        local session_id="${DOTFILES_SESSION_ID:-$(date +%Y%m%d-%H%M%S)}"
+        DOTFILES_DEBUG_LOG="${DOTFILES_PARENT_DIR:-$PWD}/tmp/debug-${session_id}.log"
+        export DOTFILES_DEBUG_LOG
+    fi
+    echo "$DOTFILES_DEBUG_LOG"
+}
+
+# Core logging function - everything goes here
+write_log() {
     local level="$1"
     local message="$2"
-    local exit_on_error="${3:-true}"
-    local display="${4:-true}"
+    local debug_file=$(get_debug_log_file)
     
-    # Log to file
-    case "$level" in
-        "info")
-            record "INFO" "$message"
-            ;;
-        "success")
-            record "SUCCESS" "$message"
-            ;;
-        "warn")
-            record "WARN" "$message"
-            ;;
-        "error")
-            record "ERROR" "$message"
-            ;;
-        "test")
-            record "TEST" "$message"
-            ;;
-    esac
+    # Create log directory if it doesn't exist
+    mkdir -p "$(dirname "$debug_file")"
     
-    # Display to user only if requested
-    if [ "$display" = "true" ]; then
-        case "$level" in
-            "info")
-                ansi --blue --bold --no-restore
-                echo "INFO: $message"
-                ansi --reset-color
-                ;;
-            "success")
-                ansi --green --bold --no-restore
-                echo "✓ SUCCESS: $message"
-                ansi --reset-color
-                ;;
-            "warn")
-                ansi --yellow --bold --no-restore
-                echo "⚠ WARNING: $message"
-                ansi --reset-color >&2
-                ;;
-            "error")
-                ansi --newline
-                ansi --red --bold --no-restore
-                echo "✗ ERROR: $message"
-                ansi --reset-color --newline
-                ;;
-            "test")
-                ansi --magenta --bold --no-restore
-                echo "TEST: $message"
-                ansi --reset-color
-                ;;
-        esac
-    fi
-    
-    # Handle exit on error
-    if [ "$level" = "error" ] && [ "$exit_on_error" = "true" ]; then
-        exit 1
-    fi
+    # Write timestamped message with level
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $level: $message" >> "$debug_file"
 }
 
-show_info() { handle_message "info" "$1"; }
-show_success() { handle_message "success" "$1"; }
-show_warn() { handle_message "warn" "$1"; }
-show_error() { handle_message "error" "$1" "${2:-true}"; }
+# Log level helpers
+debug_log() { write_log "DEBUG" "$1"; }
+info_log() { write_log "INFO" "$1"; }
+success_log() { write_log "SUCCESS" "$1"; }
+warn_log() { write_log "WARN" "$1"; }
+error_log() { write_log "ERROR" "$1"; }
+command_log() { write_log "COMMAND" "$1"; }
+output_log() { write_log "OUTPUT" "$1"; }
 
-log_info() { handle_message "info" "$1" "false" "false"; }
-log_success() { handle_message "success" "$1" "false" "false"; }
-log_warn() { handle_message "warn" "$1" "false" "false"; }
-log_error() { handle_message "error" "$1" "${2:-false}" "false"; }
-
-record() {
-    local level="${1:-$DEFAULT_LOG_LEVEL}"
-    shift
-    local log_dir="${DOTFILES_PARENT_DIR:-$PWD}/$LOG_DIR"
-    mkdir -p "$log_dir"
-    echo "$(date -u "$LOG_DATE_FORMAT") $level: $@" >> "$log_dir/$BOOTSTRAP_LOG_FILE" 2>&1
-}
-
-show_header() {
-    local message="$1"
-    local color="${2:-blue}"
-    
-    ansi --${color} --bold --no-restore --newline
-    echo "$message"
-    ansi --reset-color --newline
+# Get current debug log file path for display
+get_debug_log_path() {
+    local debug_file=$(get_debug_log_file)
+    echo "${debug_file#${DOTFILES_PARENT_DIR:-$PWD}/}"
 }

@@ -563,9 +563,9 @@ export -f check_command silent op log_info log_success show_error
 # Test password manager setup (but don't actually prompt for credentials)
 echo "Testing 1Password CLI installation..."
 if ! check_command "op" "1Password CLI"; then
-    log_info "Installing 1Password CLI..."
+    info_log "Installing 1Password CLI..."
     if silent "brew install --cask 1password-cli"; then
-        log_success "1Password CLI installed"
+        success_log "1Password CLI installed"
     else
         show_error "Failed to install 1Password CLI"
     fi

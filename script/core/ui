@@ -2,6 +2,9 @@
 
 # UI Helper Functions for Consistent Interface Elements
 
+# Source logging functions
+source "$(dirname "${BASH_SOURCE[0]}")/logging"
+
 # Show the standard header with BUILD info, divider, and ASCII art
 show_standard_header() {
     clear
@@ -86,10 +89,10 @@ run_with_progressive_spinner() {
     shift
     local command="$*"
     
-    log_output "Starting: $message"
+    info_log "Starting: $message"
     
     # Log command to debug file
-    record "DEBUG" "COMMAND: $command"
+    debug_log "COMMAND: $command"
     
     # Show the current task with animated spinner in amber
     if gum spin --spinner dot --title " $message" \
@@ -104,20 +107,20 @@ run_with_progressive_spinner() {
         echo "░ ✓ $message"
         
         # Also capture command output to debug log
-        record "DEBUG" "COMMAND OUTPUT:"
+        debug_log "COMMAND OUTPUT:"
         tail -n 50 "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}" >> "$DOTFILES_DEBUG_LOG"
-        record "DEBUG" "END COMMAND OUTPUT"
+        debug_log "END COMMAND OUTPUT"
         
-        log_output "Completed: $message"
+        info_log "Completed: $message"
         return 0
     else
         # Log failure details to debug log
-        record "DEBUG" "COMMAND FAILED: $command"
-        record "DEBUG" "ERROR OUTPUT:"
+        debug_log "COMMAND FAILED: $command"
+        debug_log "ERROR OUTPUT:"
         tail -n 50 "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}" >> "$DOTFILES_DEBUG_LOG"
-        record "DEBUG" "END ERROR OUTPUT"
+        debug_log "END ERROR OUTPUT"
         
-        log_output "Failed: $message"
+        error_log "Failed: $message"
         return 1
     fi
 }
@@ -128,10 +131,10 @@ run_with_spinner() {
     shift
     local command="$*"
     
-    log_output "Starting: $message"
+    info_log "Starting: $message"
     
     # Log command to debug file
-    record "DEBUG" "COMMAND: $command"
+    debug_log "COMMAND: $command"
     
     if gum spin --spinner dot --title " $message" \
         --spinner.foreground "$INTERFACE_COLOR" \
@@ -139,28 +142,25 @@ run_with_spinner() {
         -- bash -c "$command >> '${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}' 2>&1; echo \$? > /tmp/exit_code_\$\$"; then
         
         # Also capture command output to debug log
-        record "DEBUG" "COMMAND OUTPUT:"
+        debug_log "COMMAND OUTPUT:"
         tail -n 50 "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}" >> "$DOTFILES_DEBUG_LOG"
-        record "DEBUG" "END COMMAND OUTPUT"
+        debug_log "END COMMAND OUTPUT"
         
-        log_output "Completed: $message"
+        info_log "Completed: $message"
         return 0
     else
         # Log failure details to debug log
-        record "DEBUG" "COMMAND FAILED: $command"
-        record "DEBUG" "ERROR OUTPUT:"
+        debug_log "COMMAND FAILED: $command"
+        debug_log "ERROR OUTPUT:"
         tail -n 50 "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}" >> "$DOTFILES_DEBUG_LOG"
-        record "DEBUG" "END ERROR OUTPUT"
+        debug_log "END ERROR OUTPUT"
         
-        log_output "Failed: $message"
+        error_log "Failed: $message"
         return 1
     fi
 }
 
-# Log output to file
-log_output() {
-    echo "[$(date '+%H:%M:%S')] $1" >> "${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}"
-}
+# log_output is now provided by the logging module
 
 # Show exit screen
 show_exit_screen() {

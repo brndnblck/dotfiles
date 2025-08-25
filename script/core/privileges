@@ -32,7 +32,7 @@ prompt_sudo_password() {
 # Check if sudo access is already available
 check_existing_sudo_access() {
 	if silent "sudo -n true"; then
-		record "INFO" "sudo access already available"
+		info_log "sudo access already available"
 		return 0
 	fi
 	return 1
@@ -42,7 +42,7 @@ check_existing_sudo_access() {
 try_refresh_sudo_session() {
 	if check_file_exists "$SUDO_AUTH_MARKER" "sudo auth marker"; then
 		if silent "sudo -n -v"; then
-			log_info "sudo session refreshed"
+			info_log "sudo session refreshed"
 			return 0
 		else
 			rm -f "$SUDO_AUTH_MARKER"
@@ -54,7 +54,7 @@ try_refresh_sudo_session() {
 # Validate environment supports sudo prompting
 validate_sudo_environment() {
 	if ! tty >/dev/null 2>&1; then
-		log_error "Sudo access not available in background process" "true"
+		error_log "Sudo access not available in background process" "true"
 		return 1
 	fi
 	
@@ -69,7 +69,7 @@ validate_sudo_environment() {
 configure_sudo_session() {
 	local sudo_password="$1"
 	
-	log_info "sudo access granted and cached"
+	info_log "sudo access granted and cached"
 	touch "$SUDO_AUTH_MARKER"
 	
 	# Set a reasonable sudo timeout for bootstrap
@@ -122,13 +122,13 @@ start_sudo_keepalive() {
 			while check_file_exists "/tmp/.bootstrap_sudo_authenticated" "sudo auth marker"; do
 				sleep $SUDO_KEEPALIVE_INTERVAL
 				if ! sudo -n true 2>/dev/null; then
-					log_warn "sudo session expired, keep-alive exiting"
+					warn_log "sudo session expired, keep-alive exiting"
 					break
 				fi
 			done
 		) &
 		echo $! > "$SUDO_KEEPALIVE_PID"
-		log_info "sudo keep-alive started (PID: $!)"
+		info_log "sudo keep-alive started (PID: $!)"
 	fi
 }
 
@@ -139,7 +139,7 @@ stop_sudo_keepalive() {
 			kill "$pid" 2>/dev/null || true
 		fi
 		rm -f "$SUDO_KEEPALIVE_PID"
-		log_info "sudo keep-alive stopped"
+		info_log "sudo keep-alive stopped"
 	fi
 }
 
@@ -151,6 +151,6 @@ cleanup_sudo_config() {
 	# Remove the temporary sudoers timeout configuration
 	if [ -f "$BOOTSTRAP_TIMEOUT_CONFIG" ]; then
 		sudo rm -f "$BOOTSTRAP_TIMEOUT_CONFIG" 2>/dev/null || true
-		log_info "Cleaned up sudo timeout configuration"
+		info_log "Cleaned up sudo timeout configuration"
 	fi
 }
