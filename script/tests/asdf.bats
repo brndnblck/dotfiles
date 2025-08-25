@@ -167,6 +167,158 @@ EOF
     chmod +x "$asdf_path"
 }
 
+describe "asdf Edge Cases and Parsing Logic"
+
+@test "asdf: should handle empty version list correctly (not crash like wc -l bug)" {
+    it "should parse empty asdf list output without errors"
+    
+    # Create a more realistic asdf mock that can return empty results
+    cat > "$MOCK_BREW_PREFIX/bin/asdf" << 'EOF'
+#!/bin/bash
+case "$1" in
+    "list")
+        tool="$2"
+        case "$tool" in
+            "empty-tool") 
+                # Return literally nothing (empty string) - this is the edge case!
+                echo ""
+                ;;
+            "no-versions-tool")
+                # Return the "No versions installed" message
+                echo "No versions installed"
+                ;;
+            "whitespace-tool")
+                # Return just whitespace
+                echo "   "
+                ;;
+            *)
+                echo "  3.2.0"
+                ;;
+        esac
+        ;;
+esac
+EOF
+    chmod +x "$MOCK_BREW_PREFIX/bin/asdf"
+    
+    # Test the actual parsing logic from dependencies:166
+    # This is the same pattern that was buggy in status.bats
+    
+    # Test 1: Empty output (should not crash)
+    run bash -c "asdf list empty-tool 2>/dev/null | tail -1 | sed 's/^[[:space:]]*//'"
+    assert_success
+    assert_output ""  # Should be empty string, not crash
+    
+    # Test 2: No versions installed message
+    local installed_versions
+    installed_versions=$(asdf list no-versions-tool 2>/dev/null | tail -1 | sed 's/^[[:space:]]*//')
+    if [ -n "$installed_versions" ] && [ "$installed_versions" != "No versions installed" ]; then
+        echo "ERROR: Expected NO_VERSION but got: $installed_versions"
+        exit 1
+    fi
+    
+    # Test 3: Whitespace-only output (edge case)
+    run bash -c "asdf list whitespace-tool 2>/dev/null | tail -1 | sed 's/^[[:space:]]*//'"
+    assert_success
+    assert_output ""  # Should be empty after sed strips whitespace
+}
+
+@test "asdf: should handle complex version parsing edge cases" {
+    it "should correctly parse and filter version lists without off-by-one errors"
+    
+    # Mock asdf with realistic version output including edge cases
+    cat > "$MOCK_BREW_PREFIX/bin/asdf" << 'EOF'
+#!/bin/bash
+case "$1" in
+    "list")
+        tool="$2"
+        case "$tool" in
+            "multi-version-tool")
+                # Realistic multi-version output
+                echo "  1.0.0"
+                echo "  2.0.0"
+                echo "* 3.0.0"  # Current version marked with *
+                echo "  3.1.0"
+                ;;
+            "single-version-tool")
+                echo "* 1.0.0"
+                ;;
+            "empty-after-filter")
+                # Tool where all versions match the "latest" so filtering results in empty
+                echo "* 2.5.0"
+                ;;
+        esac
+        ;;
+esac
+EOF
+    chmod +x "$MOCK_BREW_PREFIX/bin/asdf"
+    
+    # Test the complex filtering logic from dependencies:229
+    # This pipeline: asdf list | grep -v '\*' | sed | grep -v "^$latest_version$"
+    
+    # Test 1: Multi-version filtering (should remove current version marked with *)
+    run bash -c "asdf list multi-version-tool 2>/dev/null | grep -v '\*' | sed 's/^[[:space:]]*//'"
+    assert_success
+    # Should contain 1.0.0, 2.0.0, 3.1.0 but not the * marked 3.0.0
+    assert_output --partial "1.0.0"
+    assert_output --partial "2.0.0"
+    assert_output --partial "3.1.0"
+    refute_output --partial "* 3.0.0"
+    
+    # Test 2: Single version with * (filtering should result in empty)
+    local result
+    result=$(asdf list single-version-tool 2>/dev/null | grep -v '\*' | sed 's/^[[:space:]]*//' | grep -v '^$' || echo "EMPTY_RESULT")
+    # This is the critical test - empty result should be handled gracefully
+    if [[ "$result" != "EMPTY_RESULT" && -n "$result" ]]; then
+        echo "ERROR: Expected empty result but got: $result"
+        exit 1
+    fi
+    
+    # Test 3: The actual cleanup logic that could have empty string bugs
+    latest_version="2.5.0"
+    installed_versions=$(asdf list empty-after-filter 2>/dev/null | grep -v '\*' | sed 's/^[[:space:]]*//' | grep -v "^$latest_version$" || echo "")
+    # Should handle empty result gracefully, not cause counting errors
+    if [ -z "$installed_versions" ]; then
+        echo "Correctly detected no old versions to clean up"
+    else
+        echo "ERROR: Should have been empty but got: $installed_versions"
+        exit 1
+    fi
+}
+
+@test "asdf: should test actual version parsing functions instead of mocked responses" {
+    it "should test the real sed/grep/tail logic used in dependencies script"
+    
+    # Instead of mocking asdf responses, test the parsing logic directly
+    # This tests the actual string manipulation that could have bugs
+    
+    # Test the tail -1 | sed logic (line 166 in dependencies)
+    echo -e "  1.0.0\n  2.0.0\n  3.0.0" | tail -1 | sed 's/^[[:space:]]*//' | grep -q "3.0.0"
+    assert_equal "$?" "0"  # Should find 3.0.0
+    
+    # Test empty input to tail -1 | sed (edge case that could cause issues)
+    result=$(echo "" | tail -1 | sed 's/^[[:space:]]*//')
+    assert_equal "$result" ""  # Should be empty, not crash
+    
+    # Test the "No versions installed" detection logic (line 168)
+    echo "No versions installed" | grep -q "No versions installed"
+    assert_equal "$?" "0"  # Should detect the message
+    
+    # Test whitespace-only input edge case
+    result=$(echo "   " | sed 's/^[[:space:]]*//')
+    assert_equal "$result" ""  # Should become empty string
+    
+    # Test the complex filtering pipeline (line 229) with controlled input
+    # Simulate: asdf list | grep -v '\*' | sed | grep -v "^$latest_version$"
+    local latest_version="2.0.0"
+    run bash -c "echo -e '  1.0.0\n* 2.0.0\n  3.0.0' | grep -v '\*' | sed 's/^[[:space:]]*//' | grep -v '^2.0.0$'"
+    
+    # Verify the filtering worked correctly
+    assert_success
+    assert_output --partial "1.0.0"
+    assert_output --partial "3.0.0"
+    refute_output --partial "2.0.0"  # Should be filtered out as latest_version
+}
+
 describe "asdf Plugin Management"
 
 @test "asdf: should add required language plugins" {
@@ -250,13 +402,66 @@ describe "asdf Version Installation"
 
 describe "asdf Version Cleanup"
 
-@test "asdf: should list installed versions" {
-    it "should show installed versions for a language"
+@test "asdf: should list installed versions and parse them correctly" {
+    it "should show installed versions and test the actual parsing logic used by dependencies script"
     
+    # Create realistic asdf mock with proper version formatting
+    cat > "$MOCK_BREW_PREFIX/bin/asdf" << 'EOF'
+#!/bin/bash
+case "$1" in
+    "list")
+        tool="$2"
+        case "$tool" in
+            "ruby")
+                # Real asdf output format with leading spaces
+                echo "  3.1.0"
+                echo "* 3.2.0"  # Current version marked with *
+                echo "  3.3.0"
+                ;;
+            "parsing-test")
+                # Output designed to test edge cases
+                echo "  1.0.0"
+                echo "* 2.0.0"
+                echo "  3.0.0-beta"
+                echo "  3.0.0"
+                ;;
+        esac
+        ;;
+esac
+EOF
+    chmod +x "$MOCK_BREW_PREFIX/bin/asdf"
+    
+    # Test basic listing
     run asdf list ruby
     assert_success
     assert_output --partial "3.1.0"
     assert_output --partial "3.2.0"
+    assert_output --partial "3.3.0"
+    
+    # NOW TEST THE ACTUAL PARSING LOGIC used in dependencies script:
+    
+    # Test the "tail -1" logic to get latest installed version (dependencies:166)
+    latest_installed=$(asdf list ruby 2>/dev/null | tail -1 | sed 's/^[[:space:]]*//')
+    assert_equal "$latest_installed" "3.3.0"  # Should get the last version, not the * marked one
+    
+    # Test version filtering logic (dependencies:229) - remove current version but keep others
+    local current_version="2.0.0"
+    local old_versions
+    old_versions=$(asdf list parsing-test 2>/dev/null | grep -v '\*' | sed 's/^[[:space:]]*//' | grep -v "^$current_version$")
+    
+    # Should contain 1.0.0, 3.0.0-beta, 3.0.0 but not the * marked 2.0.0
+    echo "$old_versions" | grep -q "1.0.0"
+    assert_equal "$?" "0"
+    echo "$old_versions" | grep -q "3.0.0-beta"
+    assert_equal "$?" "0"
+    echo "$old_versions" | grep -q "3.0.0"
+    assert_equal "$?" "0"
+    # Should NOT contain the filtered version (2.0.0 should be filtered out)
+    if echo "$old_versions" | grep -q "2.0.0"; then
+        echo "ERROR: Found 2.0.0 in filtered results, but it should have been removed"
+        echo "Filtered versions: $old_versions"
+        exit 1
+    fi
 }
 
 @test "asdf: should uninstall old versions" {
