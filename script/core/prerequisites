@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
-
-# Source common utilities
 source "$(dirname "${BASH_SOURCE[0]}")/common"
 
-# ============================================================================
-# Security and Permissions
-# ============================================================================
+
 
 ensure_not_root() {
     if [ "$(id -u)" -eq 0 ]; then

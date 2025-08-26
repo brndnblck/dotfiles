@@ -1,38 +1,36 @@
 #!/usr/bin/env bash
-
-# Source configuration constants
 source "$(dirname "${BASH_SOURCE[0]}")/config"
 
-# Source ansi utilities
+
 source "$(dirname "${BASH_SOURCE[0]}")/ansi"
 
-# Source logging functions
+
 source "$(dirname "${BASH_SOURCE[0]}")/logging"
 
-# Source execution functions
+
 source "$(dirname "${BASH_SOURCE[0]}")/execution"
 
-# Source validation functions
+
 source "$(dirname "${BASH_SOURCE[0]}")/validation"
 
-# Source privilege management functions
+
 source "$(dirname "${BASH_SOURCE[0]}")/privileges"
 
-# Source packaging and template processing functions
+
 source "$(dirname "${BASH_SOURCE[0]}")/packaging"
 
-# Source error handling utilities
+
 source "$(dirname "${BASH_SOURCE[0]}")/errors"
 
 
-# Helper function for colored dividers
+
 colored_divider() {
     local char="${1:-▓}"
     local width="${2:-$INTERFACE_WIDTH}"
     gum style --foreground "$INTERFACE_SECONDARY" "$(printf "${char}%.0s" $(seq 1 "$width"))"
 }
 
-# System utility functions
+
 system_pause() {
     local message="${1:-WORKING}"
     local duration="${2:-$DEFAULT_SYSTEM_PAUSE_DURATION}"
@@ -42,16 +40,14 @@ system_pause() {
 
 
 
-# Set DOTFILES_PARENT_DIR if not already set (legacy PARENT_DIR support)
+
 if [ -z "${DOTFILES_PARENT_DIR:-}" ] && [ -z "${PARENT_DIR:-}" ]; then
     SCRIPT_CORE_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
     DOTFILES_PARENT_DIR=$(dirname "$(dirname "$SCRIPT_CORE_DIR")")
     export DOTFILES_PARENT_DIR
 fi
 
-# ============================================================================
-# System Information
-# ============================================================================
+
 
 get_architecture() {
     local arch=$(uname -m)

@@ -1,13 +1,4 @@
 #!/usr/bin/env bash
-
-# Unified Session Debug Logging Module
-# All logging (commands, output, bootstrap) goes to single session-specific debug log
-
-# ============================================================================
-# Unified Debug Logging
-# ============================================================================
-
-# Get or create session-specific debug log file
 get_debug_log_file() {
     if [ -z "${DOTFILES_DEBUG_LOG:-}" ]; then
         local session_id="${DOTFILES_SESSION_ID:-$(date +%Y%m%d-%H%M%S)}"
@@ -17,20 +8,20 @@ get_debug_log_file() {
     echo "$DOTFILES_DEBUG_LOG"
 }
 
-# Core logging function - everything goes here
+
 write_log() {
     local level="$1"
     local message="$2"
     local debug_file=$(get_debug_log_file)
     
-    # Create log directory if it doesn't exist
+
     mkdir -p "$(dirname "$debug_file")"
     
-    # Write timestamped message with level
+
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $level: $message" >> "$debug_file"
 }
 
-# Log level helpers
+
 debug_log() { write_log "DEBUG" "$1"; }
 info_log() { write_log "INFO" "$1"; }
 success_log() { write_log "SUCCESS" "$1"; }
@@ -39,7 +30,7 @@ error_log() { write_log "ERROR" "$1"; }
 command_log() { write_log "COMMAND" "$1"; }
 output_log() { write_log "OUTPUT" "$1"; }
 
-# Get current debug log file path for display
+
 get_debug_log_path() {
     local debug_file=$(get_debug_log_file)
     echo "${debug_file#${DOTFILES_PARENT_DIR:-$PWD}/}"

@@ -1,13 +1,4 @@
 #!/usr/bin/env bash
-
-# Configuration Module
-# Centralized constants, timeouts, and configuration values
-
-# ============================================================================
-# System Configuration
-# ============================================================================
-
-# Default timeout values (in seconds)
 if [[ -z "${DEFAULT_NETWORK_TIMEOUT:-}" ]]; then
     readonly DEFAULT_NETWORK_TIMEOUT=10
 fi
@@ -18,10 +9,10 @@ if [[ -z "${DEFAULT_SUDO_TIMEOUT_MINUTES:-}" ]]; then
     readonly DEFAULT_SUDO_TIMEOUT_MINUTES=15
 fi
 if [[ -z "${SUDO_KEEPALIVE_INTERVAL:-}" ]]; then
-    readonly SUDO_KEEPALIVE_INTERVAL=300  # 5 minutes
+    readonly SUDO_KEEPALIVE_INTERVAL=300
 fi
 
-# Exit codes for consistent error reporting
+
 if [[ -z "${EXIT_SUCCESS:-}" ]]; then
     readonly EXIT_SUCCESS=0
 fi
@@ -47,28 +38,19 @@ if [[ -z "${EXIT_INTERRUPTED:-}" ]]; then
     readonly EXIT_INTERRUPTED=130
 fi
 
-# ============================================================================
-# Interface Configuration  
-# ============================================================================
 
-# Centrally managed interface configuration (with guard against multiple sourcing)
 if [ -z "${INTERFACE_WIDTH:-}" ]; then
     readonly INTERFACE_WIDTH=72
 
-    # Amber color theme for terminal interface
-    readonly INTERFACE_COLOR=214             # Amber primary (#FFB000)
-    readonly INTERFACE_SECONDARY=208         # Dim amber (#CC8800) 
-    readonly INTERFACE_ACCENT=51             # Cyan accent color (#00FFFF)
-    readonly INTERFACE_ERROR=10              # Green for error messages (#00FF66)
-    readonly INTERFACE_BG_COLOR=0            # Pure black background
-    readonly INTERFACE_BOLD="--bold"         # Bold styling flag
+    readonly INTERFACE_COLOR=214
+    readonly INTERFACE_SECONDARY=208
+    readonly INTERFACE_ACCENT=51
+    readonly INTERFACE_ERROR=10
+    readonly INTERFACE_BG_COLOR=0
+    readonly INTERFACE_BOLD="--bold"
 fi
 
-# ============================================================================
-# Path Configuration
-# ============================================================================
 
-# Homebrew paths for different architectures
 if [[ -z "${HOMEBREW_PREFIX_ARM:-}" ]]; then
     readonly HOMEBREW_PREFIX_ARM="/opt/homebrew"
 fi
@@ -76,7 +58,7 @@ if [[ -z "${HOMEBREW_PREFIX_INTEL:-}" ]]; then
     readonly HOMEBREW_PREFIX_INTEL="/usr/local"
 fi
 
-# Common system paths
+
 if [[ -z "${SYSTEM_RESOLVER_DIR:-}" ]]; then
     readonly SYSTEM_RESOLVER_DIR="/etc/resolver"
 fi
@@ -87,7 +69,7 @@ if [[ -z "${SUDOERS_DIR:-}" ]]; then
     readonly SUDOERS_DIR="/etc/sudoers.d"
 fi
 
-# Temporary file locations
+
 if [[ -z "${SUDO_AUTH_MARKER:-}" ]]; then
     readonly SUDO_AUTH_MARKER="/tmp/.bootstrap_sudo_authenticated"
 fi
@@ -98,11 +80,7 @@ if [[ -z "${BOOTSTRAP_TIMEOUT_CONFIG:-}" ]]; then
     readonly BOOTSTRAP_TIMEOUT_CONFIG="/etc/sudoers.d/bootstrap_timeout"
 fi
 
-# ============================================================================
-# Network Configuration
-# ============================================================================
 
-# Default URLs for connectivity testing
 if [[ -z "${DEFAULT_CONNECTIVITY_URL:-}" ]]; then
     readonly DEFAULT_CONNECTIVITY_URL="https://raw.githubusercontent.com"
 fi
@@ -110,7 +88,7 @@ if [[ -z "${FALLBACK_PING_HOST:-}" ]]; then
     readonly FALLBACK_PING_HOST="github.com"
 fi
 
-# Network retry settings
+
 if [[ -z "${NETWORK_MAX_RETRIES:-}" ]]; then
     readonly NETWORK_MAX_RETRIES=1
 fi
@@ -118,11 +96,7 @@ if [[ -z "${CURL_CONNECT_TIMEOUT_MULTIPLIER:-}" ]]; then
     readonly CURL_CONNECT_TIMEOUT_MULTIPLIER=2
 fi
 
-# ============================================================================
-# Loader Configuration
-# ============================================================================
 
-# Loader animation settings
 if [[ -z "${LOADER_CHARS:-}" ]]; then
     readonly LOADER_CHARS='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
 fi
@@ -133,11 +107,7 @@ if [[ -z "${LOADER_CHAR_COUNT:-}" ]]; then
     readonly LOADER_CHAR_COUNT=10
 fi
 
-# ============================================================================
-# Log Configuration
-# ============================================================================
 
-# Default log level and format
 if [[ -z "${DEFAULT_LOG_LEVEL:-}" ]]; then
     readonly DEFAULT_LOG_LEVEL="INFO"
 fi
@@ -148,8 +118,7 @@ if [[ -z "${DEBUG_LOG_DATE_FORMAT:-}" ]]; then
     readonly DEBUG_LOG_DATE_FORMAT="+%H:%M:%S"
 fi
 
-# Log file paths (relative to DOTFILES_PARENT_DIR)
+
 if [[ -z "${LOG_DIR:-}" ]]; then
     readonly LOG_DIR="tmp/log"
 fi
-# BOOTSTRAP_LOG_FILE removed - using unified debug log

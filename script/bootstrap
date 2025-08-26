@@ -1,36 +1,33 @@
 #!/usr/bin/env bash
 
-# Minimal Bootstrap: Zero dependencies to gum TUI
-# Performs prerequisite checks and installs only essentials needed for TUI
-
 set -euo pipefail
 
 CURRENT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 DOTFILES_PARENT_DIR=$(dirname "$CURRENT_DIR")
-# Set session ID for unified debug logging
+
 DOTFILES_SESSION_ID="bootstrap-$(date +%Y%m%d-%H%M%S)"
 
-# Export for use in helper functions
+
 export DOTFILES_SESSION_ID
 export DOTFILES_PARENT_DIR
 
-# Ensure tmp directory exists
+
 mkdir -p "$DOTFILES_PARENT_DIR/tmp"
 
-# Import helpers
+
 source "$CURRENT_DIR/core/common"
 source "$CURRENT_DIR/core/prerequisites"
 
 info_log "Starting Dotfiles Bootstrap"
 
-# Run prerequisite checks using helpers
+
 info_log "Running prerequisite checks..."
-check_macos_version "13.0" # Require Catalina or later
+check_macos_version "13.0"
 ensure_disk_encryption
 ensure_command_line_tools
 ensure_homebrew
 
-# Install gum if not present
+
 if ! check_command "gum" "Gum TUI tool"; then
     info_log "Installing gum TUI tool..."
     silent "brew install gum" || show_error "Failed to install gum" "true"
@@ -41,8 +38,8 @@ fi
 
 success_log "Bootstrap complete! Launching main interface..."
 
-# Clear screen before launching main interface
+
 clear
 
-# Launch the main interface
+
 exec "$CURRENT_DIR/main"

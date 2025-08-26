@@ -1,20 +1,16 @@
 #!/usr/bin/env bash
-
-# UI Helper Functions for Consistent Interface Elements
-
-# Source logging functions
 source "$(dirname "${BASH_SOURCE[0]}")/logging"
 
-# Show the standard header with BUILD info, divider, and ASCII art
+
 show_standard_header() {
     clear
     
-    # Build info at top
+
     local git_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
     local git_hash=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
     local version_string
     if [ -n "$git_tag" ]; then
-        # Extract version number from tag (remove 'v' prefix if present)
+
         local version_num=$(echo "$git_tag" | sed 's/^v//')
         version_string="v${version_num}.${git_hash}"
     else
@@ -25,10 +21,10 @@ show_standard_header() {
         "$INTERFACE_BOLD" \
         ">> BUILD: ${version_string}"
     
-    # Top divider
+
     colored_divider
     
-    # ASCII art DOTFILES header
+
     local title_color="${1:-$INTERFACE_SECONDARY}"
     gum style --foreground "$title_color" << 'EOF'
  _______  .___________.  __________   __          __________     _______.
@@ -43,7 +39,7 @@ EOF
     ansi --newline
 }
 
-# Show section header with title and divider
+
 show_section_header() {
     local title="$1"
     
@@ -56,7 +52,7 @@ show_section_header() {
     ansi --newline
 }
 
-# Show completion message with dividers
+
 show_completion() {
     local message="$1"
     
@@ -70,9 +66,9 @@ show_completion() {
     colored_divider
 }
 
-# Show footer with return prompt
+
 show_footer_prompt() {
-    # Wait for user input with blinking cursor on prompt
+
     ansi --newline
     gum input --placeholder "" \
         --cursor.foreground "$INTERFACE_COLOR" \
@@ -80,10 +76,10 @@ show_footer_prompt() {
         --prompt "▶ PRESS ENTER TO RETURN TO COMMAND INTERFACE "
 }
 
-# Simple progressive task tracker
+
 COMPLETED_TASKS=()
 
-# Execute command with simple progressive display
+
 run_with_progressive_spinner() {
     local message="$1"
     shift
@@ -94,16 +90,16 @@ run_with_progressive_spinner() {
     # Log command to debug file
     debug_log "COMMAND: $command"
     
-    # Show the current task with animated spinner in amber
+
     if gum spin --spinner dot --title " $message" \
         --spinner.foreground "$INTERFACE_COLOR" \
         --title.foreground "$INTERFACE_COLOR" \
         -- bash -c "$command >> '${DOTFILES_LOG_FILE:-/tmp/bootstrap.log}' 2>&1"; then
         
-        # Add to completed tasks
+
         COMPLETED_TASKS+=("$message")
         
-        # Show the completed task (gum spin clears its line, so we just print the checkmark)
+
         echo "░ ✓ $message"
         
         # Also capture command output to debug log
@@ -125,7 +121,7 @@ run_with_progressive_spinner() {
     fi
 }
 
-# Execute command with simple spinner (for status and other scripts)
+
 run_with_spinner() {
     local message="$1"
     shift
@@ -160,15 +156,13 @@ run_with_spinner() {
     fi
 }
 
-# log_output is now provided by the logging module
 
-# Show exit screen
 show_exit_screen() {
     clear
     show_standard_header
     show_section_header "SYSTEM OPERATIONS"
     
-    # Disconnection messages
+
     gum style --foreground "$INTERFACE_COLOR" "DISCONNECTING..."
     sleep 1
     ansi --newline

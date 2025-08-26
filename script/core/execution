@@ -1,17 +1,10 @@
 #!/usr/bin/env bash
-
-# Command Execution Module
-# Functions for running commands, silent execution, and loading indicators
-
-# Source ansi utilities for colored output
 source "$(dirname "${BASH_SOURCE[0]}")/ansi"
 
-# Source logging functions (needed for recording command execution)
+
 source "$(dirname "${BASH_SOURCE[0]}")/logging"
 
-# ============================================================================
-# Command Execution
-# ============================================================================
+
 
 run() {
 	command_log "Running: $1"

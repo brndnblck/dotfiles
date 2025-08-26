@@ -1,16 +1,10 @@
 #!/usr/bin/env bash
 
-# Main TUI Interface using gum for visual feedback
-# Executes bootstrap scripts with rich visual elements and silent logging
-
 set -euo pipefail
 
 CURRENT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 
-# Source ansi helper for consistent output formatting
 source "$CURRENT_DIR/core/ansi"
-
-# Check if gum is available
 if ! command -v gum > /dev/null 2>&1; then
     ansi --red --bold "⚠ gum TUI tool not found!" --newline
     ansi --newline
@@ -22,34 +16,34 @@ if ! command -v gum > /dev/null 2>&1; then
     exit 1
 fi
 
-# Use existing variables from bootstrap if available, otherwise define them
+
 if [ -z "${DOTFILES_PARENT_DIR:-}" ]; then
     DOTFILES_PARENT_DIR=$(dirname "$CURRENT_DIR")
     export DOTFILES_PARENT_DIR
 fi
 
-# Set session ID for unified debug logging
+
 if [ -z "${DOTFILES_SESSION_ID:-}" ]; then
     DOTFILES_SESSION_ID="main-$(date +%Y%m%d-%H%M%S)"
     export DOTFILES_SESSION_ID
 fi
 
-# Ensure tmp directory exists
+
 mkdir -p "$DOTFILES_PARENT_DIR/tmp"
 
-# Import helpers
+
 source "$CURRENT_DIR/core/common"
 source "$CURRENT_DIR/core/system"
 source "$CURRENT_DIR/core/prerequisites"
 source "$CURRENT_DIR/core/ui"
 
-# Main menu using gum
+
 main_menu() {
     while true; do
         show_standard_header
         show_section_header "SYSTEM OPERATIONS"
 
-        # Menu options
+
         local choice
         choice=$(gum choose \
             "[01] INIT SYSTEM" \
@@ -80,6 +74,6 @@ main_menu() {
     done
 }
 
-# Start the application
+
 info_log "Starting TUI interface"
 main_menu

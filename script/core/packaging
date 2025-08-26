@@ -1,28 +1,19 @@
 #!/usr/bin/env bash
-
-# Packaging Module
-# Template processing, temporary file management, and package installation functions
-
-# Source ansi utilities for colored output
 source "$(dirname "${BASH_SOURCE[0]}")/ansi"
 
-# Source dependent modules
+
 source "$(dirname "${BASH_SOURCE[0]}")/logging"
 source "$(dirname "${BASH_SOURCE[0]}")/validation"
 source "$(dirname "${BASH_SOURCE[0]}")/execution"
 source "$(dirname "${BASH_SOURCE[0]}")/errors"
 
-# ============================================================================
-# Temp File Management
-# ============================================================================
 
-# Array to track temp files for cleanup
 TEMP_FILES_FOR_CLEANUP=()
 
 add_temp_file_cleanup() {
     local file="$1"
     TEMP_FILES_FOR_CLEANUP+=("$file")
-    # Set up trap only once
+
     if [ ${#TEMP_FILES_FOR_CLEANUP[@]} -eq 1 ]; then
         trap 'cleanup_temp_files' EXIT INT TERM
     fi
@@ -38,9 +29,7 @@ cleanup_temp_files() {
     TEMP_FILES_FOR_CLEANUP=()
 }
 
-# ============================================================================
-# Template Processing
-# ============================================================================
+
 
 process_template() {
     local template_file="$1"
@@ -57,7 +46,7 @@ process_template() {
         add_temp_file_cleanup "$output_file"
     fi
     
-    # Try chezmoi first if available
+
     if check_command "chezmoi" "Chezmoi"; then
         if chezmoi execute-template < "$template_file" > "$output_file" 2>/dev/null; then
             success_log "Template processed with chezmoi: $template_file -> $output_file"
@@ -69,7 +58,7 @@ process_template() {
         warn_log "Chezmoi not available, using fallback template processing"
     fi
     
-    # Fallback: simple variable substitution for basic templates
+
     if [ "$fallback_enabled" = "true" ]; then
         if process_template_fallback "$template_file" "$output_file"; then
             success_log "Template processed with fallback: $template_file -> $output_file"
@@ -78,7 +67,7 @@ process_template() {
     fi
     
     template_error "$template_file" "false"
-    # Clean up failed output file
+
     rm -f "$output_file" 2>/dev/null || true
     return $EXIT_GENERAL_ERROR
 }
@@ -87,9 +76,9 @@ process_template_fallback() {
     local template_file="$1"
     local output_file="$2"
     
-    # Simple fallback: copy file as-is and replace basic variables
+
     if cp "$template_file" "$output_file" 2>/dev/null; then
-        # Replace common template variables with safe defaults
+
         sed -i.bak \
             -e "s/{{ \.user }}/${USER:-unknown}/g" \
             -e "s/{{ now\.Format \"[^\"]*\" }}/$(date '+%Y-%m-%d')/g" \

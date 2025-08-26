@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
 
-# Dotfiles Update Script
-# Updates all system packages and configurations
-
 set -euo pipefail
 
 CURRENT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 
 source "$CURRENT_DIR/core/ansi"
 
-# Check if this script is being called directly (not through main TUI)
+
 if [ -z "${DOTFILES_PARENT_DIR:-}" ]; then
     ansi --red --bold "⚠ This script should not be called directly!" --newline
     ansi --newline
@@ -20,26 +17,30 @@ if [ -z "${DOTFILES_PARENT_DIR:-}" ]; then
     ansi "  ./script/bootstrap" --newline
     exit 1
 fi
-DOTFILES_PARENT_DIR=$(dirname "$CURRENT_DIR")
+
+
+if [ -z "${DOTFILES_PARENT_DIR:-}" ]; then
+    DOTFILES_PARENT_DIR=$(dirname "$CURRENT_DIR")
+fi
 DOTFILES_SESSION_ID="update-$(date +%Y%m%d-%H%M%S)"
 export DOTFILES_SESSION_ID
 export DOTFILES_PARENT_DIR
 
-# Ensure tmp directory exists
+
 mkdir -p "$DOTFILES_PARENT_DIR/tmp"
 
-# Import helpers
+
 source "$CURRENT_DIR/core/logging"
 source "$CURRENT_DIR/core/common"
 source "$CURRENT_DIR/core/dependencies"
 source "$CURRENT_DIR/core/ui"
 
-# Main update function
+
 main() {
     show_standard_header
     show_section_header "SYSTEM UPDATE"
 
-    # Display log paths and update sequence
+
     gum style \
         --foreground "$INTERFACE_COLOR" \
         --border normal \
@@ -68,19 +69,20 @@ main() {
         exit 0
     fi
 
-    # Transition to progress display
+
     show_standard_header
     show_section_header "SYSTEM UPDATE"
 
-    # Display log paths (relative from DOTFILES_PARENT_DIR)
+
+    get_debug_log_file >/dev/null
     gum style --foreground "$INTERFACE_SECONDARY" "DEBUG: ${DOTFILES_DEBUG_LOG#"$DOTFILES_PARENT_DIR"/}"
     gum style --foreground "$INTERFACE_SECONDARY" "DEBUG LOG: $(get_debug_log_path)"
     ansi --newline
 
-    # Set task title for progress display
+
     export TASK_TITLE="SYSTEM UPDATE"
 
-    # Update Homebrew
+
     if command -v brew > /dev/null 2>&1; then
         run_with_progressive_spinner "UPDATING PACKAGE REGISTRY..." \
             "brew update"
@@ -92,27 +94,27 @@ main() {
             "brew upgrade --cask"
     fi
 
-    # Update Mac App Store apps
+
     if command -v mas > /dev/null 2>&1; then
         run_with_progressive_spinner "UPDATING APP STORE APPS..." \
             "mas upgrade"
     fi
 
-    # Update dotfiles and sync configuration
+
     if command -v chezmoi > /dev/null 2>&1; then
-        # Check if chezmoi is properly initialized
-        if ! chezmoi source-path > /dev/null 2>&1; then
+
+        if ! chezmoi source-path >/dev/null 2>&1; then
             info_log "Chezmoi not properly initialized, setting up..."
             run_with_progressive_spinner "INITIALIZING DOTFILE CONFIG..." \
                 "chezmoi init --force --source '$DOTFILES_PARENT_DIR'"
         else
-            # Verify the source path is correct
-            current_source=$(chezmoi source-path 2> /dev/null || echo "")
+
+            current_source=$(chezmoi source-path 2>/dev/null || echo "")
             if [ -n "$current_source" ] && [ "$current_source" != "$DOTFILES_PARENT_DIR" ]; then
-                # Check if it's a symlink pointing to our dotfiles
-                if [ -L "$current_source" ] && [ "$(readlink "$current_source")" = "$DOTFILES_PARENT_DIR" ]; then
-                    # Symlink is correct, proceed
-                    :
+
+                if [ -L "$current_source" ] && [ "$(readlink "$current_source" 2>/dev/null || echo "")" = "$DOTFILES_PARENT_DIR" ]; then
+
+                    info_log "Chezmoi source symlink verified"
                 else
                     info_log "Chezmoi source path mismatch, reinitializing..."
                     run_with_progressive_spinner "REINITIALIZING DOTFILE CONFIG..." \
@@ -121,18 +123,18 @@ main() {
             fi
         fi
 
-        # Try update first (if in a git repo), fall back to apply if needed
+
         if [ -d "$DOTFILES_PARENT_DIR/.git" ]; then
-            # We're in a git repository, try to update
+
             if ! run_with_progressive_spinner "SYNCING DOTFILE CONFIG..." \
                 "chezmoi update 2>/dev/null"; then
-                # Update failed, fall back to apply
+
                 info_log "Update failed, applying current configuration..."
                 run_with_progressive_spinner "APPLYING DOTFILE CONFIG..." \
                     "chezmoi apply --force"
             fi
         else
-            # Not a git repository, just apply
+
             run_with_progressive_spinner "APPLYING DOTFILE CONFIG..." \
                 "chezmoi apply --force"
         fi
@@ -141,18 +143,18 @@ main() {
             "source '$CURRENT_DIR/core/system' && apply_dotfiles_and_shell"
     fi
 
-    # Update development tools
+
     run_with_progressive_spinner "UPDATING DEVELOPMENT STACK..." \
         "export DOTFILES_PARENT_DIR='$DOTFILES_PARENT_DIR' && source '$CURRENT_DIR/core/common' && source '$CURRENT_DIR/core/dependencies' && update_development"
 
-    # Sync package dependencies and applications
+
     run_with_progressive_spinner "SYNCHRONIZING PACKAGE DEPENDENCIES..." \
         "export DOTFILES_PARENT_DIR='$DOTFILES_PARENT_DIR' && source '$CURRENT_DIR/core/common' && source '$CURRENT_DIR/core/dependencies' && ensure_dependencies"
 
     run_with_progressive_spinner "SYNCHRONIZING APPLICATION REGISTRY..." \
         "export DOTFILES_PARENT_DIR='$DOTFILES_PARENT_DIR' && source '$CURRENT_DIR/core/common' && source '$CURRENT_DIR/core/dependencies' && ensure_applications"
 
-    # Update system components
+
     run_with_progressive_spinner "REFRESHING SYSTEM FONTS..." \
         "source '$CURRENT_DIR/core/system' && ensure_fonts"
 
@@ -160,7 +162,7 @@ main() {
     show_footer_prompt
 }
 
-# Execute if called directly
+
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     main "$@"
 fi

@@ -1,9 +1,4 @@
 #!/usr/bin/env bats
-
-# BDD Tests for script/bootstrap
-# Validates minimal bootstrap functionality and prerequisite checks
-
-# Load helpers using correct relative path
 load "../../helpers/helper"
 load "$TESTS_DIR/helpers/mocks"
 
@@ -11,10 +6,10 @@ setup() {
     test_setup
     setup_advanced_mocks
     
-    # Copy the actual bootstrap script to test location
+
     cp "$PROJECT_ROOT/script/bootstrap" "$DOTFILES_PARENT_DIR/script/bootstrap"
     
-    # Copy helper scripts
+
     cp -r "$PROJECT_ROOT/script/core" "$DOTFILES_PARENT_DIR/script/"
 }
 
@@ -28,7 +23,7 @@ teardown() {
 }
 
 @test "bootstrap: should set required environment variables" {
-    # Create a minimal bootstrap that just exports variables
+
     cat > "$DOTFILES_PARENT_DIR/script/bootstrap" << 'EOF'
 #!/usr/bin/env bash
 set -euo pipefail

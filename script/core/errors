@@ -1,19 +1,10 @@
 #!/usr/bin/env bash
-
-# Error Handling Utilities
-# Standardized error handling patterns and utilities
-
-# Source configuration constants
 source "$(dirname "${BASH_SOURCE[0]}")/config"
 
-# Source logging functions for error reporting
+
 source "$(dirname "${BASH_SOURCE[0]}")/logging"
 
-# ============================================================================
-# Standardized Error Handling Patterns
-# ============================================================================
 
-# Standard error handler with context
 handle_error() {
     local error_type="$1"
     local message="$2" 

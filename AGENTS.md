@@ -1,39 +1,26 @@
-# Dotfiles Project - Agent Instructions
+# Dotfiles Repository Agent Instructions
 
-## Build/Test Commands
-- **Setup**: `make setup` - Initialize git submodules and install dependencies (shellcheck, shfmt)
-- **Run all tests**: `make test` - Execute all bats test suites
-- **Run single test**: `make test-single FILE=bootstrap.bats` - Run specific test file
-- **Lint**: `make lint` - Run shellcheck on all shell scripts
-- **Format**: `make fmt` - Format shell scripts with shfmt (-i 4 -ci -sr)
-- **Check format**: `make fmt-check` - Verify scripts are properly formatted
-- **Full check**: `make check` - Run both formatting and linting checks
-- **CI pipeline**: `make test-ci` - Run all checks (format, lint, test)
+## Build/Test/Lint Commands
+- `make test` - Run all bats tests
+- `make test-single FILE=<name>.bats` - Run single test file (e.g., `make test-single FILE=bootstrap.bats`)
+- `make test-verbose` - Run tests with verbose output
+- `make lint` - Run shellcheck on all shell scripts
+- `make fmt` - Format shell scripts with shfmt (4-space indent, compact if, space redirects)
+- `make fmt-check` - Check formatting without changing files
+- `make check` - Run both format check and lint
+- `make test-ci` - Full CI pipeline (format, lint, test)
+- `make setup` - Initialize dependencies (git submodules, shellcheck, shfmt)
 
-## Code Style
-- **No comments**: Avoid extraneous code comments unless absolutely necessary
-- **Self-documenting**: Write clear, readable code that explains itself through naming and structure
-- **Modular**: Break complex logic into small, focused functions or modules
-- **DRY principle**: Don't repeat yourself - extract common patterns into reusable components
-- **Clean**: Remove unused code, variables, and imports
-
-## Shell Script Style
-- **Safety**: Always use `set -euo pipefail` at script start
-- **Quoting**: Quote all variables: `"$var"` not `$var`
-- **Functions**: Use functions for repeated code, test with bats framework
-- **Error handling**: Check exit codes, provide meaningful error messages
-- **POSIX**: Use POSIX-compliant constructs when possible, test on bash/zsh
-- **Paths**: Use absolute paths, validate directory existence, handle spaces in filenames
-
-## Testing with Bats
-- **Framework**: Uses bats-core with bats-support, bats-assert, bats-mock helpers
-- **Test files**: Located in `script/tests/` with `.bats` extension
-- **Structure**: Use descriptive test names, test success/failure scenarios, mock external deps
-- **Patterns**: Use setup()/teardown() for test preparation, group related tests
+## Code Style & Conventions
+- **Shell Scripts**: POSIX-compliant, use `set -euo pipefail`, quote all variables
+- **Formatting**: 4-space indentation, compact if statements, space around redirects
+- **Testing**: Use bats framework with bats-support, bats-assert, bats-file helpers
+- **Linting**: Follow shellcheck rules (see `.shellcheckrc` for disabled warnings)
+- **File Paths**: Always quote paths, use absolute paths, handle spaces/special chars
+- **Error Handling**: Check exit codes, provide meaningful errors, use trap for cleanup
 
 ## Project Structure
-- **Scripts**: Main scripts in `script/` (bootstrap, main, setup, update, status)
-- **Helpers**: Modular helpers in `script/core/` (common, ansi, logging, etc.)
-- **Config**: XDG-compliant config in `dot_config/`, templates use `.tmpl` extension
-- **Dependencies**: Homebrew packages listed in `dependencies/*.brewfile`
-- **Chezmoi**: All dotfiles managed through chezmoi, use `chezmoi apply` to sync changes
+- `script/` - Core shell scripts and utilities
+- `script/tests/` - Bats test files
+- `dot_config/` - XDG-compliant configuration templates
+- Chezmoi templates use `.tmpl` extension for dynamic content
