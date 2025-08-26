@@ -14,34 +14,34 @@ handle_error() {
     case "$error_type" in
         "file_not_found")
             error_log "File not found: $message" "$exit_on_error"
-            [ "$exit_on_error" = "true" ] && exit $EXIT_FILE_NOT_FOUND
+            [ "$exit_on_error" = "true" ] && exit "$EXIT_FILE_NOT_FOUND"
             ;;
         "command_not_found")
             error_log "Command not found: $message" "$exit_on_error"
-            [ "$exit_on_error" = "true" ] && exit $EXIT_MISSING_COMMAND
+            [ "$exit_on_error" = "true" ] && exit "$EXIT_MISSING_COMMAND"
             ;;
         "permission_denied")
             error_log "Permission denied: $message" "$exit_on_error"
-            [ "$exit_on_error" = "true" ] && exit $EXIT_PERMISSION_DENIED
+            [ "$exit_on_error" = "true" ] && exit "$EXIT_PERMISSION_DENIED"
             ;;
         "network_error")
             error_log "Network error: $message" "$exit_on_error"
-            [ "$exit_on_error" = "true" ] && exit $EXIT_NETWORK_ERROR
+            [ "$exit_on_error" = "true" ] && exit "$EXIT_NETWORK_ERROR"
             ;;
         "invalid_input")
             error_log "Invalid input: $message" "$exit_on_error"
-            [ "$exit_on_error" = "true" ] && exit $EXIT_INVALID_INPUT
+            [ "$exit_on_error" = "true" ] && exit "$EXIT_INVALID_INPUT"
             ;;
         *)
             error_log "$message" "$exit_on_error"
-            [ "$exit_on_error" = "true" ] && exit $EXIT_GENERAL_ERROR
+            [ "$exit_on_error" = "true" ] && exit "$EXIT_GENERAL_ERROR"
             ;;
     esac
     
     # Add context if provided
     [ -n "$context" ] && info_log "Context: $context"
     
-    return $EXIT_GENERAL_ERROR
+    return "$EXIT_GENERAL_ERROR"
 }
 
 # Validation error with user-friendly message
@@ -86,7 +86,7 @@ installation_error() {
     
     error_log "Failed to install $package_type package: $package_name"
     [ "$exit_on_error" = "true" ] && show_error "Installation failed for $package_name" "true"
-    return $EXIT_GENERAL_ERROR
+    return "$EXIT_GENERAL_ERROR"
 }
 
 # Template processing error
@@ -96,7 +96,7 @@ template_error() {
     
     error_log "Template processing failed: $template_file"
     [ "$exit_on_error" = "true" ] && show_error "Failed to process template: $template_file" "true"
-    return $EXIT_GENERAL_ERROR
+    return "$EXIT_GENERAL_ERROR"
 }
 
 # Authentication error
@@ -106,7 +106,7 @@ auth_error() {
     local exit_on_error="${3:-true}"
     
     show_error "Authentication failed for $service: $message" "$exit_on_error"
-    return $EXIT_PERMISSION_DENIED
+    return "$EXIT_PERMISSION_DENIED"
 }
 
 # Prerequisite check error
@@ -117,7 +117,7 @@ prerequisite_error() {
     local exit_on_error="${4:-false}"
     
     show_error "$requirement check failed. Current: $current_value, Required: $expected_value" "$exit_on_error"
-    return $EXIT_GENERAL_ERROR
+    return "$EXIT_GENERAL_ERROR"
 }
 
 # Safe exit function that cleans up resources

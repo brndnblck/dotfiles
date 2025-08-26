@@ -69,7 +69,7 @@ process_template() {
     template_error "$template_file" "false"
 
     rm -f "$output_file" 2>/dev/null || true
-    return $EXIT_GENERAL_ERROR
+            return "$EXIT_GENERAL_ERROR"
 }
 
 process_template_fallback() {
@@ -225,7 +225,7 @@ process_individual_package() {
             return 0
         else
             installation_error "$package_type" "$package" "false"
-            return $EXIT_GENERAL_ERROR
+    return "$EXIT_GENERAL_ERROR"
         fi
     fi
 }

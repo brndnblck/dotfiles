@@ -120,7 +120,7 @@ start_sudo_keepalive() {
 		stop_sudo_keepalive
 		(
 			while check_file_exists "/tmp/.bootstrap_sudo_authenticated" "sudo auth marker"; do
-				sleep $SUDO_KEEPALIVE_INTERVAL
+				sleep "$SUDO_KEEPALIVE_INTERVAL"
 				if ! sudo -n true 2>/dev/null; then
 					warn_log "sudo session expired, keep-alive exiting"
 					break

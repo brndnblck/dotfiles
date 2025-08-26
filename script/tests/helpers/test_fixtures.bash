@@ -175,7 +175,14 @@ test_config_processing() {
 
     # Test that our processing logic works correctly
     # This tests OUR code, not the config format itself
-    echo "$config_content" | our_config_parser
+    local actual_result
+    actual_result=$(echo "$config_content" | our_config_parser)
+
+    if [ -n "$expected_result" ]; then
+        [ "$actual_result" = "$expected_result" ]
+    else
+        echo "$actual_result"
+    fi
 }
 
 # Validate test focuses on our business logic

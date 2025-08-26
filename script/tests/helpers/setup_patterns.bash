@@ -47,8 +47,10 @@ setup_standard_environment() {
             export DOTFILES_DEBUG_LOG="$DOTFILES_PARENT_DIR/tmp/debug-update-test.log"
             ;;
         *)
-            export DOTFILES_LOG_FILE="$DOTFILES_PARENT_DIR/tmp/test-$(date +%Y%m%d-%H%M%S).log"
-            export DOTFILES_DEBUG_LOG="$DOTFILES_PARENT_DIR/tmp/debug-test-$(date +%Y%m%d-%H%M%S).log"
+            export DOTFILES_LOG_FILE
+            export DOTFILES_DEBUG_LOG
+            DOTFILES_LOG_FILE="$DOTFILES_PARENT_DIR/tmp/test-$(date +%Y%m%d-%H%M%S).log"
+            DOTFILES_DEBUG_LOG="$DOTFILES_PARENT_DIR/tmp/debug-test-$(date +%Y%m%d-%H%M%S).log"
             ;;
     esac
 }

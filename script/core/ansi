@@ -16,7 +16,7 @@ ansi_addCode() {
 ansi_addColor() {
     OUTPUT="$OUTPUT$CSI${1}m"
 
-    if [ ! -z "$2" ]; then
+    if [ -n "$2" ]; then
         SUFFIX="$CSI${2}m$SUFFIX"
     fi
 }

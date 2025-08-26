@@ -75,9 +75,9 @@ validate_network_operation() {
     
     if ! check_network_connectivity "$url"; then
         network_error "$operation" "$url" "true"
-        return $EXIT_NETWORK_ERROR
+        return "$EXIT_NETWORK_ERROR"
     fi
     
     info_log "Network connectivity verified for $operation"
-    return $EXIT_SUCCESS
+    return "$EXIT_SUCCESS"
 }

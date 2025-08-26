@@ -17,7 +17,8 @@ load_test_helpers() {
             TESTS_DIR="$CURRENT_DIR"
             break
         fi
-        local NEW_DIR="$(dirname "$CURRENT_DIR")"
+        local NEW_DIR
+        NEW_DIR="$(dirname "$CURRENT_DIR")"
         # Prevent infinite loops when dirname doesn't change
         if [[ "$NEW_DIR" == "$CURRENT_DIR" ]]; then
             break
@@ -29,7 +30,8 @@ load_test_helpers() {
     # Fallback if not found
     if [[ -z "$TESTS_DIR" ]]; then
         # Try to find helpers directory from current script location
-        local SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[1]}")" && pwd)"
+        local SCRIPT_DIR
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[1]}")" && pwd)"
         while [[ "$SCRIPT_DIR" != "/" ]]; do
             if [[ -d "$SCRIPT_DIR/helpers" ]]; then
                 TESTS_DIR="$SCRIPT_DIR"
@@ -46,7 +48,8 @@ load_test_helpers() {
     # Final fallback - use absolute path
     if [[ -z "$TESTS_DIR" ]]; then
         # Find the actual tests directory in the project
-        local PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+        local PROJECT_ROOT
+        PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
         if [[ -d "$PROJECT_ROOT/script/tests/helpers" ]]; then
             TESTS_DIR="$PROJECT_ROOT/script/tests"
         else

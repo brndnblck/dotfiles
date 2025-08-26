@@ -159,6 +159,7 @@ assert_package_manager_status() {
     local expected_status="${2:-installed}" # "installed", "not_installed", "outdated"
 
     assert_output --partial "▶ PACKAGE MANAGER STATUS:"
+    assert_output --partial "$package_manager"
 
     case "$expected_status" in
         "installed")

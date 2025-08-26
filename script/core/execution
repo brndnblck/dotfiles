@@ -54,7 +54,7 @@ show_loader() {
     
     while ps a | awk '{print $1}' | grep -q "${pid}"; do
         i=$(( (i+1) % 10 ))
-        ansi --blue-intense $(printf "\r   ${loader:$i:1}") >/dev/tty
+        ansi --blue-intense "$(printf "\r   ${loader:$i:1}")" >/dev/tty
         ansi --bold --no-restore >/dev/tty
         if [ -n "$message" ]; then
             printf " $message" >/dev/tty
