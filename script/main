@@ -16,33 +16,27 @@ if ! command -v gum > /dev/null 2>&1; then
     exit 1
 fi
 
-
 if [ -z "${DOTFILES_PARENT_DIR:-}" ]; then
     DOTFILES_PARENT_DIR=$(dirname "$CURRENT_DIR")
     export DOTFILES_PARENT_DIR
 fi
-
 
 if [ -z "${DOTFILES_SESSION_ID:-}" ]; then
     DOTFILES_SESSION_ID="main-$(date +%Y%m%d-%H%M%S)"
     export DOTFILES_SESSION_ID
 fi
 
-
 mkdir -p "$DOTFILES_PARENT_DIR/tmp"
-
 
 source "$CURRENT_DIR/core/common"
 source "$CURRENT_DIR/core/system"
 source "$CURRENT_DIR/core/prerequisites"
 source "$CURRENT_DIR/core/ui"
 
-
 main_menu() {
     while true; do
         show_standard_header
         show_section_header "SYSTEM OPERATIONS"
-
 
         local choice
         choice=$(gum choose \
@@ -73,7 +67,6 @@ main_menu() {
         esac
     done
 }
-
 
 info_log "Starting TUI interface"
 main_menu

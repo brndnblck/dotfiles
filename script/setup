@@ -19,20 +19,16 @@ DOTFILES_PARENT_DIR=$(dirname "$CURRENT_DIR")
 
 DOTFILES_SESSION_ID="setup-$(date +%Y%m%d-%H%M%S)"
 
-
 export DOTFILES_SESSION_ID
 export DOTFILES_PARENT_DIR
 
-
 mkdir -p "$DOTFILES_PARENT_DIR/tmp"
-
 
 source "$CURRENT_DIR/core/logging"
 source "$CURRENT_DIR/core/common"
 source "$CURRENT_DIR/core/system"
 source "$CURRENT_DIR/core/prerequisites"
 source "$CURRENT_DIR/core/ui"
-
 
 main() {
     show_standard_header
@@ -64,17 +60,13 @@ main() {
         exit 0
     fi
 
-
     show_standard_header
     show_section_header "SYSTEM INIT"
-
 
     gum style --foreground "$INTERFACE_SECONDARY" "DEBUG LOG: $(get_debug_log_path)"
     ansi --newline
 
-
     export TASK_TITLE="SYSTEM INIT"
-
 
     run_with_progressive_spinner "BOOTSTRAPPING CORE SYSTEMS..." \
         "source '$CURRENT_DIR/core/common' && source '$CURRENT_DIR/core/prerequisites' && ensure_sudo && ensure_command_line_tools && ensure_homebrew"
@@ -119,7 +111,6 @@ main() {
 
     show_footer_prompt
 }
-
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     main "$@"
