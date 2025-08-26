@@ -1,1 +1,86 @@
+function colormap() {
+  # Description: Display a colormap of all 256 terminal colors
+  # Usage: colormap
+  # Example: colormap
+  for i in {0..255}; do print -Pn "%K{$i}  %k%F{$i}${(l:3::0:)i}%f " ${${(M)$((i%6)):#3}:+$'\n'}; done
+}
 
+function run-repeat() {
+  # Description: Execute a command multiple times
+  # Usage: run-repeat COUNT COMMAND
+  # Example: run-repeat 5 echo "hello"
+  if [ $# -lt 2 ]
+  then
+    echo "Error! Count and command required."
+  else
+    local count=$1
+    shift
+    for i in $(seq 1 $count); do "$@"; done
+  fi
+}
+
+function dig-host() {
+  # Description: Perform DNS lookup and reverse DNS lookup
+  # Usage: dig-host HOSTNAME
+  # Example: dig-host google.com
+  if [ $# -lt 1 ]; then
+    echo "Usage: dig-host HOSTNAME"
+    return 1
+  fi
+  
+  local hostname="$1"
+  local ip=$(dig +short "$hostname" | tail -n 1)
+  
+  if [ -z "$ip" ]; then
+    echo "Error: No IP found for $hostname"
+    return 1
+  fi
+  
+  echo "IP for $hostname: $ip"
+  host "$ip"
+}
+
+function remind() {
+  # Description: Add a reminder to the Reminders.app (macOS only)
+  # Usage: remind TEXT or echo "text" | remind
+  # Example: remind "Buy milk" or echo "Meeting at 3pm" | remind
+  local text
+  if [ -t 0 ]; then
+    text="$1"
+  else
+    text=$(cat)
+  fi
+  osascript >/dev/null <<EOF
+tell application "Reminders"
+  tell list "Personal" of default account
+    make new reminder with properties {name:"$text"}
+  end tell
+end tell
+EOF
+}
+
+extract () {
+  # Description: Extract various archive formats automatically
+  # Usage: extract ARCHIVE_FILE
+  # Example: extract myfile.tar.gz
+  if [ -f $1 ]; then
+    case $1 in
+      *.tar.bz2)  tar -jxvf $1                        ;;
+      *.tar.gz)   tar -zxvf $1                        ;;
+      *.bz2)      bunzip2 $1                          ;;
+      *.dmg)      hdiutil mount $1                    ;;
+      *.gz)       gunzip $1                           ;;
+      *.tar)      tar -xvf $1                         ;;
+      *.tbz2)     tar -jxvf $1                        ;;
+      *.tgz)      tar -zxvf $1                        ;;
+      *.zip)      unzip $1                            ;;
+      *.ZIP)      unzip $1                            ;;
+      *.pax)      cat $1 | pax -r                     ;;
+      *.pax.Z)    uncompress $1 --stdout | pax -r     ;;
+      *.Z)        uncompress $1                       ;;
+      *)          echo "'$1' cannot be extracted/mounted via extract()" ;;
+    esac
+  else
+    echo "'$1' is not a valid file"
+  fi
+}
