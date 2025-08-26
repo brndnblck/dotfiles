@@ -10,6 +10,14 @@ You are an AI coding assistant working in a development environment managed by c
 - Use XDG Base Directory specification for configuration files
 - Follow POSIX compliance for shell scripts when possible
 
+## Code Style
+
+- **No comments**: Avoid extraneous code comments unless absolutely necessary
+- **Self-documenting**: Write clear, readable code that explains itself through naming and structure
+- **Modular**: Break complex logic into small, focused functions or modules
+- **DRY principle**: Don't repeat yourself - extract common patterns into reusable components
+- **Clean**: Remove unused code, variables, and imports
+
 ## Development Environment
 
 This system uses:

@@ -7,7 +7,6 @@ set -euo pipefail
 
 CURRENT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 
-# Source ansi helper for consistent output formatting
 source "$CURRENT_DIR/core/ansi"
 
 # Check if this script is being called directly (not through main TUI)
@@ -22,10 +21,7 @@ if [ -z "${DOTFILES_PARENT_DIR:-}" ]; then
     exit 1
 fi
 DOTFILES_PARENT_DIR=$(dirname "$CURRENT_DIR")
-# Set session ID for unified debug logging
 DOTFILES_SESSION_ID="update-$(date +%Y%m%d-%H%M%S)"
-
-# Export for use in helper functions
 export DOTFILES_SESSION_ID
 export DOTFILES_PARENT_DIR
 

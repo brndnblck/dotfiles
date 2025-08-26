@@ -4,6 +4,7 @@ tap "homebrew/bundle"
 cask "1password-cli"      # Password manager CLI
 cask "appcleaner"         # Application uninstaller
 cask "brave-browser"      # Privacy-focused browser
+cask "docker-desktop"     # Docker containerization
 cask "gcloud-cli"         # Google Cloud tools
 cask "ghostty"            # Fast, native terminal emulator
 cask "kubecontext"        # Kubernetes context manager

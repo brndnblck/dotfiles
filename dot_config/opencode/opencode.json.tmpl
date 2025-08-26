@@ -6,22 +6,44 @@
   "theme": "dark",
   "share": "manual",
   "autoupdate": false,
-  "keybinds": {
-    "accept": "tab",
-    "reject": "escape",
-    "accept_word": "ctrl+right"
+  "permission": {
+    "edit": "ask",
+    "bash": {
+      "ls": "allow",
+      "pwd": "allow", 
+      "cat": "allow",
+      "file": "allow",
+      "which": "allow",
+      "echo": "allow",
+      "*": "ask"
+    }
   },
   "formatter": {
-    "javascript": "prettier",
-    "typescript": "prettier",
-    "json": "prettier",
-    "python": "black",
-    "rust": "rustfmt",
-    "go": "gofmt",
-    "ruby": "rubocop"
+    "javascript": {
+      "command": ["prettier"]
+    },
+    "typescript": {
+      "command": ["prettier"]
+    },
+    "json": {
+      "command": ["prettier"]
+    },
+    "python": {
+      "command": ["black"]
+    },
+    "rust": {
+      "command": ["rustfmt"]
+    },
+    "go": {
+      "command": ["gofmt"]
+    },
+    "ruby": {
+      "command": ["rubocop"]
+    }
   },
   "instructions": [
     "AGENTS.md",
+    "CONTRIBUTING.md",
     "rules/*.md",
     "rules/languages/*.md"
   ],
@@ -33,9 +55,33 @@
     }
   },
   "provider": {
+    "openai": {
+      "npm": "openai",
+      "name": "OpenAI",
+      "options": {
+        "apiKey": "{{ env "OPENAI_API_KEY" }}"
+      },
+      "models": {
+        "gpt-4o": {
+          "name": "GPT-4o"
+        },
+        "gpt-4o-mini": {
+          "name": "GPT-4o Mini"
+        },
+        "o1-preview": {
+          "name": "o1 Preview"
+        },
+        "o1-mini": {
+          "name": "o1 Mini"
+        },
+        "gpt-5": {
+          "name": "GPT-5"
+        }
+      }
+    },
     "ollama": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "Ollama (local)",
+      "name": "Ollama",
       "options": {
         "baseURL": "http://localhost:11434/v1"
       },
