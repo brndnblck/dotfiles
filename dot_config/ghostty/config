@@ -6,27 +6,45 @@ font-thicken = true
 
 # Window settings
 window-decoration = true
-window-title-font-family = "Hack Nerd Font"
+window-subtitle = false
+window-theme = dark
+macos-titlebar-proxy-icon = hidden
+macos-titlebar-style = transparent
+background-opacity = 0.7
+background-blur-radius = 20
 window-padding-x = 8
 window-padding-y = 8
 window-padding-balance = true
 window-vsync = true
 
 # Terminal behavior
-cursor-style = "block"
-cursor-style-blink = false
+cursor-style = "underline"
+cursor-style-blink = true
+adjust-cursor-thickness = 12
+cursor-color = "#7129ff"
 mouse-hide-while-typing = true
 copy-on-select = false
 confirm-close-surface = false
 
+# URL linking
+link-url = true
+
+# Clipboard access
+clipboard-read = allow
+clipboard-write = allow
+
+# Pane focus animations and visual effects
+unfocused-split-opacity = 0.6
+focus-follows-mouse = true
+
 # Shell integration
 shell-integration = "zsh"
-shell-integration-features = "cursor,sudo,title"
+shell-integration-features = "sudo,title"
 
-# Performance
-resize-overlay = "never"
-resize-overlay-position = "center"
-resize-overlay-duration = 0ms
+# Performance & Resize animations
+resize-overlay = after-first
+resize-overlay-position = center
+resize-overlay-duration = 500ms
 
 # Essential keybindings only
 keybind = "cmd+t=new_tab"
