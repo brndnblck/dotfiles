@@ -67,12 +67,12 @@ run() {
 setup_homebrew_env() { echo "Mock: Setting up Homebrew environment"; }
 ensure_password_manager() { echo "Mock: Setting up password manager"; }
 
-log_info() { echo "LOG_INFO: $1"; }
-log_success() { echo "LOG_SUCCESS: $1"; }
+info_log() { echo "LOG_INFO: $1"; }
+success_log() { echo "LOG_SUCCESS: $1"; }
 show_error() { echo "SHOW_ERROR: $1"; return 1; }
 
 # Export functions
-export -f check_command validate_network_operation run setup_homebrew_env ensure_password_manager log_info log_success show_error
+export -f check_command validate_network_operation run setup_homebrew_env ensure_password_manager info_log success_log show_error
 
 # Override check_command to succeed after installation
 check_command() {
@@ -136,10 +136,10 @@ validate_network_operation() {
 }
 
 setup_homebrew_env() { echo "Mock: Setting up Homebrew environment"; }
-log_info() { echo "LOG_INFO: $1"; }
+info_log() { echo "LOG_INFO: $1"; }
 show_error() { echo "SHOW_ERROR: $1"; return 1; }
 
-export -f check_command validate_network_operation setup_homebrew_env log_info show_error
+export -f check_command validate_network_operation setup_homebrew_env info_log show_error
 
 # Test ensure_homebrew with network failure (but don't exit)
 if ! ensure_homebrew 2>/dev/null; then
@@ -186,10 +186,10 @@ sw_vers() {
 }
 
 silent() { eval "$1" >/dev/null 2>&1; }
-log_info() { echo "LOG_INFO: $1"; }
+info_log() { echo "LOG_INFO: $1"; }
 show_error() { echo "SHOW_ERROR: $1"; return 1; }
 
-export -f sw_vers silent log_info show_error
+export -f sw_vers silent info_log show_error
 
 # Test version check with compatible version
 check_macos_version "11.0"
@@ -223,10 +223,10 @@ df() {
     esac
 }
 
-log_info() { echo "LOG_INFO: $1"; }
+info_log() { echo "LOG_INFO: $1"; }
 show_error() { echo "SHOW_ERROR: $1"; return 1; }
 
-export -f df log_info show_error
+export -f df info_log show_error
 
 # Test disk space check
 check_disk_space 5
@@ -267,9 +267,9 @@ show_error() {
     return 1
 }
 
-log_info() { echo "LOG_INFO: $1"; }
+info_log() { echo "LOG_INFO: $1"; }
 
-export -f df log_info show_error
+export -f df info_log show_error
 
 # Test disk space check with insufficient space (capture exit status)
 if check_disk_space 5 2>/dev/null; then
@@ -474,9 +474,9 @@ check_disk_space() { echo "Mock: Disk space check passed for ${1}GB"; }
 check_network_connectivity() { echo "Mock: Network connectivity check passed for $1"; }
 ensure_not_root() { echo "Mock: Not root check passed"; }
 
-log_info() { echo "LOG_INFO: $1"; }
+info_log() { echo "LOG_INFO: $1"; }
 
-export -f check_macos_version get_architecture check_disk_space check_network_connectivity ensure_not_root log_info
+export -f check_macos_version get_architecture check_disk_space check_network_connectivity ensure_not_root info_log
 
 # Test preflight checks
 preflight_checks
@@ -554,11 +554,11 @@ op() {
     esac
 }
 
-log_info() { echo "LOG_INFO: $1"; }
-log_success() { echo "LOG_SUCCESS: $1"; }
+info_log() { echo "LOG_INFO: $1"; }
+success_log() { echo "LOG_SUCCESS: $1"; }
 show_error() { echo "SHOW_ERROR: $1"; return 1; }
 
-export -f check_command silent op log_info log_success show_error
+export -f check_command silent op info_log success_log show_error
 
 # Test password manager setup (but don't actually prompt for credentials)
 echo "Testing 1Password CLI installation..."

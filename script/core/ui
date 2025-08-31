@@ -157,6 +157,26 @@ run_with_spinner() {
 }
 
 
+show_error() {
+    local message="$1"
+    local exit_on_error="${2:-false}"
+    
+    error_log "$message"
+    
+    # Display error message with styling if gum is available
+    if command -v gum >/dev/null 2>&1; then
+        gum style --foreground "$INTERFACE_ERROR" "ERROR: $message"
+    else
+        echo "ERROR: $message" >&2
+    fi
+    
+    if [ "$exit_on_error" = "true" ]; then
+        exit 1
+    fi
+    
+    return 1
+}
+
 show_exit_screen() {
     clear
     show_standard_header

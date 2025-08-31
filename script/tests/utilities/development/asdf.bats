@@ -327,10 +327,10 @@ describe "asdf Integration Tests"
         setup_asdf_tools 'false'
     "
     assert_success
-    assert_output --partial "Processing ruby"
-    assert_output --partial "Processing python"
-    assert_output --partial "Processing nodejs"
-    assert_output --partial "Processing golang"
+    assert_output --partial "LOG_INFO: Processing ruby"
+    assert_output --partial "LOG_INFO: Processing python"
+    assert_output --partial "LOG_INFO: Processing nodejs"
+    assert_output --partial "LOG_INFO: Processing golang"
 }
 
 @test "asdf: setup_asdf_tools function should work in update mode" {
@@ -354,8 +354,8 @@ describe "asdf Integration Tests"
         setup_asdf_tools 'true'
     "
     assert_success
-    assert_output --partial "Processing ruby"
-    assert_output --partial "Version ruby 3.2.0 is ready for global use"
+    assert_output --partial "LOG_INFO: Processing ruby"
+    assert_output --partial "LOG_INFO: Version ruby 3.2.0 is ready for global use"
 }
 
 @test "asdf: should handle missing asdf gracefully" {
@@ -378,7 +378,7 @@ describe "asdf Integration Tests"
         setup_asdf_tools 'false' 2>&1
     "
     assert_failure
-    assert_output --partial "asdf not found, skipping language version management"
+    assert_output --partial "LOG_WARN: asdf not found, skipping language version management"
 }
 
 describe "~/.tool-versions File Management"
@@ -412,7 +412,7 @@ describe "~/.tool-versions File Management"
         fi
     "
     assert_success
-    assert_output --partial "Updating $MOCK_HOME/.tool-versions with latest versions"
+    assert_output --partial "LOG_INFO: Updating $MOCK_HOME/.tool-versions with latest versions"
     assert_output --partial "FILE_CREATED: ~/.tool-versions exists"
     assert_output --partial "ruby 3.2.0"
     assert_output --partial "python 3.11.1"
@@ -451,8 +451,8 @@ describe "~/.tool-versions File Management"
         fi
     "
     assert_success
-    assert_output --partial "Updating $MOCK_HOME/.tool-versions with latest versions"
-    assert_output --partial "Successfully updated $MOCK_HOME/.tool-versions"
+    assert_output --partial "LOG_INFO: Updating $MOCK_HOME/.tool-versions with latest versions"
+    assert_output --partial "LOG_SUCCESS: Successfully updated $MOCK_HOME/.tool-versions"
     assert_output --partial "FILE_EXISTS: true"
     assert_output --partial "ruby 3.2.0"
     assert_output --partial "python 3.11.1"
@@ -570,7 +570,7 @@ EOF
         mv '$MOCK_BREW_PREFIX/bin/asdf.orig' '$MOCK_BREW_PREFIX/bin/asdf'
     "
     assert_success
-    assert_output --partial "No installed version for golang, fetching latest"
+    assert_output --partial "LOG_INFO: No installed version for golang, fetching latest"
     assert_output --partial "FILE_CONTENTS:"
     assert_output --partial "ruby 3.2.0"
     assert_output --partial "python 3.11.1"
@@ -605,8 +605,8 @@ EOF
         fi
     "
     assert_success
-    assert_output --partial "Updating $MOCK_HOME/.tool-versions with latest versions"
-    assert_output --partial "Successfully updated $MOCK_HOME/.tool-versions"
+    assert_output --partial "LOG_INFO: Updating $MOCK_HOME/.tool-versions with latest versions"
+    assert_output --partial "LOG_SUCCESS: Successfully updated $MOCK_HOME/.tool-versions"
     assert_output --partial "VERIFICATION: ~/.tool-versions was created by setup_asdf_tools"
     assert_output --partial "LINE_COUNT: 4"
 }

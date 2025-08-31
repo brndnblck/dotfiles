@@ -104,8 +104,8 @@ source() {
 }
 
 # Mock logging functions
-log_info() { echo "INFO: $1"; }
-log_success() { echo "SUCCESS: $1"; }
+info_log() { echo "INFO: $1"; }
+success_log() { echo "SUCCESS: $1"; }
 
 source "$CURRENT_DIR/helpers/common"
 source "$CURRENT_DIR/helpers/prerequisites"
@@ -211,8 +211,8 @@ check_command() {
     fi
 }
 
-log_info() { echo "INFO: $1"; }
-log_success() { echo "SUCCESS: $1"; }
+info_log() { echo "INFO: $1"; }
+success_log() { echo "SUCCESS: $1"; }
 
 if ! check_command "gum" "Gum TUI tool"; then
     info_log "Installing gum TUI tool..."
@@ -243,7 +243,7 @@ set -euo pipefail
 
 CURRENT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 
-log_success() { echo "SUCCESS: $1"; }
+success_log() { echo "SUCCESS: $1"; }
 
 success_log "Bootstrap complete! Launching main interface..."
 
