@@ -1,4 +1,5 @@
 ---
+name: specialist-performance
 description: Orchestrate performance optimization initiatives and coordinate performance testing workflows
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

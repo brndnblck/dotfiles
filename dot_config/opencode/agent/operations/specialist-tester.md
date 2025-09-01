@@ -1,4 +1,5 @@
 ---
+name: specialist-tester
 description: Executes unit, integration, and performance tests; owns test result aggregation
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

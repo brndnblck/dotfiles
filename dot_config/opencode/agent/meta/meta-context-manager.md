@@ -1,4 +1,5 @@
 ---
+name: meta-context-manager
 description: Manage context across agents and long-running tasks
 mode: subagent
 model: anthropic/claude-haiku-4-20250514

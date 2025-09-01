@@ -1,4 +1,5 @@
 ---
+name: domain-java-engineer
 description: Master modern Java language features, JVM optimization, and core Java development patterns
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

@@ -1,4 +1,5 @@
 ---
+name: specialist-product-strategy
 description: Refine product strategy and translate vision into actionable requirements
 mode: subagent
 model: anthropic/claude-haiku-4-20250514

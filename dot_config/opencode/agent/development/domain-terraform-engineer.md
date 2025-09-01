@@ -1,4 +1,5 @@
 ---
+name: domain-terraform-engineer
 description: Write Terraform modules and implement infrastructure as code
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

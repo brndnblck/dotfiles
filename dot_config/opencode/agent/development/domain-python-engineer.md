@@ -1,4 +1,5 @@
 ---
+name: domain-python-engineer
 description: Advanced Python expert specializing in complex implementations, performance optimization, and advanced language features
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

@@ -1,4 +1,5 @@
 ---
+name: meta-context-summarizer
 description: Create concise summaries and checkpoint long workflows for resumption
 mode: subagent
 model: anthropic/claude-haiku-4-20250514

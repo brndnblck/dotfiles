@@ -1,4 +1,5 @@
 ---
+name: specialist-security
 description: Orchestrate security assessments, threat modeling, and compliance workflows across systems
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

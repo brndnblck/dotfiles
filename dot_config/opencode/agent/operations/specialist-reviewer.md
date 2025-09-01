@@ -1,4 +1,5 @@
 ---
+name: specialist-reviewer
 description: Review code for quality, security, and maintainability
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

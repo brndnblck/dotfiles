@@ -1,4 +1,5 @@
 ---
+name: domain-go-engineer
 description: Advanced Go expert specializing in complex concurrency patterns, performance optimization, and systems programming
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

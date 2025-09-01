@@ -1,4 +1,5 @@
 ---
+name: domain-search-expert
 description: Expert web researcher with advanced search techniques
 mode: subagent
 model: anthropic/claude-haiku-4-20250514

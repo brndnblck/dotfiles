@@ -1,4 +1,5 @@
 ---
+name: domain-rust-engineer
 description: Advanced Rust expert specializing in complex ownership patterns, unsafe code, and systems programming
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

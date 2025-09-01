@@ -1,4 +1,5 @@
 ---
+name: domain-database-engineer
 description: Optimize SQL queries, indexes, and database performance
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

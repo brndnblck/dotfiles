@@ -1,4 +1,5 @@
 ---
+name: meta-agent-selector
 description: Select optimal agent combinations through dynamic capability discovery
 mode: subagent
 model: anthropic/claude-haiku-4-20250514

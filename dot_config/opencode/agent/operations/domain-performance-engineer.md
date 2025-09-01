@@ -1,4 +1,5 @@
 ---
+name: domain-performance-engineer
 description: Profile applications and optimize performance bottlenecks
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

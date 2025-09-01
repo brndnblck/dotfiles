@@ -1,4 +1,5 @@
 ---
+name: domain-ruby-engineer
 description: Advanced Ruby expert specializing in metaprogramming, performance optimization, and complex Ruby patterns
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

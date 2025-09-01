@@ -1,4 +1,5 @@
 ---
+name: specialist-architect
 description: Defines implementation plans, task specs, risk mitigations, and acceptance criteria
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

@@ -1,4 +1,5 @@
 ---
+name: domain-mermaid-expert
 description: Create Mermaid diagrams for documentation and architecture
 mode: subagent
 model: anthropic/claude-haiku-4-20250514

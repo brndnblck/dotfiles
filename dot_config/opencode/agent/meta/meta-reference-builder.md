@@ -1,4 +1,5 @@
 ---
+name: meta-reference-builder
 description: Create exhaustive reference documentation for any domain or system
 mode: subagent
 model: anthropic/claude-haiku-4-20250514

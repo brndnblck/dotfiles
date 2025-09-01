@@ -1,4 +1,5 @@
 ---
+name: specialist-developer-experience
 description: Optimizes development workflows, tooling, and API ergonomics for developer productivity
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

@@ -1,4 +1,5 @@
 ---
+name: meta-error-coordinator
 description: Coordinate error handling and recovery strategies across multiple agents
 mode: subagent
 model: anthropic/claude-haiku-4-20250514

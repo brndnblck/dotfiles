@@ -1,4 +1,5 @@
 ---
+name: specialist-user-experience
 description: Designs user interfaces, workflows, and interaction patterns for optimal usability
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

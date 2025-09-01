@@ -1,4 +1,5 @@
 ---
+name: domain-ios-engineer
 description: Develop native iOS apps with Swift and SwiftUI
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

@@ -1,4 +1,5 @@
 ---
+name: domain-c-engineer
 description: Advanced C expert specializing in systems programming, memory management, and low-level optimization
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

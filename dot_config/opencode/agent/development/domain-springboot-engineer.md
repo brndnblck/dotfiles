@@ -1,4 +1,5 @@
 ---
+name: domain-springboot-engineer
 description: Expert Spring Boot developer specializing in Spring Boot 3+ framework patterns and Java integration
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

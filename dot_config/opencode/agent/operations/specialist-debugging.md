@@ -1,4 +1,5 @@
 ---
+name: specialist-debugging
 description: Debug errors, analyze logs, detect patterns, and fix root causes across systems
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

@@ -1,4 +1,5 @@
 ---
+name: domain-tutorial-technical-writer
 description: Create step-by-step tutorials from existing code
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

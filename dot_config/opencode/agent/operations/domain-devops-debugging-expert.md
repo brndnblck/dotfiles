@@ -1,4 +1,5 @@
 ---
+name: domain-devops-debugging-expert
 description: Debug production issues and analyze system logs
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

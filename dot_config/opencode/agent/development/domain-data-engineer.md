@@ -1,4 +1,5 @@
 ---
+name: domain-data-engineer
 description: Manage database operations, backups, and disaster recovery
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

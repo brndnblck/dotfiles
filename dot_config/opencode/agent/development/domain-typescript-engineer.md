@@ -1,4 +1,5 @@
 ---
+name: domain-typescript-engineer
 description: Advanced TypeScript expert specializing in complex type systems, compiler internals, and advanced patterns
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

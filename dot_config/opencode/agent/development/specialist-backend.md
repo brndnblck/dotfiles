@@ -1,4 +1,5 @@
 ---
+name: specialist-backend
 description: Implements APIs, services, and data processing logic for backend systems
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

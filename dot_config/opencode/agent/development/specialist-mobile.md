@@ -1,4 +1,5 @@
 ---
+name: specialist-mobile
 description: Handles mobile-specific or cross-platform development and device compatibility
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

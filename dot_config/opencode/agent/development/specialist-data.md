@@ -1,4 +1,5 @@
 ---
+name: specialist-data
 description: Orchestrate data architecture, ETL workflows, and data governance initiatives across systems
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

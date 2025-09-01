@@ -1,4 +1,5 @@
 ---
+name: domain-cloud-architect
 description: Design AWS/Azure/GCP infrastructure and optimize cloud costs
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

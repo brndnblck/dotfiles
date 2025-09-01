@@ -1,4 +1,5 @@
 ---
+name: domain-javascript-engineer
 description: Advanced JavaScript expert specializing in complex async patterns, performance optimization, and deep JavaScript internals
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

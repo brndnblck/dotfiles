@@ -1,4 +1,5 @@
 ---
+name: domain-api-technical-writer
 description: Create OpenAPI specs, SDKs, and API documentation
 mode: subagent
 model: anthropic/claude-haiku-4-20250514

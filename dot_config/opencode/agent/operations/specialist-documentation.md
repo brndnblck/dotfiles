@@ -1,4 +1,5 @@
 ---
+name: specialist-documentation
 description: Create comprehensive technical documentation from codebases
 mode: subagent
 model: anthropic/claude-opus-4-1-20250805

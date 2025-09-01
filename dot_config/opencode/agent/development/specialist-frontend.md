@@ -1,4 +1,5 @@
 ---
+name: specialist-frontend
 description: Develops UI logic, layout, and interface-layer functionality
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

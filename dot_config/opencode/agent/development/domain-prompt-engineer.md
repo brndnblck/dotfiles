@@ -1,4 +1,5 @@
 ---
+name: domain-prompt-engineer
 description: Optimize prompts for LLMs and AI systems
 mode: subagent
 model: anthropic/claude-opus-4-1-20250805

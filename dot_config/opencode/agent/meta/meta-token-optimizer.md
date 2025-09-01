@@ -1,4 +1,5 @@
 ---
+name: meta-token-optimizer
 description: Optimize token usage by removing redundancy and compressing agent outputs
 mode: subagent
 model: anthropic/claude-haiku-4-20250514

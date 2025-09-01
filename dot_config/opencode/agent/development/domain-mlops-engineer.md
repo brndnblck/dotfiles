@@ -1,4 +1,5 @@
 ---
+name: domain-mlops-engineer
 description: Build ML pipelines, experiment tracking, and model deployment
 mode: subagent
 model: anthropic/claude-opus-4-1-20250805

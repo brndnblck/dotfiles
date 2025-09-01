@@ -1,4 +1,5 @@
 ---
+name: domain-security-engineer
 description: Review code for vulnerabilities and security compliance
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

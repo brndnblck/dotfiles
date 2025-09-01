@@ -1,4 +1,5 @@
 ---
+name: meta-workflow-analyzer
 description: Analyze workflows to identify patterns and suggest optimizations
 mode: subagent
 model: anthropic/claude-haiku-4-20250514

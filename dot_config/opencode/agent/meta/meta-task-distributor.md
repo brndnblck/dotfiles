@@ -1,4 +1,5 @@
 ---
+name: meta-task-distributor
 description: Distribute tasks across agents based on dependencies and capabilities
 mode: subagent
 model: anthropic/claude-haiku-4-20250514

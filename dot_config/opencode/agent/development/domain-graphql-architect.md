@@ -1,4 +1,5 @@
 ---
+name: domain-graphql-architect
 description: Design GraphQL schemas, resolvers, and federation
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

@@ -1,4 +1,5 @@
 ---
+name: specialist-modernization
 description: Orchestrate legacy system refactoring and framework migration projects
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

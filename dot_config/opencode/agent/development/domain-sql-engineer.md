@@ -1,4 +1,5 @@
 ---
+name: domain-sql-engineer
 description: Advanced SQL expert specializing in complex query optimization, database performance tuning, and advanced SQL patterns
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

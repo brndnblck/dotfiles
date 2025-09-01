@@ -1,4 +1,5 @@
 ---
+name: meta-artifact-manager
 description: Manage agent-docs artifacts, versioning, and relationships across workflows
 mode: subagent
 model: anthropic/claude-haiku-4-20250514

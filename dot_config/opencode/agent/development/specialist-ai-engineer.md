@@ -1,4 +1,5 @@
 ---
+name: specialist-ai-engineer
 description: Build LLM applications, RAG systems, and AI integrations by orchestrating AI/ML system development
 mode: subagent
 model: anthropic/claude-opus-4-1-20250805

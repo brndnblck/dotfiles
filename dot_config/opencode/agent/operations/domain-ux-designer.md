@@ -1,4 +1,5 @@
 ---
+name: domain-ux-designer
 description: Create interface designs, wireframes, and design systems
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514

@@ -1,4 +1,5 @@
 ---
+name: specialist-deployment
 description: Orchestrate CI/CD pipelines, containerization, and automated deployment systems
 mode: subagent
 model: anthropic/claude-sonnet-4-20250514
