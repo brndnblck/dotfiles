@@ -12,7 +12,6 @@
 - Group related functionality together
 - Separate concerns (business logic, data access, presentation)
 - Follow established design patterns when appropriate
-- Document complex algorithms and business rules
 
 ## Performance Considerations
 - Avoid premature optimization, but be aware of performance implications
@@ -23,14 +22,6 @@
 
 ## Maintainability
 - Write code that is easy to understand and modify
-- Use meaningful comments for complex logic
 - Follow consistent coding style and conventions
 - Avoid magic numbers and hardcoded values
 - Refactor code regularly to improve quality
-
-## Version Control
-- Write clear, descriptive commit messages
-- Make atomic commits that represent single logical changes
-- Use branching strategies appropriate for the project
-- Review code before merging to main branch
-- Tag releases and document changes

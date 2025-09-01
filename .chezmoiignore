@@ -1,6 +1,7 @@
 .github/*
 .shellcheckrc
-CLAUDE.md
+AGENTS.md
+**/AGENT-FRAMEWORK.md
 dependencies/
 fonts/
 install.sh
