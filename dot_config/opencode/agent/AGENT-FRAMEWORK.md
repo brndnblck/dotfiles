@@ -44,29 +44,34 @@ flowchart TD
     subgraph BuildEnhanced ["🎯 PRIMARY ORCHESTRATOR: build-enhanced.md"]
         direction TB
         
-        subgraph Step1 ["1️⃣ UNDERSTAND"]
-            Analyze["📊 Analyze complexity & scope<br/>Parse requirements<br/>Identify domain needs"]
+        subgraph Step1 ["1️⃣ UNDERSTAND & CLARIFY"]
+            Analyze["📊 Ask clarifying questions<br/>Parse ambiguous requests<br/>Never assume understanding"]
         end
         
-        subgraph Step2 ["2️⃣ ROUTE"]
+        subgraph Step2 ["2️⃣ PLAN & CONFIRM"]
+            PlanStep["📋 Create specific plan<br/>Present approach & steps<br/>Get user confirmation"]
+        end
+        
+        subgraph Step3 ["3️⃣ ROUTE"]
             Decision{Complexity<br/>Assessment}
             SimpleRoute["🚀 Simple Direct<br/>Minimal overhead"]
             ComplexRoute["🔄 Complex Workflow<br/>Multi-stage coordination"]
             CrossRoute["🌐 Cross-Domain<br/>Universal coordination"]
         end
         
-        subgraph Step3 ["3️⃣ COORDINATE"]
+        subgraph Step4 ["4️⃣ COORDINATE"]
             DirectExec["Direct specialist assignment"]
             WorkflowOrch["Multi-agent orchestration<br/>+ Meta agent activation"]
             CrossOrch["Cross-functional coordination<br/>+ Universal capability keys"]
         end
         
-        subgraph Step4 ["4️⃣ VALIDATE"]
+        subgraph Step5 ["5️⃣ VALIDATE"]
             QualityGates["✅ Quality assurance<br/>Completion verification<br/>Success validation"]
         end
         
         %% Internal flow
-        Analyze --> Decision
+        Analyze --> PlanStep
+        PlanStep --> Decision
         Decision -->|"Low complexity"| SimpleRoute
         Decision -->|"High complexity"| ComplexRoute
         Decision -->|"Cross-domain"| CrossRoute
