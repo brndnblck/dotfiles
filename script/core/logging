@@ -23,10 +23,10 @@ write_log() {
 
 
 debug_log() { write_log "DEBUG" "$1"; }
-info_log() { write_log "INFO" "$1"; echo "LOG_INFO: $1" >&2; }
-success_log() { write_log "SUCCESS" "$1"; echo "LOG_SUCCESS: $1" >&2; }
-warn_log() { write_log "WARN" "$1"; echo "LOG_WARN: $1" >&2; }
-error_log() { write_log "ERROR" "$1"; echo "LOG_ERROR: $1" >&2; }
+info_log() { write_log "INFO" "$1"; }
+success_log() { write_log "SUCCESS" "$1"; }
+warn_log() { write_log "WARN" "$1"; }
+error_log() { write_log "ERROR" "$1"; }
 command_log() { write_log "COMMAND" "$1"; }
 output_log() { write_log "OUTPUT" "$1"; }
 

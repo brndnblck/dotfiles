@@ -1,0 +1,376 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+CURRENT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+
+source "$CURRENT_DIR/core/ansi"
+
+if [ -z "${DOTFILES_PARENT_DIR:-}" ]; then
+    ansi --red --bold --newline "⚠ This script should not be called directly!"
+    ansi --newline ""
+    ansi --newline "Please use the main TUI interface:"
+    ansi --newline "  ./script/main"
+    ansi --newline ""
+    ansi --newline "Or run the bootstrap first:"
+    ansi --newline "  ./script/bootstrap"
+    exit 1
+fi
+
+if [ -z "${DOTFILES_PARENT_DIR:-}" ]; then
+    DOTFILES_PARENT_DIR=$(dirname "$CURRENT_DIR")
+fi
+DOTFILES_SESSION_ID="reset-$(date +%Y%m%d-%H%M%S)"
+
+export DOTFILES_SESSION_ID
+export DOTFILES_PARENT_DIR
+
+mkdir -p "$DOTFILES_PARENT_DIR/tmp"
+
+source "$CURRENT_DIR/core/logging"
+source "$CURRENT_DIR/core/common"
+source "$CURRENT_DIR/core/system"
+source "$CURRENT_DIR/core/ui"
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
+
+# Process a list of items for removal with logging
+process_removal_list() {
+    local list_command="$1"
+    local remove_command="$2"
+    local item_type="$3"
+
+    local items
+    items=$(eval "$list_command" 2> /dev/null || true)
+
+    if [ -n "$items" ] && [ "$items" != " " ]; then
+        info_log "Found $item_type to remove:"
+        echo "$items" | while read -r item; do
+            if [ -n "$item" ]; then
+                info_log "  - $item"
+                local cmd="${remove_command/\{\}/$item}"
+                silent "$cmd" || warn_log "Failed to remove $item_type: $item"
+            fi
+        done
+    else
+        info_log "No $item_type found to remove"
+    fi
+}
+
+# Execute command with optional description
+execute_command() {
+    local command="$1"
+    local description="${2:-}"
+
+    [ -n "$description" ] && info_log "$description"
+    silent "$command" || warn_log "Command failed: $command"
+}
+
+# Remove file or directory with logging
+remove_path() {
+    local path="$1"
+    local description="${2:-}"
+
+    if [ -e "$path" ]; then
+        if [ -n "$description" ]; then
+            info_log "$description"
+        else
+            info_log "Removing $path"
+        fi
+        rm -rf "$path" || warn_log "Failed to remove: $path"
+    fi
+}
+
+# Remove multiple paths with logging
+remove_paths() {
+    local description="$1"
+    shift
+    local paths=("$@")
+
+    info_log "$description"
+    for path in "${paths[@]}"; do
+        remove_path "$path"
+    done
+}
+
+# ============================================================================
+# Reset Functions
+# ============================================================================
+
+reset_homebrew_packages() {
+    info_log "Processing Homebrew packages removal..."
+
+    if check_command "brew" "Homebrew"; then
+        # Remove all packages and casks but leave Homebrew installed
+        process_removal_list \
+            "brew list --formula | tr '\n' ' '" \
+            "brew uninstall --force --ignore-dependencies {}" \
+            "Homebrew packages"
+
+        process_removal_list \
+            "brew list --cask | tr '\n' ' '" \
+            "brew uninstall --cask --force {}" \
+            "Homebrew casks"
+
+        # Clean up homebrew cache and orphaned dependencies
+        execute_command "brew cleanup --prune=all" "Cleaning up homebrew cache"
+        execute_command "brew autoremove" "Removing orphaned dependencies"
+
+        info_log "Homebrew packages removed (Homebrew itself remains installed)"
+    else
+        info_log "No Homebrew found"
+    fi
+
+    # Note about mas apps (cannot be uninstalled via mas)
+    if check_command "mas" "Mac App Store CLI"; then
+        local mas_apps
+        mas_apps=$(mas list 2> /dev/null || true)
+
+        if [ -n "$mas_apps" ]; then
+            info_log "Note: Mac App Store applications cannot be automatically removed:"
+            echo "$mas_apps" | while read -r line; do
+                [ -n "$line" ] && info_log "  - $line (remove manually via Launchpad)"
+            done
+        fi
+    fi
+}
+
+reset_development_environment() {
+    info_log "Processing development environment cleanup..."
+
+    # Remove entire development directories
+    local dev_dirs=(
+        "$HOME/.asdf"
+        "$HOME/.cargo"
+        "$HOME/.npm"
+        "$HOME/.tool-versions"
+    )
+
+    for dir in "${dev_dirs[@]}"; do
+        remove_path "$dir"
+    done
+
+    # Remove Rust toolchains if rustup is still available
+    if check_command "rustup" "Rust toolchain manager"; then
+        process_removal_list \
+            "rustup toolchain list | grep -E '^(stable|nightly|beta)' | awk '{print \$1}'" \
+            "rustup toolchain uninstall {}" \
+            "Rust toolchains"
+    fi
+}
+
+reset_dotfiles_and_configs() {
+    info_log "Processing dotfiles and configuration removal..."
+
+    if check_command "chezmoi" "Chezmoi"; then
+        # Get and display managed files
+        local managed_files
+        managed_files=$(chezmoi managed 2> /dev/null || true)
+
+        if [ -n "$managed_files" ]; then
+            info_log "Found managed dotfiles to remove:"
+            echo "$managed_files" | while read -r file; do
+                [ -n "$file" ] && info_log "  - $file"
+            done
+
+            execute_command "chezmoi remove --all" "Removing all managed dotfiles and configs"
+        fi
+
+        # Remove chezmoi directories
+        local chezmoi_source
+        chezmoi_source=$(chezmoi source-path 2> /dev/null || true)
+        if [ -n "$chezmoi_source" ] && [ -d "$chezmoi_source" ] && [ "$chezmoi_source" != "$DOTFILES_PARENT_DIR" ]; then
+            remove_path "$chezmoi_source" "Removing chezmoi source directory"
+        fi
+
+        remove_path "$HOME/.config/chezmoi" "Removing chezmoi config directory"
+    fi
+
+    # Remove common application directories that may have been created
+    # (Be conservative - only remove .config subdirs we know about)
+    local safe_config_dirs=(
+        "$HOME/.config/ghostty" "$HOME/.config/starship" "$HOME/.config/git"
+        "$HOME/.config/tmux" "$HOME/.config/direnv" "$HOME/.config/npm"
+    )
+
+    for dir in "${safe_config_dirs[@]}"; do
+        if [ -d "$dir" ]; then
+            info_log "Removing config directory: $dir"
+            rm -rf "$dir" || warn_log "Failed to remove: $dir"
+        fi
+    done
+
+    # Note about other application directories that require manual cleanup
+    local manual_cleanup_dirs=("$HOME/.docker" "$HOME/.aws" "$HOME/.kube")
+    for dir in "${manual_cleanup_dirs[@]}"; do
+        if [ -d "$dir" ]; then
+            info_log "Note: $dir requires manual cleanup (may contain non-dotfiles data)"
+        fi
+    done
+}
+
+reset_system_changes() {
+    info_log "Processing system changes reversal..."
+
+    # Remove system configuration files
+    local system_configs=(
+        "$PAM_CONFIG_DIR/sudo_local"
+        "/etc/sudoers.d/bootstrap_timeout"
+    )
+
+    for config in "${system_configs[@]}"; do
+        if [ -f "$config" ]; then
+            info_log "Removing system config: $config"
+            execute_command "sudo rm -f '$config'"
+        fi
+    done
+}
+
+reset_fonts_and_assets() {
+    info_log "Processing fonts and assets cleanup..."
+
+    # Remove custom fonts that were installed
+    local fonts_dir="${DOTFILES_PARENT_DIR}/fonts"
+    if [ -d "$fonts_dir" ]; then
+        info_log "Removing installed custom fonts..."
+
+        for font in "$fonts_dir"/*.ttf; do
+            if [ -f "$font" ]; then
+                local font_name
+                font_name=$(basename "$font")
+                local installed_font="$HOME/Library/Fonts/$font_name"
+                remove_path "$installed_font" "Removing font: $font_name"
+            fi
+        done
+    fi
+
+    # Clean up temporary files and session data
+    info_log "Cleaning up temporary files and logs..."
+
+    # Remove session-specific temp files
+    [ -n "${DOTFILES_SESSION_ID:-}" ] && rm -f "/tmp/*${DOTFILES_SESSION_ID}*" 2> /dev/null || true
+
+    # Clean up dotfiles directories and auth markers
+    remove_path "${DOTFILES_PARENT_DIR}/tmp" "Removing dotfiles temp directory"
+    rm -f "/tmp/.bootstrap_sudo_authenticated" "/tmp/.bootstrap_sudo_keepalive_pid" 2> /dev/null || true
+}
+
+# ============================================================================
+# Main Function
+# ============================================================================
+
+main() {
+    show_standard_header
+
+    gum style \
+        --foreground "$INTERFACE_COLOR" \
+        --border normal \
+        --border-foreground "$INTERFACE_SECONDARY" \
+        --padding "0 1" \
+        --width "$((INTERFACE_WIDTH - 1))" \
+        "▶ SYSTEM RESET SEQUENCE:" \
+        "" \
+        "  [01] HOMEBREW PACKAGES & APPLICATIONS" \
+        "  [02] DEVELOPMENT ENVIRONMENT CLEANUP" \
+        "  [03] DOTFILES & CONFIGURATION REMOVAL" \
+        "  [04] SYSTEM CHANGES REVERSAL" \
+        "  [05] FONTS & ASSETS CLEANUP"
+
+    ansi --newline
+
+    gum style \
+        --foreground "$INTERFACE_COLOR" \
+        --border normal \
+        --border-foreground "$INTERFACE_SECONDARY" \
+        --padding "0 1" \
+        --width "$((INTERFACE_WIDTH - 1))" \
+        "⚠ WARNING: DESTRUCTIVE OPERATION" \
+        "" \
+        "This will permanently remove:" \
+        "• All homebrew packages and applications" \
+        "• All development tools and environments" \
+        "• All dotfiles and configurations" \
+        "• System customizations and preferences" \
+        "" \
+        "This action CANNOT be undone!"
+
+    ansi --newline
+
+    if ! gum confirm "INITIATE SYSTEM RESET SEQUENCE?" \
+        --prompt.foreground "$INTERFACE_COLOR" \
+        --selected.foreground "$INTERFACE_BG_COLOR" \
+        --selected.background "$INTERFACE_COLOR" \
+        --unselected.foreground "$INTERFACE_COLOR" \
+        --affirmative "DESTROY" \
+        --negative "ABORT"; then
+        gum style --foreground "$INTERFACE_ERROR" "SYSTEM RESET ABORTED"
+        exit 0
+    fi
+
+    # Execute the reset
+    show_standard_header
+    show_section_header "SYSTEM RESET"
+
+    gum style --foreground "$INTERFACE_SECONDARY" "DEBUG LOG: $(get_debug_log_path)"
+    ansi --newline
+
+    export TASK_TITLE="SYSTEM RESET"
+
+    run_with_progressive_spinner "REMOVING HOMEBREW PACKAGES & APPLICATIONS..." \
+        "$(declare -f reset_homebrew_packages); reset_homebrew_packages"
+
+    run_with_progressive_spinner "CLEANING UP DEVELOPMENT ENVIRONMENT..." \
+        "$(declare -f reset_development_environment); reset_development_environment"
+
+    run_with_progressive_spinner "REMOVING DOTFILES & CONFIGURATIONS..." \
+        "$(declare -f reset_dotfiles_and_configs); reset_dotfiles_and_configs"
+
+    run_with_progressive_spinner "REVERTING SYSTEM CHANGES..." \
+        "$(declare -f reset_system_changes); reset_system_changes"
+
+    run_with_progressive_spinner "REMOVING FONTS & ASSETS..." \
+        "$(declare -f reset_fonts_and_assets); reset_fonts_and_assets"
+
+    show_completion "SYSTEM RESET COMPLETE"
+
+    ansi --newline
+    gum style \
+        --foreground "$INTERFACE_SECONDARY" \
+        --border normal \
+        --border-foreground "$INTERFACE_SECONDARY" \
+        --padding "0 1" \
+        --width "$((INTERFACE_WIDTH - 1))" \
+        "RESET SUMMARY:" \
+        "" \
+        "✓ Homebrew packages and applications removed" \
+        "✓ Development environment cleaned up" \
+        "✓ Dotfiles and configurations removed" \
+        "✓ System changes reverted" \
+        "✓ Fonts and assets removed" \
+        "" \
+        "Your system has been restored to its pre-dotfiles state." \
+        "You may need to restart your terminal or reboot your system."
+
+    ansi --newline
+
+    if gum confirm "RESTART TERMINAL SESSION?" \
+        --prompt.foreground "$INTERFACE_COLOR" \
+        --selected.foreground "$INTERFACE_BG_COLOR" \
+        --selected.background "$INTERFACE_COLOR" \
+        --unselected.foreground "$INTERFACE_COLOR" \
+        --affirmative "RESTART" \
+        --negative "MANUAL"; then
+        gum style --foreground "$INTERFACE_SECONDARY" "RESTARTING TERMINAL SESSION..."
+        exec "$SHELL"
+    else
+        gum style --foreground "$INTERFACE_SECONDARY" "MANUAL RESTART REQUIRED"
+    fi
+
+    show_footer_prompt
+}
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    main "$@"
+fi

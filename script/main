@@ -41,9 +41,10 @@ main_menu() {
         local choice
         choice=$(gum choose \
             "[01] INIT SYSTEM" \
-            "[02] UPDATE AND SYNC" \
-            "[03] SYSTEM STATUS" \
-            "[04] TERMINATE SESSION" \
+            "[02] PERFORM RESET" \
+            "[03] UPDATE AND SYNC" \
+            "[04] SYSTEM STATUS" \
+            "[05] TERMINATE SESSION" \
             --height 6 \
             --cursor.foreground "$INTERFACE_COLOR" \
             --item.foreground "$INTERFACE_SECONDARY" \
@@ -53,15 +54,18 @@ main_menu() {
 
         case "$choice" in
             "[01] INIT SYSTEM")
-                "$CURRENT_DIR/setup"
+                DOTFILES_PARENT_DIR="$DOTFILES_PARENT_DIR" "$CURRENT_DIR/setup"
                 ;;
-            "[02] UPDATE AND SYNC")
-                "$CURRENT_DIR/update"
+            "[02] PERFORM RESET")
+                DOTFILES_PARENT_DIR="$DOTFILES_PARENT_DIR" "$CURRENT_DIR/reset"
                 ;;
-            "[03] SYSTEM STATUS")
-                "$CURRENT_DIR/status"
+            "[03] UPDATE AND SYNC")
+                DOTFILES_PARENT_DIR="$DOTFILES_PARENT_DIR" "$CURRENT_DIR/update"
                 ;;
-            "[04] TERMINATE SESSION")
+            "[04] SYSTEM STATUS")
+                DOTFILES_PARENT_DIR="$DOTFILES_PARENT_DIR" "$CURRENT_DIR/status"
+                ;;
+            "[05] TERMINATE SESSION")
                 show_exit_screen
                 ;;
         esac

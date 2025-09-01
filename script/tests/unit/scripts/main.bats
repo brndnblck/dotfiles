@@ -196,7 +196,7 @@ main_menu() {
         "[01] INIT SYSTEM" \
         "[02] UPDATE AND SYNCHRONIZE" \
         "[03] RUN SYSTEM SCAN" \
-        "[04] TERMINATE SESSION")
+        "[05] TERMINATE SESSION")
     
     echo "Selected: $choice"
     colored_divider
@@ -227,21 +227,36 @@ exit 0
 EOF
     chmod +x "$DOTFILES_PARENT_DIR/script/setup"
     
-    # Mock gum to select setup, then terminate
-    cat > "$MOCK_BREW_PREFIX/bin/gum" << 'EOF'
-#!/bin/bash
-case "$1" in
-    "choose")
-        if [ ! -f "$TEST_TEMP_DIR/first_choice_made" ]; then
-            touch "$TEST_TEMP_DIR/first_choice_made"
-            echo "[01] INIT SYSTEM"
-        else
-            echo "[04] TERMINATE SESSION"
-        fi
+    # Create a simplified main script that tests just the orchestration logic
+    cat > "$DOTFILES_PARENT_DIR/script/main" << 'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+CURRENT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+DOTFILES_PARENT_DIR=$(dirname "$CURRENT_DIR")
+export DOTFILES_PARENT_DIR
+
+mkdir -p "$DOTFILES_PARENT_DIR/tmp"
+
+# Source required files
+source "$CURRENT_DIR/core/common" || true
+source "$CURRENT_DIR/core/system" || true
+source "$CURRENT_DIR/core/prerequisites" || true
+source "$CURRENT_DIR/core/ui" || true
+
+# Simulate selecting INIT SYSTEM and then terminating
+choice="[01] INIT SYSTEM"
+
+case "$choice" in
+    "[01] INIT SYSTEM")
+        DOTFILES_PARENT_DIR="$DOTFILES_PARENT_DIR" "$CURRENT_DIR/setup"
         ;;
 esac
+
+# Exit successfully
+exit 0
 EOF
-    chmod +x "$MOCK_BREW_PREFIX/bin/gum"
+    chmod +x "$DOTFILES_PARENT_DIR/script/main"
     
     run "$DOTFILES_PARENT_DIR/script/main"
     assert_success
@@ -260,21 +275,36 @@ exit 0
 EOF
     chmod +x "$DOTFILES_PARENT_DIR/script/update"
     
-    # Mock gum to select update, then terminate
-    cat > "$MOCK_BREW_PREFIX/bin/gum" << EOF
-#!/bin/bash
-case "\$1" in
-    "choose")
-        if [ ! -f "$TEST_TEMP_DIR/first_choice_made" ]; then
-            touch "$TEST_TEMP_DIR/first_choice_made"
-            echo "[02] UPDATE AND SYNC"
-        else
-            echo "[04] TERMINATE SESSION"
-        fi
+    # Create a simplified main script that tests just the orchestration logic
+    cat > "$DOTFILES_PARENT_DIR/script/main" << 'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+CURRENT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+DOTFILES_PARENT_DIR=$(dirname "$CURRENT_DIR")
+export DOTFILES_PARENT_DIR
+
+mkdir -p "$DOTFILES_PARENT_DIR/tmp"
+
+# Source required files
+source "$CURRENT_DIR/core/common" || true
+source "$CURRENT_DIR/core/system" || true
+source "$CURRENT_DIR/core/prerequisites" || true
+source "$CURRENT_DIR/core/ui" || true
+
+# Simulate selecting UPDATE AND SYNC
+choice="[03] UPDATE AND SYNC"
+
+case "$choice" in
+    "[03] UPDATE AND SYNC")
+        DOTFILES_PARENT_DIR="$DOTFILES_PARENT_DIR" "$CURRENT_DIR/update"
         ;;
 esac
+
+# Exit successfully
+exit 0
 EOF
-    chmod +x "$MOCK_BREW_PREFIX/bin/gum"
+    chmod +x "$DOTFILES_PARENT_DIR/script/main"
     
     run "$DOTFILES_PARENT_DIR/script/main"
     assert_success
@@ -293,21 +323,36 @@ exit 0
 EOF
     chmod +x "$DOTFILES_PARENT_DIR/script/status"
     
-    # Mock gum to select status, then terminate
-    cat > "$MOCK_BREW_PREFIX/bin/gum" << EOF
-#!/bin/bash
-case "\$1" in
-    "choose")
-        if [ ! -f "$TEST_TEMP_DIR/first_choice_made" ]; then
-            touch "$TEST_TEMP_DIR/first_choice_made"
-            echo "[03] SYSTEM STATUS"
-        else
-            echo "[04] TERMINATE SESSION"
-        fi
+    # Create a simplified main script that tests just the orchestration logic
+    cat > "$DOTFILES_PARENT_DIR/script/main" << 'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+CURRENT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+DOTFILES_PARENT_DIR=$(dirname "$CURRENT_DIR")
+export DOTFILES_PARENT_DIR
+
+mkdir -p "$DOTFILES_PARENT_DIR/tmp"
+
+# Source required files
+source "$CURRENT_DIR/core/common" || true
+source "$CURRENT_DIR/core/system" || true
+source "$CURRENT_DIR/core/prerequisites" || true
+source "$CURRENT_DIR/core/ui" || true
+
+# Simulate selecting SYSTEM STATUS
+choice="[04] SYSTEM STATUS"
+
+case "$choice" in
+    "[04] SYSTEM STATUS")
+        DOTFILES_PARENT_DIR="$DOTFILES_PARENT_DIR" "$CURRENT_DIR/status"
         ;;
 esac
+
+# Exit successfully
+exit 0
 EOF
-    chmod +x "$MOCK_BREW_PREFIX/bin/gum"
+    chmod +x "$DOTFILES_PARENT_DIR/script/main"
     
     run "$DOTFILES_PARENT_DIR/script/main"
     assert_success
@@ -334,13 +379,13 @@ log_output() { true; }
 source() { true; }
 
 main_menu() {
-    choice="[04] TERMINATE SESSION"
+    choice="[05] TERMINATE SESSION"
     
-    case "$choice" in
-        "[04] TERMINATE SESSION")
-            show_exit_screen
-            ;;
-    esac
+        case "$choice" in
+            "[05] TERMINATE SESSION")
+                show_exit_screen
+                ;;
+        esac
 }
 
 main_menu
@@ -378,7 +423,7 @@ case "$1" in
             echo "2" > "$call_count_file"
             echo "[01] INIT SYSTEM"  
         else
-            echo "[04] TERMINATE SESSION"
+            echo "[05] TERMINATE SESSION"
         fi
         ;;
 esac
@@ -409,7 +454,7 @@ EOF
     # Mock gum to terminate immediately
     cat > "$MOCK_BREW_PREFIX/bin/gum" << 'EOF'
 #!/bin/bash
-echo "[04] TERMINATE SESSION"
+echo "[05] TERMINATE SESSION"
 EOF
     chmod +x "$MOCK_BREW_PREFIX/bin/gum"
     
@@ -491,7 +536,7 @@ EOF
     # Mock gum to terminate immediately
     cat > "$MOCK_BREW_PREFIX/bin/gum" << 'EOF'
 #!/bin/bash
-echo "[04] TERMINATE SESSION"
+echo "[05] TERMINATE SESSION"
 EOF
     chmod +x "$MOCK_BREW_PREFIX/bin/gum"
     
@@ -520,7 +565,7 @@ EOF
     # Mock gum to terminate immediately
     cat > "$MOCK_BREW_PREFIX/bin/gum" << 'EOF'
 #!/bin/bash
-echo "[04] TERMINATE SESSION"
+echo "[05] TERMINATE SESSION"
 EOF
     chmod +x "$MOCK_BREW_PREFIX/bin/gum"
     

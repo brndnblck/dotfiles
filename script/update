@@ -67,7 +67,6 @@ main() {
     show_section_header "SYSTEM UPDATE"
 
     get_debug_log_file > /dev/null
-    gum style --foreground "$INTERFACE_SECONDARY" "DEBUG: ${DOTFILES_DEBUG_LOG#"$DOTFILES_PARENT_DIR"/}"
     gum style --foreground "$INTERFACE_SECONDARY" "DEBUG LOG: $(get_debug_log_path)"
     ansi --newline
 
@@ -131,13 +130,13 @@ main() {
     fi
 
     run_with_progressive_spinner "UPDATING DEVELOPMENT STACK..." \
-        "export DOTFILES_PARENT_DIR='$DOTFILES_PARENT_DIR' && source '$CURRENT_DIR/core/common' && source '$CURRENT_DIR/core/dependencies' && update_development"
+        "export DOTFILES_PARENT_DIR='$DOTFILES_PARENT_DIR' && source '$CURRENT_DIR/core/common' && source '$CURRENT_DIR/core/dependencies' && update_development" || warn_log "Development stack update encountered issues (continuing)"
 
     run_with_progressive_spinner "SYNCHRONIZING PACKAGE DEPENDENCIES..." \
-        "export DOTFILES_PARENT_DIR='$DOTFILES_PARENT_DIR' && source '$CURRENT_DIR/core/common' && source '$CURRENT_DIR/core/dependencies' && ensure_dependencies"
+        "export DOTFILES_PARENT_DIR='$DOTFILES_PARENT_DIR' && source '$CURRENT_DIR/core/common' && source '$CURRENT_DIR/core/dependencies' && ensure_dependencies" || warn_log "Package dependencies sync encountered issues (continuing)"
 
     run_with_progressive_spinner "SYNCHRONIZING APPLICATION REGISTRY..." \
-        "export DOTFILES_PARENT_DIR='$DOTFILES_PARENT_DIR' && source '$CURRENT_DIR/core/common' && source '$CURRENT_DIR/core/dependencies' && ensure_applications"
+        "export DOTFILES_PARENT_DIR='$DOTFILES_PARENT_DIR' && source '$CURRENT_DIR/core/common' && source '$CURRENT_DIR/core/dependencies' && ensure_applications" || warn_log "Application registry sync encountered issues (continuing)"
 
     run_with_progressive_spinner "REFRESHING SYSTEM FONTS..." \
         "source '$CURRENT_DIR/core/system' && ensure_fonts"

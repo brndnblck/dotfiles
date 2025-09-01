@@ -94,6 +94,7 @@ main() {
 
     show_completion "SETUP COMPLETE"
 
+    ansi --newline
     if gum confirm "INITIATE SYSTEM REBOOT SEQUENCE?" \
         --prompt.foreground "$INTERFACE_COLOR" \
         --selected.foreground "$INTERFACE_BG_COLOR" \

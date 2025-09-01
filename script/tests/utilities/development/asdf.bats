@@ -319,10 +319,10 @@ describe "asdf Integration Tests"
         source script/core/dependencies
         
         # Override log functions for testing AFTER sourcing
-        log_info() { echo 'LOG_INFO: '\$1; }
-        log_success() { echo 'LOG_SUCCESS: '\$1; }
-        log_error() { echo 'LOG_ERROR: '\$1; }
-        log_warn() { echo 'LOG_WARN: '\$1; }
+        info_log() { echo 'LOG_INFO: '\$1; }
+        success_log() { echo 'LOG_SUCCESS: '\$1; }
+        error_log() { echo 'LOG_ERROR: '\$1; }
+        warn_log() { echo 'LOG_WARN: '\$1; }
         
         setup_asdf_tools 'false'
     "
@@ -346,10 +346,10 @@ describe "asdf Integration Tests"
         source script/core/dependencies
         
         # Override log functions for testing AFTER sourcing
-        log_info() { echo 'LOG_INFO: '\$1; }
-        log_success() { echo 'LOG_SUCCESS: '\$1; }
-        log_error() { echo 'LOG_ERROR: '\$1; }
-        log_warn() { echo 'LOG_WARN: '\$1; }
+        info_log() { echo 'LOG_INFO: '\$1; }
+        success_log() { echo 'LOG_SUCCESS: '\$1; }
+        error_log() { echo 'LOG_ERROR: '\$1; }
+        warn_log() { echo 'LOG_WARN: '\$1; }
         
         setup_asdf_tools 'true'
     "
@@ -370,10 +370,10 @@ describe "asdf Integration Tests"
         source script/core/dependencies
         
         # Override log functions for testing AFTER sourcing
-        log_info() { echo 'LOG_INFO: '\$1; }
-        log_success() { echo 'LOG_SUCCESS: '\$1; }
-        log_error() { echo 'LOG_ERROR: '\$1; }
-        log_warn() { echo 'LOG_WARN: '\$1; }
+        info_log() { echo 'LOG_INFO: '\$1; }
+        success_log() { echo 'LOG_SUCCESS: '\$1; }
+        error_log() { echo 'LOG_ERROR: '\$1; }
+        warn_log() { echo 'LOG_WARN: '\$1; }
         
         setup_asdf_tools 'false' 2>&1
     "
@@ -396,10 +396,10 @@ describe "~/.tool-versions File Management"
         source script/core/dependencies
         
         # Override log functions for testing AFTER sourcing
-        log_info() { echo 'LOG_INFO: '\$1; }
-        log_success() { echo 'LOG_SUCCESS: '\$1; }
-        log_error() { echo 'LOG_ERROR: '\$1; }
-        log_warn() { echo 'LOG_WARN: '\$1; }
+        info_log() { echo 'LOG_INFO: '\$1; }
+        success_log() { echo 'LOG_SUCCESS: '\$1; }
+        error_log() { echo 'LOG_ERROR: '\$1; }
+        warn_log() { echo 'LOG_WARN: '\$1; }
         
         setup_asdf_tools 'false'
         
@@ -433,10 +433,10 @@ describe "~/.tool-versions File Management"
         source script/core/dependencies
         
         # Override log functions for testing AFTER sourcing
-        log_info() { echo 'LOG_INFO: '\$1; }
-        log_success() { echo 'LOG_SUCCESS: '\$1; }
-        log_error() { echo 'LOG_ERROR: '\$1; }
-        log_warn() { echo 'LOG_WARN: '\$1; }
+        info_log() { echo 'LOG_INFO: '\$1; }
+        success_log() { echo 'LOG_SUCCESS: '\$1; }
+        error_log() { echo 'LOG_ERROR: '\$1; }
+        warn_log() { echo 'LOG_WARN: '\$1; }
         
         # Call update_tool_versions_file directly
         update_tool_versions_file
@@ -484,10 +484,10 @@ OLDEOF
         source script/core/dependencies
         
         # Override log functions for testing AFTER sourcing
-        log_info() { echo 'LOG_INFO: '\$1; }
-        log_success() { echo 'LOG_SUCCESS: '\$1; }
-        log_error() { echo 'LOG_ERROR: '\$1; }
-        log_warn() { echo 'LOG_WARN: '\$1; }
+        info_log() { echo 'LOG_INFO: '\$1; }
+        success_log() { echo 'LOG_SUCCESS: '\$1; }
+        error_log() { echo 'LOG_ERROR: '\$1; }
+        warn_log() { echo 'LOG_WARN: '\$1; }
         
         # Update the file
         update_tool_versions_file
@@ -555,10 +555,10 @@ EOF
         source script/core/dependencies
         
         # Override log functions for testing AFTER sourcing
-        log_info() { echo 'LOG_INFO: '\$1; }
-        log_success() { echo 'LOG_SUCCESS: '\$1; }
-        log_error() { echo 'LOG_ERROR: '\$1; }
-        log_warn() { echo 'LOG_WARN: '\$1; }
+        info_log() { echo 'LOG_INFO: '\$1; }
+        success_log() { echo 'LOG_SUCCESS: '\$1; }
+        error_log() { echo 'LOG_ERROR: '\$1; }
+        warn_log() { echo 'LOG_WARN: '\$1; }
         
         update_tool_versions_file
         
@@ -591,10 +591,10 @@ EOF
         source script/core/dependencies
         
         # Override log functions for testing AFTER sourcing
-        log_info() { echo 'LOG_INFO: '\$1; }
-        log_success() { echo 'LOG_SUCCESS: '\$1; }
-        log_error() { echo 'LOG_ERROR: '\$1; }
-        log_warn() { echo 'LOG_WARN: '\$1; }
+        info_log() { echo 'LOG_INFO: '\$1; }
+        success_log() { echo 'LOG_SUCCESS: '\$1; }
+        error_log() { echo 'LOG_ERROR: '\$1; }
+        warn_log() { echo 'LOG_WARN: '\$1; }
         
         setup_asdf_tools 'false'
         

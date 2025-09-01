@@ -419,7 +419,7 @@ sudo() {
 }
 
 # Mock log functions
-log_info() { echo "LOG_INFO: $1"; }
+info_log() { echo "LOG_INFO: $1"; }
 
 # Create mock sudo timeout file
 mkdir -p /tmp/mock_etc_sudoers_d
@@ -497,7 +497,7 @@ silent() {
     eval "$1"
 }
 
-log_info() { echo "LOG_INFO: $1"; }
+info_log() { echo "LOG_INFO: $1"; }
 
 # Test that the new timeout is properly set (simulated)
 echo "test_password" | sudo -S sh -c 'echo "Defaults timestamp_timeout=15" > /etc/sudoers.d/bootstrap_timeout'
@@ -523,7 +523,7 @@ export DOTFILES_PARENT_DIR="$(pwd)"
 source "script/core/common"
 
 # Mock log functions
-log_info() { echo "LOG_INFO: $1"; }
+info_log() { echo "LOG_INFO: $1"; }
 
 # Initialize temp files array (already done in common)
 TEMP_FILES_FOR_CLEANUP=()
@@ -570,7 +570,7 @@ export DOTFILES_PARENT_DIR="$(pwd)"
 source "script/core/common"
 
 # Mock log functions
-log_info() { echo "LOG_INFO: $1"; }
+info_log() { echo "LOG_INFO: $1"; }
 
 # Initialize array
 TEMP_FILES_FOR_CLEANUP=()
@@ -818,8 +818,8 @@ check_network_connectivity() {
     esac
 }
 
-log_error() { echo "LOG_ERROR: $1"; }
-log_info() { echo "LOG_INFO: $1"; }
+error_log() { echo "LOG_ERROR: $1"; }
+info_log() { echo "LOG_INFO: $1"; }
 show_error() { 
     echo "SHOW_ERROR: $1"
     # Don't actually exit in test
@@ -892,10 +892,10 @@ check_command() {
 }
 
 check_file_exists() { test -f "$1"; }
-log_success() { echo "LOG_SUCCESS: $1"; }
-log_warn() { echo "LOG_WARN: $1"; }
-log_error() { echo "LOG_ERROR: $1"; }
-log_info() { echo "LOG_INFO: $1"; }
+success_log() { echo "LOG_SUCCESS: $1"; }
+warn_log() { echo "LOG_WARN: $1"; }
+error_log() { echo "LOG_ERROR: $1"; }
+info_log() { echo "LOG_INFO: $1"; }
 
 # Export functions for subshells
 export -f chezmoi check_command check_file_exists log_success log_warn log_error log_info
@@ -960,10 +960,10 @@ check_command() {
 }
 
 check_file_exists() { test -f "$1"; }
-log_success() { echo "LOG_SUCCESS: $1"; }
-log_warn() { echo "LOG_WARN: $1"; }
-log_error() { echo "LOG_ERROR: $1"; }
-log_info() { echo "LOG_INFO: $1"; }
+success_log() { echo "LOG_SUCCESS: $1"; }
+warn_log() { echo "LOG_WARN: $1"; }
+error_log() { echo "LOG_ERROR: $1"; }
+info_log() { echo "LOG_INFO: $1"; }
 
 # Export functions for subshells  
 export -f check_command check_file_exists log_success log_warn log_error log_info
@@ -1015,8 +1015,8 @@ check_file_exists() {
 }
 
 check_command() { return 1; }  # No chezmoi available
-log_error() { echo "LOG_ERROR: $1"; }
-log_warn() { echo "LOG_WARN: $1"; }
+error_log() { echo "LOG_ERROR: $1"; }
+warn_log() { echo "LOG_WARN: $1"; }
 
 export -f check_file_exists check_command log_error log_warn
 
@@ -1109,7 +1109,7 @@ export DOTFILES_PARENT_DIR="$(pwd)"
 source "script/core/common"
 
 # Mock log functions
-log_info() { echo "LOG_INFO: $1"; }
+info_log() { echo "LOG_INFO: $1"; }
 
 # Initialize arrays
 TEMP_FILES_FOR_CLEANUP=()
@@ -1190,8 +1190,8 @@ export DOTFILES_PARENT_DIR="$(pwd)"
 source "script/core/common"
 
 # Mock log functions
-log_info() { echo "LOG_INFO: $1"; }
-log_warn() { echo "LOG_WARN: $1"; }
+info_log() { echo "LOG_INFO: $1"; }
+warn_log() { echo "LOG_WARN: $1"; }
 
 # Test edge case: PID file exists but process doesn't
 echo "Testing sudo keepalive edge cases"
@@ -1257,7 +1257,7 @@ export DOTFILES_PARENT_DIR="$(pwd)"
 source "script/core/common"
 
 # Mock log functions
-log_info() { echo "LOG_INFO: $1"; }
+info_log() { echo "LOG_INFO: $1"; }
 
 echo "Testing concurrent access edge cases"
 

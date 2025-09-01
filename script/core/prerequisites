@@ -180,7 +180,7 @@ ensure_bootstrap_tools() {
 	setup_homebrew_env
 	
 	info_log "Installing essential bootstrap tools..."
-	if silent "brew bundle -d --file=\"${DOTFILES_PARENT_DIR:-$PWD}/dependencies/dependencies.brewfile\""; then
+	if silent "brew bundle --no-upgrade --file=\"${DOTFILES_PARENT_DIR:-$PWD}/dependencies/dependencies.brewfile\""; then
 		success_log "Essential bootstrap tools installed"
 	else
 		show_error "Failed to install essential bootstrap tools" "true"

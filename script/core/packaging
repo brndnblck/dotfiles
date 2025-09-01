@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+
+# Enable Homebrew developer mode for macOS beta compatibility
+export HOMEBREW_DEVELOPER=1
+
 source "$(dirname "${BASH_SOURCE[0]}")/ansi"
 
 
@@ -195,9 +199,9 @@ process_brewfile() {
     
     # Try templated version first
     if check_file_exists "$base_path/${brewfile_name}.tmpl" "Templated Brewfile"; then
-        process_templated_package_file "$base_path/${brewfile_name}.tmpl" "brew bundle -d --file=\"{FILE}\"" "$description"
+        process_templated_package_file "$base_path/${brewfile_name}.tmpl" "brew bundle --no-upgrade --file=\"{FILE}\"" "$description"
     elif check_file_exists "$base_path/${brewfile_name}" "Static Brewfile"; then
-        process_static_package_file "$base_path/${brewfile_name}" "brew bundle -d --file=\"{FILE}\"" "$description"
+        process_static_package_file "$base_path/${brewfile_name}" "brew bundle --no-upgrade --file=\"{FILE}\"" "$description"
     else
         error_log "Neither ${brewfile_name}.tmpl nor ${brewfile_name} found" "true"
         return 1

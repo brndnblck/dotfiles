@@ -115,7 +115,7 @@ main() {
         else
             echo \"Total configured: \$total_deps formulae\"
             if command -v brew >/dev/null 2>&1; then
-                configured_list=\$(grep '^brew ' \"\$DOTFILES_PARENT_DIR/dependencies/dependencies.brewfile\" | sed 's/^brew \"\([^\"]*\)\".*/\1/' | sort)
+                configured_list=\$(grep '^brew ' \"\$DOTFILES_PARENT_DIR/dependencies/dependencies.brewfile\" | sed 's/^brew \"\([^\"]*\)\".*/\1/' | sed 's|.*/||' | sort)
                 missing_list=\$(comm -23 <(echo \"\$configured_list\") <(brew list --formula | sort))
                 total_configured=\$(echo \"\$configured_list\" | wc -l | xargs)
                 if [[ -n \"\$missing_list\" ]]; then
