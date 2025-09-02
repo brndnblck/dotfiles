@@ -20,6 +20,7 @@ brew "grep"              # Search tool
 brew "htop"              # System monitor
 brew "jq"                # JSON processor
 brew "mas"               # Mac App Store CLI
+brew "make"               # GNU make
 brew "pam-reattach"      # TouchID for sudo
 brew "parallel"          # Parallel processing
 brew "starship"          # Shell prompt
@@ -33,8 +34,6 @@ brew "wget2"             # Download tool
 # Development Environment Manager
 brew "asdf"              # Universal version manager
 brew "rustup"            # Rust toolchain installer
-brew "aicommits"         # AI-powered commit messages
-brew "sst/tap/opencode"   # AI-powered code assistant
 brew "libyaml"           # YAML library for Ruby psych extension
 
 # Platform Tools

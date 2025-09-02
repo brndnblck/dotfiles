@@ -9,7 +9,7 @@ cask "gcloud-cli"         # Google Cloud tools
 cask "ghostty"            # Fast, native terminal emulator
 cask "kubecontext"        # Kubernetes context manager
 cask "obsidian"           # Note-taking
-cask "ollama-app"	          # Local LLM runner
+cask "ollama-app"	      # Local LLM runner
 cask "sublime-text"       # Text editor
 
 # Audio/Video tools
