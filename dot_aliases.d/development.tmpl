@@ -68,10 +68,10 @@ alias md="make dist"
 alias mdcl="make distclean"
 
 # Caddy
-alias dev-start="sudo caddy start --config {{ if eq .chezmoi.arch "arm64" }}/opt/homebrew{{ else }}/usr/local{{ end }}/etc/Caddyfile"
+alias dev-start="sudo caddy start --config $(brew --prefix)/etc/Caddyfile"
 alias dev-stop="sudo caddy stop"
-alias dev-restart="sudo caddy reload --config {{ if eq .chezmoi.arch "arm64" }}/opt/homebrew{{ else }}/usr/local{{ end }}/etc/Caddyfile"
-alias dev-config="$EDITOR {{ if eq .chezmoi.arch "arm64" }}/opt/homebrew{{ else }}/usr/local{{ end }}/etc/Caddyfile"
+alias dev-restart="sudo caddy reload --config $(brew --prefix)/etc/Caddyfile"
+alias dev-config="$EDITOR $(brew --prefix)/etc/Caddyfile"
 alias dev-logs="sudo caddy logs"
 alias dev-run="caddy run"
 alias dev-local="caddy run --config Caddyfile"

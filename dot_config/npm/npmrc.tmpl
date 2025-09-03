@@ -1,7 +1,6 @@
-{{ if ne (env "LOCATION" | trim) "test" }}
 # setup user authentication
 //registry.npmjs.org/:_authToken={{ (onepasswordDetailsFields "sl6x2zj7g5d65eb3s6gmrygvya").username.value }}
-{{ end }}
+
 # Set the registry
 registry=https://registry.npmjs.org/
 
