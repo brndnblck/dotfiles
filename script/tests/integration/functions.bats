@@ -5,8 +5,8 @@
 
 # Load helpers
 load "../helpers/helper"
-load "../helpers/test_fixtures" 
-load "../helpers/function_test_helpers"
+load "../helpers/fixtures" 
+load "../helpers/functions"
 
 setup() {
     test_setup
@@ -16,8 +16,8 @@ setup() {
     mkdir -p "$TEST_TEMP_DIR/.functions.d"
     
     # Copy actual function files for realistic testing (with snake_case naming)
-    cp "$PROJECT_ROOT/dot_functions.d/help_core.tmpl" "$TEST_TEMP_DIR/.functions.d/help_core.tmpl"
-    cp "$PROJECT_ROOT/dot_functions.d/dev_workflow.tmpl" "$TEST_TEMP_DIR/.functions.d/dev_workflow.tmpl"
+    cp "$PROJECT_ROOT/dot_functions.d/support.tmpl" "$TEST_TEMP_DIR/.functions.d/support.tmpl"
+     cp "$PROJECT_ROOT/dot_functions.d/development.tmpl" "$TEST_TEMP_DIR/.functions.d/development.tmpl"
     cp "$PROJECT_ROOT/dot_functions.d/system.tmpl" "$TEST_TEMP_DIR/.functions.d/system.tmpl"
     
     # Create comprehensive test alias files in isolated environment
@@ -177,7 +177,7 @@ EOF
 
 @test "integration: help system should integrate aliases and functions" {
     # Source all help functions from isolated environment
-    source "$TEST_TEMP_DIR/.functions.d/help_core.tmpl"
+    source "$TEST_TEMP_DIR/.functions.d/support.tmpl"
     
     # Test that alias search finds content from multiple modules
     run alias-search "git"
@@ -191,7 +191,7 @@ EOF
 }
 
 @test "integration: function help should work with actual function files" {
-    source "$TEST_TEMP_DIR/.functions.d/help_core.tmpl"
+    source "$TEST_TEMP_DIR/.functions.d/support.tmpl"
     
     run function-help "git"
     
@@ -241,7 +241,7 @@ EOF
 
 @test "integration: git functions should work together in realistic workflow" {
     # Source development workflow functions
-    source "$TEST_TEMP_DIR/.functions.d/dev-workflow.tmpl"
+    source "$TEST_TEMP_DIR/.functions.d/development.tmpl"
     
     # Set up a mock git repository
     setup_git_repository_mock "$TEST_TEMP_DIR/test-repo"
@@ -266,7 +266,7 @@ EOF
 }
 
 @test "integration: project initialization should work with different languages" {
-    source "$TEST_TEMP_DIR/.functions.d/dev-workflow.tmpl"
+    source "$TEST_TEMP_DIR/.functions.d/development.tmpl"
     
     # Test JavaScript project initialization
     run project-init "js-test" "javascript"
@@ -286,7 +286,7 @@ EOF
 }
 
 @test "integration: development server should detect project types correctly" {
-    source "$TEST_TEMP_DIR/.functions.d/dev-workflow.tmpl"
+    source "$TEST_TEMP_DIR/.functions.d/development.tmpl"
     
     # Create Node.js project structure
     create_test_project_structure "javascript" "node-project"
@@ -316,7 +316,7 @@ EOF
 }
 
 @test "integration: code statistics should analyze real project structure" {
-    source "$TEST_TEMP_DIR/.functions.d/dev-workflow.tmpl"
+    source "$TEST_TEMP_DIR/.functions.d/development.tmpl"
     
     # Create a comprehensive test project
     create_comprehensive_test_project "test-project"
@@ -395,7 +395,7 @@ EOF
 
 @test "integration: functions should work together in complex workflows" {
     # Source all function modules
-    source "$TEST_TEMP_DIR/.functions.d/dev-workflow.tmpl"
+    source "$TEST_TEMP_DIR/.functions.d/development.tmpl"
     source "$TEST_TEMP_DIR/.functions.d/system.tmpl"
     
     # Create a project, initialize it, and analyze it
@@ -438,7 +438,7 @@ EOF
 }
 
 @test "integration: error handling should be consistent across function modules" {
-    source "$TEST_TEMP_DIR/.functions.d/dev-workflow.tmpl"
+    source "$TEST_TEMP_DIR/.functions.d/development.tmpl"
     source "$TEST_TEMP_DIR/.functions.d/system.tmpl"
     
     # Test git functions outside of git repository
@@ -476,7 +476,7 @@ EOF
 
 @test "integration: complete development workflow simulation" {
     # This test simulates a complete development workflow
-    source "$TEST_TEMP_DIR/.functions.d/dev-workflow.tmpl"
+    source "$TEST_TEMP_DIR/.functions.d/development.tmpl"
     source "$TEST_TEMP_DIR/.functions.d/system.tmpl"
     source "$TEST_TEMP_DIR/.functions.d/help-core.tmpl"
     
@@ -543,7 +543,7 @@ EOF
 }
 
 @test "integration: functions handle missing dependencies gracefully" {
-    source "$TEST_TEMP_DIR/.functions.d/dev-workflow.tmpl"
+    source "$TEST_TEMP_DIR/.functions.d/development.tmpl"
     source "$TEST_TEMP_DIR/.functions.d/system.tmpl"
     
     # Remove some commands and test graceful degradation
@@ -613,7 +613,7 @@ EOF
 }
 
 @test "integration: functions maintain consistency in edge cases" {
-    source "$TEST_TEMP_DIR/.functions.d/dev-workflow.tmpl"
+    source "$TEST_TEMP_DIR/.functions.d/development.tmpl"
     source "$TEST_TEMP_DIR/.functions.d/system.tmpl"
     
     # Test functions with unusual but valid inputs

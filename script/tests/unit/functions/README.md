@@ -11,10 +11,10 @@ This directory contains comprehensive test suites for the dotfiles functions sys
 - **`alias_validation.bats`** - Tests for alias syntax validation and loading
 
 ### Integration Tests
-- **`../integration/functions_integration.bats`** - Integration tests for complete workflow scenarios
+- **`../integration/functions.bats`** - Integration tests for complete workflow scenarios
 
 ### Test Helpers
-- **`../helpers/function_test_helpers.bash`** - Specialized utilities for function testing
+- **`../helpers/functions.bash`** - Specialized utilities for function testing
 
 ## Test Coverage
 
@@ -29,7 +29,7 @@ This directory contains comprehensive test suites for the dotfiles functions sys
 - ✅ Error handling and edge cases
 - ✅ Integration with alias files
 
-### Development Workflow Functions (`dev-workflow.tmpl`)
+### Development Workflow Functions (`development.tmpl`)
 - ✅ `git-export()` - Clone repo without history
 - ✅ `git-branch-clean()` - Clean merged branches
 - ✅ `git-current-branch()` - Get current git branch

@@ -1,11 +1,11 @@
 #!/usr/bin/env bats
 
-# Test Suite for dot_functions.d/help_core.tmpl
+# Test Suite for dot_functions.d/support.tmpl
 # Tests the centralized help and search system for aliases and functions
 
 # Load helpers
 load "../../helpers/helper"
-load "../../helpers/test_fixtures"
+load "../../helpers/fixtures"
 
 setup() {
     test_setup
@@ -50,7 +50,7 @@ alias mv='mv -i'
 EOF
 
     # Create test fixture function files (no real functions, just test data)
-    cat > "$TEST_TEMP_DIR/.functions.d/dev_workflow.tmpl" << 'EOF'
+     cat > "$TEST_TEMP_DIR/.functions.d/development.tmpl" << 'EOF'
 # Development workflow and git utility functions
 
 git-export() {
@@ -94,7 +94,7 @@ dig-host() {
 EOF
 
     # Copy and modify the actual functions to use our test directory
-    cp "$PROJECT_ROOT/dot_functions.d/help_core.tmpl" "$TEST_TEMP_DIR/help_core_functions.sh"
+    cp "$PROJECT_ROOT/dot_functions.d/support.tmpl" "$TEST_TEMP_DIR/support_functions.sh"
     
     # Override HOME to point to our test directory for isolated testing
     export HOME="$TEST_TEMP_DIR"
@@ -108,8 +108,8 @@ teardown() {
 # Helper Function Tests - _render-aliases
 # =============================================================================
 
-@test "help_core: _render-aliases should format aliases with consistent spacing" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: _render-aliases should format aliases with consistent spacing" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     local test_matches="alias gs='git status'
 alias gp='git push'
@@ -127,8 +127,8 @@ alias gl='git pull'"
     assert_output --partial "git pull"
 }
 
-@test "help_core: _render-aliases should handle comments when requested" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: _render-aliases should handle comments when requested" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     local test_matches="# Git shortcuts
 alias gs='git status'
@@ -143,8 +143,8 @@ alias gp='git push'"
     assert_output --partial "git status"
 }
 
-@test "help_core: _render-aliases should truncate long alias commands" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: _render-aliases should truncate long alias commands" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     local long_command=$(printf 'a%.0s' {1..100})
     local test_matches="alias longtest='$long_command'"
@@ -157,8 +157,8 @@ alias gp='git push'"
     assert_output --partial "..."
 }
 
-@test "help_core: _render-aliases should handle multiline aliases" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: _render-aliases should handle multiline aliases" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     local test_matches="alias multiline='command1 && \\
 command2 && \\
@@ -175,8 +175,8 @@ command3'"
 # Helper Function Tests - _render-functions
 # =============================================================================
 
-@test "help_core: _render-functions should format function documentation" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: _render-functions should format function documentation" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     local test_blocks="FUNCTION:git-export
     # Description: Clone a git repository without git history
@@ -201,8 +201,8 @@ FUNCTION:git-branch-clean
     assert_output --partial "Description: Delete merged local branches"
 }
 
-@test "help_core: _render-functions should handle empty function blocks" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: _render-functions should handle empty function blocks" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run _render-functions "EMPTY MODULE" ""
     
@@ -214,8 +214,8 @@ FUNCTION:git-branch-clean
 # Main Function Tests - alias-help
 # =============================================================================
 
-@test "help_core: alias-help should display usage when no arguments provided" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: alias-help should display usage when no arguments provided" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run alias-help
     
@@ -223,8 +223,8 @@ FUNCTION:git-branch-clean
     assert_output --partial "Usage: alias-help SEARCH_TERM"
 }
 
-@test "help_core: alias-help should search aliases and show context" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: alias-help should search aliases and show context" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run alias-help git
     
@@ -237,8 +237,8 @@ FUNCTION:git-branch-clean
     assert_output --partial "# Git shortcuts"
 }
 
-@test "help_core: alias-help should handle case insensitive search" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: alias-help should handle case insensitive search" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run alias-help GIT
     
@@ -248,8 +248,8 @@ FUNCTION:git-branch-clean
     assert_output --partial "git status"
 }
 
-@test "help_core: alias-help should handle searches with no matches" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: alias-help should handle searches with no matches" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run alias-help nonexistent
     
@@ -262,8 +262,8 @@ FUNCTION:git-branch-clean
 # Main Function Tests - alias-search
 # =============================================================================
 
-@test "help_core: alias-search should display usage when no arguments provided" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: alias-search should display usage when no arguments provided" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run alias-search
     
@@ -271,8 +271,8 @@ FUNCTION:git-branch-clean
     assert_output --partial "Usage: alias-search SEARCH_TERM"
 }
 
-@test "help_core: alias-search should find aliases by name" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: alias-search should find aliases by name" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run alias-search gs
     
@@ -282,8 +282,8 @@ FUNCTION:git-branch-clean
     assert_output --partial "git status"
 }
 
-@test "help_core: alias-search should find aliases by command content" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: alias-search should find aliases by command content" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run alias-search "git status"
     
@@ -293,8 +293,8 @@ FUNCTION:git-branch-clean
     assert_output --partial "git status"
 }
 
-@test "help_core: alias-search should search by module name" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: alias-search should search by module name" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run alias-search dev
     
@@ -307,8 +307,8 @@ FUNCTION:git-branch-clean
     assert_output --partial "git status"
 }
 
-@test "help_core: alias-search should be case insensitive" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: alias-search should be case insensitive" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run alias-search DOCKER
     
@@ -322,8 +322,8 @@ FUNCTION:git-branch-clean
 # Main Function Tests - function-help
 # =============================================================================
 
-@test "help_core: function-help should display all functions when no search term" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: function-help should display all functions when no search term" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run function-help
     
@@ -336,8 +336,8 @@ FUNCTION:git-branch-clean
     assert_output --partial "Description: Execute a command multiple times"
 }
 
-@test "help_core: function-help should filter functions by search term" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: function-help should filter functions by search term" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run function-help git
     
@@ -348,8 +348,8 @@ FUNCTION:git-branch-clean
     refute_output --partial "run-repeat"
 }
 
-@test "help_core: function-help should exclude private functions (starting with _)" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: function-help should exclude private functions (starting with _)" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run function-help
     
@@ -358,8 +358,8 @@ FUNCTION:git-branch-clean
     refute_output --partial "Private function"
 }
 
-@test "help_core: function-help should handle case insensitive search" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: function-help should handle case insensitive search" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run function-help GIT
     
@@ -368,8 +368,8 @@ FUNCTION:git-branch-clean
     assert_output --partial "git-branch-clean"
 }
 
-@test "help_core: function-help should show complete function documentation" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: function-help should show complete function documentation" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run function-help git-export
     
@@ -384,8 +384,8 @@ FUNCTION:git-branch-clean
 # Main Function Tests - alias-list
 # =============================================================================
 
-@test "help_core: alias-list should show all aliases when no category specified" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: alias-list should show all aliases when no category specified" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run alias-list
     
@@ -398,8 +398,8 @@ FUNCTION:git-branch-clean
     assert_output --partial "rm"
 }
 
-@test "help_core: alias-list should filter by category" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: alias-list should filter by category" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run alias-list dev
     
@@ -410,8 +410,8 @@ FUNCTION:git-branch-clean
     refute_output --partial "=== FILE OPS ==="
 }
 
-@test "help_core: alias-list should handle partial category matches" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: alias-list should handle partial category matches" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run alias-list file
     
@@ -426,8 +426,8 @@ FUNCTION:git-branch-clean
 # Main Function Tests - function-list  
 # =============================================================================
 
-@test "help_core: function-list should show all functions when no category specified" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: function-list should show all functions when no category specified" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run function-list
     
@@ -438,8 +438,8 @@ FUNCTION:git-branch-clean
     assert_output --partial "run-repeat"
 }
 
-@test "help_core: function-list should filter by category" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: function-list should filter by category" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run function-list dev
     
@@ -449,8 +449,8 @@ FUNCTION:git-branch-clean
     refute_output --partial "=== SYSTEM ==="
 }
 
-@test "help_core: function-list should exclude private functions from listings" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: function-list should exclude private functions from listings" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run function-list
     
@@ -462,8 +462,8 @@ FUNCTION:git-branch-clean
 # Error Handling and Edge Cases
 # =============================================================================
 
-@test "help_core: functions should handle missing aliases directory gracefully" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: functions should handle missing aliases directory gracefully" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     # Remove aliases directory
     rm -rf "$TEST_TEMP_DIR/.aliases.d"
@@ -474,8 +474,8 @@ FUNCTION:git-branch-clean
     # Should complete without errors but produce no output
 }
 
-@test "help_core: functions should handle missing functions directory gracefully" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: functions should handle missing functions directory gracefully" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     # Remove functions directory
     rm -rf "$TEST_TEMP_DIR/.functions.d"
@@ -486,8 +486,8 @@ FUNCTION:git-branch-clean
     # Should complete without errors but produce no output
 }
 
-@test "help_core: functions should handle unreadable files gracefully" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: functions should handle unreadable files gracefully" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     # Create an unreadable file
     touch "$TEST_TEMP_DIR/.aliases.d/unreadable.tmpl"
@@ -500,8 +500,8 @@ FUNCTION:git-branch-clean
     assert_output --partial "=== DEV TOOLS ==="
 }
 
-@test "help_core: functions should handle empty alias files" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: functions should handle empty alias files" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     # Create empty alias file
     touch "$TEST_TEMP_DIR/.aliases.d/empty.tmpl"
@@ -513,8 +513,8 @@ FUNCTION:git-branch-clean
     assert_output --partial "=== DEV TOOLS ==="
 }
 
-@test "help_core: functions should handle malformed alias syntax" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: functions should handle malformed alias syntax" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     # Create file with malformed aliases
     cat > "$TEST_TEMP_DIR/.aliases.d/malformed.tmpl" << 'EOF'
@@ -536,8 +536,8 @@ EOF
 # Integration Tests
 # =============================================================================
 
-@test "help_core: alias search and help integration should work together" {
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+@test "support: alias search and help integration should work together" {
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     # First search for git aliases
     run alias-search git
@@ -550,7 +550,7 @@ EOF
     assert_output --partial "# Git shortcuts"
 }
 
-@test "help_core: function help should parse complex function documentation" {
+@test "support: function help should parse complex function documentation" {
     # Create a complex function with edge case documentation
     cat > "$TEST_TEMP_DIR/.functions.d/complex.tmpl" << 'EOF'
 complex-function() {
@@ -562,7 +562,7 @@ complex-function() {
 }
 EOF
     
-    source "$TEST_TEMP_DIR/help_core_functions.sh"
+    source "$TEST_TEMP_DIR/support_functions.sh"
     
     run function-help complex
     

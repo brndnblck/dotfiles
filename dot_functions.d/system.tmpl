@@ -9,15 +9,15 @@ run-repeat() {
         echo "Example: run-repeat 5 echo 'hello world'"
         return 1
     fi
-    
+
     local count=$1
     shift
-    
+
     if ! [[ "$count" =~ ^[0-9]+$ ]]; then
         echo "Error: COUNT must be a positive integer"
         return 1
     fi
-    
+
     for i in $(seq 1 $count); do
         echo "[$i/$count] Running: $*"
         "$@"
@@ -33,15 +33,15 @@ dig-host() {
         echo "Example: dig-host google.com"
         return 1
     fi
-    
+
     local hostname="$1"
     local ip=$(dig +short "$hostname" | tail -n 1)
-    
+
     if [ -z "$ip" ]; then
         echo "Error: No IP found for $hostname"
         return 1
     fi
-    
+
     echo "Forward lookup for $hostname: $ip"
     echo "Reverse lookup for $ip:"
     host "$ip"
@@ -52,7 +52,7 @@ remind() {
     # Usage: remind "TEXT" or echo "text" | remind
     # Example: remind "Buy milk at 5pm" or echo "Meeting tomorrow" | remind
     local text
-    
+
     if [ -t 0 ]; then
         if [ $# -eq 0 ]; then
             echo "Usage: remind \"TEXT\""
@@ -63,25 +63,25 @@ remind() {
     else
         text=$(cat)
     fi
-    
+
     if [ -z "$text" ]; then
         echo "Error: No reminder text provided"
         return 1
     fi
-    
-    if ! command -v osascript >/dev/null 2>&1; then
+
+    if ! command -v osascript > /dev/null 2>&1; then
         echo "Error: osascript not found. This function only works on macOS."
         return 1
     fi
-    
-    osascript >/dev/null <<EOF
+
+    osascript > /dev/null << EOF
 tell application "Reminders"
     tell list "Personal" of default account
         make new reminder with properties {name:"$text"}
     end tell
 end tell
 EOF
-    
+
     echo "Reminder added: $text"
 }
 
@@ -94,35 +94,37 @@ extract() {
         echo "Supported formats: tar.gz, tar.bz2, zip, rar, 7z, dmg, and more"
         return 1
     fi
-    
+
     if [ ! -f "$1" ]; then
         echo "Error: '$1' is not a valid file"
         return 1
     fi
-    
+
     case "$1" in
-        *.tar.bz2)   tar -jxvf "$1"                         ;;
-        *.tar.gz)    tar -zxvf "$1"                         ;;
-        *.tar.xz)    tar -Jxvf "$1"                         ;;
-        *.bz2)       bunzip2 "$1"                           ;;
-        *.dmg)       hdiutil mount "$1"                     ;;
-        *.gz)        gunzip "$1"                            ;;
-        *.tar)       tar -xvf "$1"                          ;;
-        *.tbz2)      tar -jxvf "$1"                         ;;
-        *.tgz)       tar -zxvf "$1"                         ;;
-        *.zip)       unzip "$1"                             ;;
-        *.ZIP)       unzip "$1"                             ;;
-        *.pax)       cat "$1" | pax -r                      ;;
-        *.pax.Z)     uncompress "$1" --stdout | pax -r      ;;
-        *.Z)         uncompress "$1"                        ;;
-        *.7z)        7z x "$1"                              ;;
-        *.rar)       unrar x "$1"                           ;;
-        *.deb)       ar x "$1"                              ;;
-        *)           echo "Error: '$1' cannot be extracted via extract()"
-                     echo "Unsupported format. Try extracting manually."
-                     return 1 ;;
+        *.tar.bz2) tar -jxvf "$1" ;;
+        *.tar.gz) tar -zxvf "$1" ;;
+        *.tar.xz) tar -Jxvf "$1" ;;
+        *.bz2) bunzip2 "$1" ;;
+        *.dmg) hdiutil mount "$1" ;;
+        *.gz) gunzip "$1" ;;
+        *.tar) tar -xvf "$1" ;;
+        *.tbz2) tar -jxvf "$1" ;;
+        *.tgz) tar -zxvf "$1" ;;
+        *.zip) unzip "$1" ;;
+        *.ZIP) unzip "$1" ;;
+        *.pax) cat "$1" | pax -r ;;
+        *.pax.Z) uncompress "$1" --stdout | pax -r ;;
+        *.Z) uncompress "$1" ;;
+        *.7z) 7z x "$1" ;;
+        *.rar) unrar x "$1" ;;
+        *.deb) ar x "$1" ;;
+        *)
+            echo "Error: '$1' cannot be extracted via extract()"
+            echo "Unsupported format. Try extracting manually."
+            return 1
+            ;;
     esac
-    
+
     echo "Extraction completed for: $1"
 }
 
@@ -132,12 +134,12 @@ find-large() {
     # Example: find-large /Users/john 100M
     local search_path="${1:-.}"
     local size="${2:-100M}"
-    
+
     if [ ! -d "$search_path" ]; then
         echo "Error: '$search_path' is not a valid directory"
         return 1
     fi
-    
+
     echo "Finding files larger than $size in $search_path..."
     find "$search_path" -type f -size +$size -exec ls -lh {} \; | sort -k5 -hr
 }
@@ -147,14 +149,14 @@ disk-usage() {
     # Usage: disk-usage [PATH]
     # Example: disk-usage /Users/john
     local path="${1:-.}"
-    
+
     if [ ! -d "$path" ]; then
         echo "Error: '$path' is not a valid directory"
         return 1
     fi
-    
+
     echo "Disk usage for: $path"
-    du -h "$path"/* 2>/dev/null | sort -hr | head -20
+    du -h "$path"/* 2> /dev/null | sort -hr | head -20
 }
 
 process-port() {
@@ -166,14 +168,14 @@ process-port() {
         echo "Example: process-port 8080"
         return 1
     fi
-    
+
     local port="$1"
-    
+
     if ! [[ "$port" =~ ^[0-9]+$ ]]; then
         echo "Error: PORT must be a number"
         return 1
     fi
-    
+
     echo "Checking port $port..."
     lsof -i ":$port"
 }
@@ -186,9 +188,9 @@ system-info() {
     echo "Hostname: $(hostname)"
     echo "Uptime: $(uptime)"
     echo
-    
+
     echo "=== Operating System ==="
-    if command -v sw_vers >/dev/null 2>&1; then
+    if command -v sw_vers > /dev/null 2>&1; then
         sw_vers
     elif [ -f /etc/os-release ]; then
         cat /etc/os-release
@@ -196,15 +198,15 @@ system-info() {
         uname -a
     fi
     echo
-    
+
     echo "=== Hardware ==="
     echo "Architecture: $(uname -m)"
-    if command -v sysctl >/dev/null 2>&1; then
-        echo "CPU: $(sysctl -n machdep.cpu.brand_string 2>/dev/null || echo 'N/A')"
-        echo "Memory: $(sysctl -n hw.memsize 2>/dev/null | awk '{print $1/1024/1024/1024 " GB"}' || echo 'N/A')"
+    if command -v sysctl > /dev/null 2>&1; then
+        echo "CPU: $(sysctl -n machdep.cpu.brand_string 2> /dev/null || echo 'N/A')"
+        echo "Memory: $(sysctl -n hw.memsize 2> /dev/null | awk '{print $1/1024/1024/1024 " GB"}' || echo 'N/A')"
     fi
     echo
-    
+
     echo "=== Storage ==="
     df -h | head -10
 }
@@ -218,17 +220,17 @@ backup-file() {
         echo "Example: backup-file important-config.conf"
         return 1
     fi
-    
+
     local file_path="$1"
-    
+
     if [ ! -f "$file_path" ]; then
         echo "Error: '$file_path' is not a valid file"
         return 1
     fi
-    
+
     local timestamp=$(date +"%Y%m%d_%H%M%S")
     local backup_path="${file_path}.backup_${timestamp}"
-    
+
     if cp "$file_path" "$backup_path"; then
         echo "Backup created: $backup_path"
     else
@@ -246,19 +248,19 @@ monitor-process() {
         echo "Example: monitor-process firefox 2"
         return 1
     fi
-    
+
     local process_name="$1"
     local interval="${2:-1}"
-    
+
     if ! [[ "$interval" =~ ^[0-9]+$ ]]; then
         echo "Error: INTERVAL must be a positive integer"
         return 1
     fi
-    
+
     echo "Monitoring process: $process_name (Press Ctrl+C to stop)"
     echo "PID    %CPU   %MEM   COMMAND"
     echo "=============================="
-    
+
     while true; do
         ps aux | grep -i "$process_name" | grep -v grep | awk '{printf "%-6s %-6s %-6s %s\n", $2, $3, $4, $11}'
         sleep "$interval"
@@ -270,21 +272,21 @@ cleanup-temp() {
     # Usage: cleanup-temp [--force]
     # Example: cleanup-temp or cleanup-temp --force
     local force_mode=false
-    
+
     if [ "$1" = "--force" ]; then
         force_mode=true
         shift
     fi
-    
+
     echo "=== Cleaning temporary files ==="
-    
+
     # Clean user temp directory
     local temp_dir="/tmp"
     if [ -d "$temp_dir" ]; then
-        local temp_files=$(find "$temp_dir" -name "*" -user "$(whoami)" -mtime +7 2>/dev/null | wc -l | tr -d ' ')
+        local temp_files=$(find "$temp_dir" -name "*" -user "$(whoami)" -mtime +7 2> /dev/null | wc -l | tr -d ' ')
         if [ "$temp_files" -gt 0 ]; then
             if [ "$force_mode" = true ]; then
-                find "$temp_dir" -name "*" -user "$(whoami)" -mtime +7 -delete 2>/dev/null
+                find "$temp_dir" -name "*" -user "$(whoami)" -mtime +7 -delete 2> /dev/null
                 echo "Removed $temp_files temporary files from $temp_dir"
             else
                 echo "Found $temp_files temporary files older than 7 days in $temp_dir"
@@ -294,14 +296,14 @@ cleanup-temp() {
             echo "No old temporary files found in $temp_dir"
         fi
     fi
-    
+
     # Clean Downloads folder (files older than 30 days)
     local downloads_dir="$HOME/Downloads"
     if [ -d "$downloads_dir" ]; then
-        local download_files=$(find "$downloads_dir" -type f -mtime +30 2>/dev/null | wc -l | tr -d ' ')
+        local download_files=$(find "$downloads_dir" -type f -mtime +30 2> /dev/null | wc -l | tr -d ' ')
         if [ "$download_files" -gt 0 ]; then
             if [ "$force_mode" = true ]; then
-                find "$downloads_dir" -type f -mtime +30 -delete 2>/dev/null
+                find "$downloads_dir" -type f -mtime +30 -delete 2> /dev/null
                 echo "Removed $download_files old downloads"
             else
                 echo "Found $download_files download files older than 30 days"
@@ -311,7 +313,7 @@ cleanup-temp() {
             echo "No old download files found"
         fi
     fi
-    
+
     if [ "$force_mode" = false ]; then
         echo
         echo "Note: This was a dry run. Use --force to actually delete files"

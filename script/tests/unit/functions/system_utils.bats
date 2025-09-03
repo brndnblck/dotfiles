@@ -5,7 +5,7 @@
 
 # Load helpers
 load "../../helpers/helper"
-load "../../helpers/test_fixtures"
+load "../../helpers/fixtures"
 
 setup() {
     test_setup

@@ -1,17 +1,17 @@
 #!/usr/bin/env bats
 
-# Test Suite for dot_functions.d/dev_workflow.tmpl
+# Test Suite for dot_functions.d/development.tmpl
 # Tests development workflow and git utility functions
 
 # Load helpers
 load "../../helpers/helper"
-load "../../helpers/test_fixtures"
+load "../../helpers/fixtures"
 
 setup() {
     test_setup
     
     # Copy the function file to test environment
-    cp "$PROJECT_ROOT/dot_functions.d/dev_workflow.tmpl" "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+    cp "$PROJECT_ROOT/dot_functions.d/development.tmpl" "$TEST_TEMP_DIR/development_functions.sh"
     
     # Set up completely isolated mock environment
     setup_isolated_mocks
@@ -168,8 +168,8 @@ EOF
 # git-export Function Tests
 # =============================================================================
 
-@test "dev_workflow: git-export should display usage when no arguments provided" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-export should display usage when no arguments provided" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     run git-export
     
@@ -178,8 +178,8 @@ EOF
     assert_output --partial "Example: git-export https://github.com/user/repo.git my-project"
 }
 
-@test "dev_workflow: git-export should display usage when only one argument provided" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-export should display usage when only one argument provided" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     run git-export "https://github.com/test/repo.git"
     
@@ -187,8 +187,8 @@ EOF
     assert_output --partial "Usage: git-export REPO_URL PROJECT_NAME"
 }
 
-@test "dev_workflow: git-export should clone repository without git history" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-export should clone repository without git history" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     run git-export "https://github.com/test/repo.git" "test-project"
     
@@ -202,8 +202,8 @@ EOF
     [ ! -d "test-project/.git" ]
 }
 
-@test "dev_workflow: git-export should handle existing directory error" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-export should handle existing directory error" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     mkdir -p "existing-project"
     
@@ -213,8 +213,8 @@ EOF
     assert_output --partial "Error: Directory 'existing-project' already exists"
 }
 
-@test "dev_workflow: git-export should handle clone failure" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-export should handle clone failure" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     run git-export "https://github.com/nonexistent/repo.git" "test-project"
     
@@ -227,8 +227,8 @@ EOF
 # git-branch-clean Function Tests  
 # =============================================================================
 
-@test "dev_workflow: git-branch-clean should verify it's in a git repository" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-branch-clean should verify it's in a git repository" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     export MOCK_GIT_REPO=false
     
@@ -238,8 +238,8 @@ EOF
     assert_output --partial "Error: Not in a git repository"
 }
 
-@test "dev_workflow: git-branch-clean should clean merged branches from master and main" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-branch-clean should clean merged branches from master and main" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     export MOCK_GIT_REPO=true
     
@@ -253,8 +253,8 @@ EOF
     assert_output --partial "Branch cleanup complete"
 }
 
-@test "dev_workflow: git-branch-clean should handle no merged branches" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-branch-clean should handle no merged branches" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     # Override git mock to return no merged branches
     cat > "$TEST_TEMP_DIR/mock-bin/git" << 'EOF'
@@ -300,8 +300,8 @@ EOF
 # git-current-branch Function Tests
 # =============================================================================
 
-@test "dev_workflow: git-current-branch should verify it's in a git repository" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-current-branch should verify it's in a git repository" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     export MOCK_GIT_REPO=false
     
@@ -311,8 +311,8 @@ EOF
     assert_output --partial "Error: Not in a git repository"
 }
 
-@test "dev_workflow: git-current-branch should return current branch name" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-current-branch should return current branch name" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     export MOCK_GIT_REPO=true
     export MOCK_GIT_BRANCH="feature/test-branch"
@@ -327,8 +327,8 @@ EOF
 # git-root Function Tests
 # =============================================================================
 
-@test "dev_workflow: git-root should verify it's in a git repository" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-root should verify it's in a git repository" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     export MOCK_GIT_REPO=false
     
@@ -338,8 +338,8 @@ EOF
     assert_output --partial "Error: Not in a git repository"
 }
 
-@test "dev_workflow: git-root should navigate to repository root" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-root should navigate to repository root" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     export MOCK_GIT_REPO=true
     # Use the test temp directory as the mock root (it exists)
@@ -351,7 +351,7 @@ EOF
     cd subdir/deep
     
     # Source functions in the subdirectory context
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+    source "$TEST_TEMP_DIR/development_functions.sh"
     git-root
     
     # Should have changed to the git root directory
@@ -362,8 +362,8 @@ EOF
 # git-uncommitted Function Tests
 # =============================================================================
 
-@test "dev_workflow: git-uncommitted should verify it's in a git repository" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-uncommitted should verify it's in a git repository" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     export MOCK_GIT_REPO=false
     
@@ -373,8 +373,8 @@ EOF
     assert_output --partial "Error: Not in a git repository"
 }
 
-@test "dev_workflow: git-uncommitted should show uncommitted changes" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-uncommitted should show uncommitted changes" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     export MOCK_GIT_REPO=true
     export MOCK_GIT_STATUS=" M file1.txt
@@ -392,8 +392,8 @@ EOF
     assert_output --partial "Mock diff stats"
 }
 
-@test "dev_workflow: git-uncommitted should handle clean working directory" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-uncommitted should handle clean working directory" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     export MOCK_GIT_REPO=true
     export MOCK_GIT_STATUS=""
@@ -409,8 +409,8 @@ EOF
 # git-recent-branches Function Tests
 # =============================================================================
 
-@test "dev_workflow: git-recent-branches should verify it's in a git repository" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-recent-branches should verify it's in a git repository" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     export MOCK_GIT_REPO=false
     
@@ -420,8 +420,8 @@ EOF
     assert_output --partial "Error: Not in a git repository"
 }
 
-@test "dev_workflow: git-recent-branches should show default 10 recent branches" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-recent-branches should show default 10 recent branches" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     export MOCK_GIT_REPO=true
     
@@ -434,8 +434,8 @@ EOF
     assert_output --partial "hotfix/urgent - 3 days ago - Urgent fix"
 }
 
-@test "dev_workflow: git-recent-branches should accept custom count parameter" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-recent-branches should accept custom count parameter" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     export MOCK_GIT_REPO=true
     
@@ -445,8 +445,8 @@ EOF
     assert_output --partial "Recently used branches:"
 }
 
-@test "dev_workflow: git-recent-branches should validate count parameter" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-recent-branches should validate count parameter" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     export MOCK_GIT_REPO=true
     
@@ -460,8 +460,8 @@ EOF
 # git-file-history Function Tests
 # =============================================================================
 
-@test "dev_workflow: git-file-history should display usage when no arguments provided" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-file-history should display usage when no arguments provided" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     run git-file-history
     
@@ -470,8 +470,8 @@ EOF
     assert_output --partial "Example: git-file-history src/main.js"
 }
 
-@test "dev_workflow: git-file-history should verify it's in a git repository" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-file-history should verify it's in a git repository" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     export MOCK_GIT_REPO=false
     
@@ -481,8 +481,8 @@ EOF
     assert_output --partial "Error: Not in a git repository"
 }
 
-@test "dev_workflow: git-file-history should show file history for existing file" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-file-history should show file history for existing file" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     export MOCK_GIT_REPO=true
     
@@ -496,8 +496,8 @@ EOF
     assert_output --partial "Mock git log output for file: test-file.txt"
 }
 
-@test "dev_workflow: git-file-history should handle non-existent file" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: git-file-history should handle non-existent file" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     export MOCK_GIT_REPO=true
     
@@ -533,8 +533,8 @@ EOF
 # project-init Function Tests  
 # =============================================================================
 
-@test "dev_workflow: project-init should display usage when no arguments provided" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: project-init should display usage when no arguments provided" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     run project-init
     
@@ -543,8 +543,8 @@ EOF
     assert_output --partial "Supported languages: javascript, python, rust, go, generic (default)"
 }
 
-@test "dev_workflow: project-init should create generic project structure" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: project-init should create generic project structure" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     run project-init "test-project"
     
@@ -564,8 +564,8 @@ EOF
     grep -q ".env" "test-project/.gitignore"
 }
 
-@test "dev_workflow: project-init should create JavaScript project structure" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: project-init should create JavaScript project structure" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     run project-init "js-project" "javascript"
     
@@ -581,8 +581,8 @@ EOF
     grep -q "coverage/" "js-project/.gitignore"
 }
 
-@test "dev_workflow: project-init should create Python project structure" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: project-init should create Python project structure" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     run project-init "py-project" "python"
     
@@ -599,8 +599,8 @@ EOF
     grep -q "venv/" "py-project/.gitignore"
 }
 
-@test "dev_workflow: project-init should handle existing directory error" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: project-init should handle existing directory error" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     mkdir -p "existing-project"
     
@@ -614,8 +614,8 @@ EOF
 # dev-server Function Tests
 # =============================================================================
 
-@test "dev_workflow: dev-server should validate port parameter" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: dev-server should validate port parameter" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     run dev-server "not-a-port"
     
@@ -623,8 +623,8 @@ EOF
     assert_output --partial "Error: Port must be a number between 1 and 65535"
 }
 
-@test "dev_workflow: dev-server should validate port range" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: dev-server should validate port range" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     run dev-server "70000"
     
@@ -632,8 +632,8 @@ EOF
     assert_output --partial "Error: Port must be a number between 1 and 65535"
 }
 
-@test "dev_workflow: dev-server should detect Node.js project and use npm" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: dev-server should detect Node.js project and use npm" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     # Create package.json to simulate Node.js project
     echo '{"name": "test", "scripts": {"start": "node index.js"}}' > package.json
@@ -646,8 +646,8 @@ EOF
     assert_output --partial "Mock npm output"
 }
 
-@test "dev_workflow: dev-server should detect Node.js project and prefer yarn when yarn.lock exists" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: dev-server should detect Node.js project and prefer yarn when yarn.lock exists" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     # Create package.json and yarn.lock
     echo '{"name": "test"}' > package.json
@@ -661,8 +661,8 @@ EOF
     assert_output --partial "Mock yarn output"
 }
 
-@test "dev_workflow: dev-server should detect Rust project" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: dev-server should detect Rust project" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     # Create Cargo.toml to simulate Rust project
     echo '[package]
@@ -677,8 +677,8 @@ version = "0.1.0"' > Cargo.toml
     assert_output --partial "Mock cargo output"
 }
 
-@test "dev_workflow: dev-server should detect Go project" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: dev-server should detect Go project" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     # Create go.mod to simulate Go project
     echo 'module test' > go.mod
@@ -691,8 +691,8 @@ version = "0.1.0"' > Cargo.toml
     assert_output --partial "Mock go output"
 }
 
-@test "dev_workflow: dev-server should detect Python project" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: dev-server should detect Python project" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     # Create requirements.txt to simulate Python project
     echo 'flask==2.0.0' > requirements.txt
@@ -704,8 +704,8 @@ version = "0.1.0"' > Cargo.toml
     assert_output --partial "Starting Python development server on port 8080..."
 }
 
-@test "dev_workflow: dev-server should fall back to generic HTTP server" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: dev-server should fall back to generic HTTP server" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     run dev-server 9000
     
@@ -718,8 +718,8 @@ version = "0.1.0"' > Cargo.toml
 # code-stats Function Tests
 # =============================================================================
 
-@test "dev_workflow: code-stats should validate directory parameter" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: code-stats should validate directory parameter" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     run code-stats "/non/existent/directory"
     
@@ -727,8 +727,8 @@ version = "0.1.0"' > Cargo.toml
     assert_output --partial "Error: '/non/existent/directory' is not a valid directory"
 }
 
-@test "dev_workflow: code-stats should analyze current directory by default" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: code-stats should analyze current directory by default" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     # Create some test files
     mkdir -p src test
@@ -743,8 +743,8 @@ version = "0.1.0"' > Cargo.toml
     assert_output --partial "Directory structure:"
 }
 
-@test "dev_workflow: code-stats should analyze specified directory" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: code-stats should analyze specified directory" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     mkdir -p target-dir
     touch target-dir/file1.py target-dir/file2.py
@@ -756,8 +756,8 @@ version = "0.1.0"' > Cargo.toml
     assert_output --partial "target-dir"
 }
 
-@test "dev_workflow: code-stats should use tree command when available" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: code-stats should use tree command when available" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     # Mock tree command to be available
     cat > "$MOCK_BREW_PREFIX/bin/tree" << 'EOF'
@@ -776,8 +776,8 @@ EOF
     assert_output --partial "Mock tree output"
 }
 
-@test "dev_workflow: code-stats should fall back to find when tree not available" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: code-stats should fall back to find when tree not available" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     # Ensure tree is not available
     rm -f "$MOCK_BREW_PREFIX/bin/tree"
@@ -795,8 +795,8 @@ EOF
 # Error Handling and Edge Cases
 # =============================================================================
 
-@test "dev_workflow: functions should handle git repository detection consistently" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: functions should handle git repository detection consistently" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     export MOCK_GIT_REPO=false
     
@@ -814,8 +814,8 @@ EOF
     assert_output --partial "Error: Not in a git repository"
 }
 
-@test "dev_workflow: project-init should handle different language variations" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: project-init should handle different language variations" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     # Test language aliases
     run project-init "js-test" "js"
@@ -830,8 +830,8 @@ EOF
     assert_output --partial "python template"
 }
 
-@test "dev_workflow: functions should handle missing command dependencies gracefully" {
-    source "$TEST_TEMP_DIR/dev_workflow_functions.sh"
+@test "development: functions should handle missing command dependencies gracefully" {
+    source "$TEST_TEMP_DIR/development_functions.sh"
     
     # Remove commands from isolated mock PATH
     rm -f "$TEST_TEMP_DIR/mock-bin/cargo"

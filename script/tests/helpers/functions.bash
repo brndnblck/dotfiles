@@ -7,7 +7,7 @@
 create_test_alias_files() {
     local aliases_dir="$1"
     mkdir -p "$aliases_dir"
-    
+
     # Development tools aliases
     cat > "$aliases_dir/dev-tools.tmpl" << 'EOF'
 # Development Tools Aliases
@@ -67,7 +67,7 @@ alias less='less -R'
 alias tree='tree -C'
 EOF
 
-    # Infrastructure aliases  
+    # Infrastructure aliases
     cat > "$aliases_dir/infrastructure.tmpl" << 'EOF'
 # Infrastructure Aliases
 # Tools for managing infrastructure and deployments
@@ -93,7 +93,7 @@ EOF
 create_test_function_files() {
     local functions_dir="$1"
     mkdir -p "$functions_dir"
-    
+
     # Development workflow functions
     cat > "$functions_dir/dev-workflow.tmpl" << 'EOF'
 # Development workflow and git utility functions
@@ -198,7 +198,7 @@ EOF
 setup_git_repository_mock() {
     local test_dir="$1"
     mkdir -p "$test_dir/.git"
-    
+
     # Create mock git config
     cat > "$test_dir/.git/config" << 'EOF'
 [core]
@@ -213,7 +213,7 @@ EOF
 
     # Create mock HEAD file
     echo "ref: refs/heads/main" > "$test_dir/.git/HEAD"
-    
+
     # Create refs structure
     mkdir -p "$test_dir/.git/refs/heads"
     echo "abc123def456" > "$test_dir/.git/refs/heads/main"
@@ -224,11 +224,11 @@ EOF
 create_test_project_structure() {
     local project_type="$1"
     local project_dir="$2"
-    
+
     mkdir -p "$project_dir"
-    
+
     case "$project_type" in
-        "javascript"|"js"|"node")
+        "javascript" | "js" | "node")
             cat > "$project_dir/package.json" << 'EOF'
 {
   "name": "test-project",
@@ -246,7 +246,7 @@ EOF
             echo "console.log('Hello World');" > "$project_dir/index.js"
             mkdir -p "$project_dir/src" "$project_dir/test"
             ;;
-        "python"|"py")
+        "python" | "py")
             echo "flask==2.0.0" > "$project_dir/requirements.txt"
             echo "print('Hello World')" > "$project_dir/main.py"
             mkdir -p "$project_dir/src" "$project_dir/tests"
@@ -275,7 +275,7 @@ func main() { fmt.Println("Hello World") }' > "$project_dir/main.go"
 # Mock system command responses for different scenarios
 setup_system_command_mocks() {
     local mock_dir="$1"
-    
+
     # DNS resolution mocks
     cat > "$mock_dir/dig" << 'EOF'
 #!/bin/bash
@@ -295,7 +295,7 @@ case "$*" in
 esac
 EOF
     chmod +x "$mock_dir/dig"
-    
+
     # File system mocks
     cat > "$mock_dir/find" << 'EOF'
 #!/bin/bash
@@ -311,7 +311,7 @@ elif [[ "$*" == *"-mtime +30"* ]]; then
 fi
 EOF
     chmod +x "$mock_dir/find"
-    
+
     # Process monitoring mocks
     cat > "$mock_dir/lsof" << 'EOF'
 #!/bin/bash
@@ -326,14 +326,14 @@ else
 fi
 EOF
     chmod +x "$mock_dir/lsof"
-    
+
     # System information mocks
     cat > "$mock_dir/uptime" << 'EOF'
 #!/bin/bash
 echo " 10:30AM  up 2 days, 14:45,  2 users,  load average: 1.23, 1.45, 1.67"
 EOF
     chmod +x "$mock_dir/uptime"
-    
+
     cat > "$mock_dir/hostname" << 'EOF'
 #!/bin/bash  
 echo "test-macbook-pro.local"
@@ -345,21 +345,21 @@ EOF
 assert_function_documentation() {
     local function_name="$1"
     local output="$2"
-    
+
     # Check that function name appears
     if ! echo "$output" | grep -q "$function_name"; then
         fail "Function name '$function_name' not found in output"
     fi
-    
+
     # Check for required documentation elements
     if ! echo "$output" | grep -q "Description:"; then
         fail "Function '$function_name' missing Description in documentation"
     fi
-    
+
     if ! echo "$output" | grep -q "Usage:"; then
-        fail "Function '$function_name' missing Usage in documentation"  
+        fail "Function '$function_name' missing Usage in documentation"
     fi
-    
+
     if ! echo "$output" | grep -q "Example:"; then
         fail "Function '$function_name' missing Example in documentation"
     fi
@@ -368,12 +368,12 @@ assert_function_documentation() {
 # Assert alias formatting is consistent
 assert_alias_formatting() {
     local output="$1"
-    
+
     # Check for section headers
     if ! echo "$output" | grep -q "===.*==="; then
         fail "Missing section headers in alias output"
     fi
-    
+
     # Check for alias entries (basic format validation)
     if echo "$output" | grep -q "alias.*="; then
         # Good - found alias entries
@@ -386,7 +386,7 @@ assert_alias_formatting() {
 # Validate that private functions are excluded from listings
 assert_no_private_functions() {
     local output="$1"
-    
+
     if echo "$output" | grep -q "_.*function"; then
         fail "Private functions (starting with _) should not appear in listings"
     fi
@@ -396,7 +396,7 @@ assert_no_private_functions() {
 create_temp_function_file() {
     local temp_file="$1"
     local function_content="$2"
-    
+
     cat > "$temp_file" << EOF
 #!/usr/bin/env bash
 # Temporary function file for testing
@@ -410,15 +410,15 @@ test_function_argument_validation() {
     local function_name="$1"
     local required_args="$2"
     local test_file="$3"
-    
+
     # Source the function file
     source "$test_file"
-    
+
     # Test with no arguments
     run "$function_name"
     assert_failure
     assert_output --partial "Usage:"
-    
+
     # Test with insufficient arguments if required_args > 1
     if [ "$required_args" -gt 1 ]; then
         run "$function_name" "single_arg"
@@ -427,7 +427,7 @@ test_function_argument_validation() {
     fi
 }
 
-# Setup mock environment variables for testing  
+# Setup mock environment variables for testing
 setup_test_environment_vars() {
     export TEST_MODE=true
     export MOCK_COMMANDS=true
@@ -438,7 +438,7 @@ setup_test_environment_vars() {
 # Clean up test environment variables
 cleanup_test_environment_vars() {
     unset TEST_MODE
-    unset MOCK_COMMANDS  
+    unset MOCK_COMMANDS
     unset DISABLE_INTERACTIVE
     unset NO_COLOR
 }
@@ -447,7 +447,7 @@ cleanup_test_environment_vars() {
 assert_mock_command_available() {
     local command_name="$1"
     local mock_bin_dir="$2"
-    
+
     if [ ! -x "$mock_bin_dir/$command_name" ]; then
         fail "Mock command '$command_name' not found in $mock_bin_dir"
     fi
@@ -456,31 +456,31 @@ assert_mock_command_available() {
 # Create comprehensive test project with multiple file types
 create_comprehensive_test_project() {
     local project_dir="$1"
-    
+
     mkdir -p "$project_dir/src/components"
     mkdir -p "$project_dir/tests/unit"
     mkdir -p "$project_dir/docs"
-    
+
     # JavaScript files
     echo "console.log('main');" > "$project_dir/src/main.js"
     echo "export const utils = {};" > "$project_dir/src/utils.js"
     echo "import React from 'react';" > "$project_dir/src/components/App.jsx"
-    
+
     # Python files
     echo "def main(): pass" > "$project_dir/src/main.py"
     echo "import unittest" > "$project_dir/tests/unit/test_main.py"
-    
-    # Go files  
+
+    # Go files
     echo "package main" > "$project_dir/main.go"
     echo "package utils" > "$project_dir/src/utils.go"
-    
+
     # Rust files
     echo "fn main() {}" > "$project_dir/src/main.rs"
     echo "#[cfg(test)]" > "$project_dir/src/lib.rs"
-    
+
     # Configuration files
     echo "{}" > "$project_dir/package.json"
-    echo "requirements.txt content" > "$project_dir/requirements.txt"  
+    echo "requirements.txt content" > "$project_dir/requirements.txt"
     echo "# README" > "$project_dir/README.md"
     echo ".env" > "$project_dir/.gitignore"
 }

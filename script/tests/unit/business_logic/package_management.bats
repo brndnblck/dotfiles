@@ -6,7 +6,7 @@
 # Load helpers using correct relative path
 load "../../helpers/helper"
 load "../../helpers/mocks"
-load "../../helpers/test_fixtures"
+load "../../helpers/fixtures"
 
 setup() {
     test_setup

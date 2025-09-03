@@ -128,7 +128,7 @@ addpath() {
 
 prepath() {
     # Description: Add directory to beginning of PATH
-    # Usage: prepath DIRECTORY  
+    # Usage: prepath DIRECTORY
     # Example: prepath /usr/local/bin
     if [ $# -eq 0 ]; then
         echo "Usage: prepath DIRECTORY"
@@ -142,7 +142,7 @@ weather() {
     # Usage: weather [LOCATION]
     # Example: weather "New York"
     local location="${1:-}"
-    if command -v curl >/dev/null 2>&1; then
+    if command -v curl > /dev/null 2>&1; then
         curl -s "wttr.in/${location}?format=3"
     else
         echo "curl is required for weather function"
@@ -181,7 +181,7 @@ ports-used() {
     local common_ports=(22 80 443 8080 8443 3000 5000 9000)
     echo "Checking common ports..."
     for port in "${common_ports[@]}"; do
-        if lsof -i :$port >/dev/null 2>&1; then
+        if lsof -i :$port > /dev/null 2>&1; then
             printf "Port %d: \033[32mIN USE\033[0m\n" $port
         else
             printf "Port %d: \033[90mavailable\033[0m\n" $port

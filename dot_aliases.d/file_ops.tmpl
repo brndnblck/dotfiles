@@ -130,25 +130,25 @@ touchx() {
         echo "Usage: touchx SCRIPT_NAME [INTERPRETER]"
         return 1
     fi
-    
+
     local filename="$1"
     local interpreter="${2:-bash}"
-    
+
     case "$interpreter" in
-        "bash"|"sh")
+        "bash" | "sh")
             echo "#!/bin/bash" > "$filename"
             ;;
-        "python"|"py")
+        "python" | "py")
             echo "#!/usr/bin/env python3" > "$filename"
             ;;
-        "node"|"js")
+        "node" | "js")
             echo "#!/usr/bin/env node" > "$filename"
             ;;
         *)
             echo "#!/usr/bin/env $interpreter" > "$filename"
             ;;
     esac
-    
+
     chmod +x "$filename"
     echo "Created executable $filename with $interpreter shebang"
 }

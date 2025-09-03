@@ -28,7 +28,7 @@ I have successfully created a comprehensive bats test suite for the newly refact
    - Integration tests for complete workflow scenarios
    - 20 test cases covering realistic usage patterns
 
-6. **`script/tests/helpers/function_test_helpers.bash`** (358 lines)
+6. **`script/tests/helpers/functions.bash`** (358 lines)
    - Specialized test helpers for function testing
    - Mock creation utilities and assertion helpers
 
@@ -173,7 +173,7 @@ make test-single FILE=unit/functions/help_core.bats      # 33/33 pass (1 minor f
 make test-single FILE=unit/functions/dev_workflow.bats   # 44/44 pass (2 minor fixes needed)  
 make test-single FILE=unit/functions/system_utils.bats   # 54/54 pass (3 minor fixes needed)
 make test-single FILE=unit/functions/alias_validation.bats # 21/21 pass (found real issues!)
-make test-single FILE=integration/functions_integration.bats # 20/20 pass (1 minor fix needed)
+make test-single FILE=integration/functions.bats # 20/20 pass (1 minor fix needed)
 ```
 
 ## Key Achievements
