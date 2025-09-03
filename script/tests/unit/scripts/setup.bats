@@ -4,7 +4,7 @@
 # Validates comprehensive system setup and configuration deployment
 
 # Load helpers using correct relative path
-load "../../helpers/helper"
+load "../../helpers/base"
 load "$TESTS_DIR/helpers/mocks"
 
 describe() { true; }

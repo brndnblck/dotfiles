@@ -5,9 +5,9 @@ This directory contains comprehensive test suites for the dotfiles functions sys
 ## Test Structure
 
 ### Unit Tests
-- **`help_core.bats`** - Tests for the centralized help and search system
-- **`dev_workflow.bats`** - Tests for development workflow and git utility functions
-- **`system_utils.bats`** - Tests for system utilities and helper functions
+- **`support.bats`** - Tests for the centralized help and search system
+- **`development.bats`** - Tests for development workflow and git utility functions  
+- **`system.bats`** - Tests for system utilities and helper functions
 - **`alias_validation.bats`** - Tests for alias syntax validation and loading
 
 ### Integration Tests
@@ -18,7 +18,7 @@ This directory contains comprehensive test suites for the dotfiles functions sys
 
 ## Test Coverage
 
-### Help Core Functions (`help-core.tmpl`)
+### Support Functions (`support.tmpl`)
 - ✅ `_render_aliases()` - Alias rendering with formatting
 - ✅ `_render_functions()` - Function documentation rendering
 - ✅ `alias-help()` - Search and display help for aliases
@@ -29,7 +29,7 @@ This directory contains comprehensive test suites for the dotfiles functions sys
 - ✅ Error handling and edge cases
 - ✅ Integration with alias files
 
-### Development Workflow Functions (`development.tmpl`)
+### Development Functions (`development.tmpl`)
 - ✅ `git-export()` - Clone repo without history
 - ✅ `git-branch-clean()` - Clean merged branches
 - ✅ `git-current-branch()` - Get current git branch
@@ -44,7 +44,7 @@ This directory contains comprehensive test suites for the dotfiles functions sys
 - ✅ Project type detection (JavaScript, Python, Rust, Go)
 - ✅ Error handling for missing dependencies
 
-### System Utilities Functions (`system.tmpl`)
+### System Functions (`system.tmpl`)
 - ✅ `run-repeat()` - Execute command multiple times
 - ✅ `dig-host()` - DNS lookup and reverse lookup
 - ✅ `remind()` - Add reminder (macOS)
@@ -109,15 +109,15 @@ This directory contains comprehensive test suites for the dotfiles functions sys
 make test-single FILE=unit/functions/*.bats
 
 # Or run specific test suites
-make test-single FILE=unit/functions/help_core.bats
-make test-single FILE=unit/functions/dev_workflow.bats  
-make test-single FILE=unit/functions/system_utils.bats
+make test-single FILE=unit/functions/support.bats
+make test-single FILE=unit/functions/development.bats  
+make test-single FILE=unit/functions/system.bats
 make test-single FILE=unit/functions/alias_validation.bats
 ```
 
 ### Run Integration Tests
 ```bash
-make test-single FILE=integration/functions_integration.bats
+make test-single FILE=integration/functions.bats
 ```
 
 ### Run All Tests

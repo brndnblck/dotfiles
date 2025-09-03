@@ -4,7 +4,7 @@
 # This ensures consistent helper loading across the reorganized test structure
 
 load_test_helpers() {
-    local helper_names=("${@:-helper mocks}")
+    local helper_names=("${@:-base mocks}")
 
     # Find tests directory - handle empty BATS_TEST_DIRNAME and prevent infinite loops
     local CURRENT_DIR="${BATS_TEST_DIRNAME:-$(dirname "${BASH_SOURCE[1]}")}"

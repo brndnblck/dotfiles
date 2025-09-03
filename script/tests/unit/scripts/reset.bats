@@ -4,7 +4,7 @@
 # Uses command logging approach - logs what commands would be executed without running real commands
 
 # Load helpers
-load "../../helpers/helper"
+load "../../helpers/base"
 
 setup() {
     test_setup

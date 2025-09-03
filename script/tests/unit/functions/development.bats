@@ -4,7 +4,7 @@
 # Tests development workflow and git utility functions
 
 # Load helpers
-load "../../helpers/helper"
+load "../../helpers/base"
 load "../../helpers/fixtures"
 
 setup() {

@@ -4,8 +4,8 @@
 # Reusable test components to reduce duplication and ensure consistency
 
 # Load helpers using correct relative path from utilities directory  
-load "../helpers/helper"
-load "../helpers/mocks"
+load "../../helpers/base"
+load "../../helpers/mocks"
 
 setup() {
     test_setup

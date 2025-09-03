@@ -4,7 +4,7 @@
 # Tests system utilities and helper functions
 
 # Load helpers
-load "../../helpers/helper"
+load "../../helpers/base"
 load "../../helpers/fixtures"
 
 setup() {

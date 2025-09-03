@@ -4,7 +4,7 @@
 # Tests business logic, environment validation, and system analysis functionality
 
 # Load helpers using correct relative path
-load "../../helpers/helper"
+load "../../helpers/base"
 load "$TESTS_DIR/helpers/mocks"
 
 setup() {

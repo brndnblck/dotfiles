@@ -4,7 +4,7 @@
 # Validates prerequisite checks and network validation integration
 
 # Load helpers using correct relative path
-load "../../helpers/helper"
+load "../../helpers/base"
 load "$TESTS_DIR/helpers/mocks"
 
 setup() {

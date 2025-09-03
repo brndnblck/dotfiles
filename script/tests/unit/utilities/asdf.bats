@@ -4,7 +4,7 @@
 # Tests asdf installation, version management, and cleanup
 
 # Load helpers using correct relative path
-load "../../helpers/helper"
+load "../../helpers/base"
 load "../../helpers/mocks"
 
 describe() { true; }

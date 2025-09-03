@@ -4,7 +4,7 @@
 # Validates system update orchestration and package management
 
 # Load helpers using correct relative path
-load "../../helpers/helper"
+load "../../helpers/base"
 load "$TESTS_DIR/helpers/mocks"
 
 setup() {

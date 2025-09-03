@@ -4,7 +4,7 @@
 # Tests configuration processing, validation, workflow orchestration, and package management
 
 # Load helpers using correct relative path
-load "../../helpers/helper"
+load "../../helpers/base"
 load "../../helpers/mocks"
 load "../../helpers/fixtures"
 

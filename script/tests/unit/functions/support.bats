@@ -4,7 +4,7 @@
 # Tests the centralized help and search system for aliases and functions
 
 # Load helpers
-load "../../helpers/helper"
+load "../../helpers/base"
 load "../../helpers/fixtures"
 
 setup() {

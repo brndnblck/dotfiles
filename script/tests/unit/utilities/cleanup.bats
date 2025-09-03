@@ -4,7 +4,7 @@
 # Validates that all cleanup functions work together properly
 
 # Load helpers using correct relative path
-load "../helpers/helper"
+load "../../helpers/base"
 load "$TESTS_DIR/helpers/mocks"
 
 setup() {

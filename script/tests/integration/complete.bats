@@ -4,8 +4,8 @@
 # Focus: Test complete workflows and integration between modules
 
 # Load helpers using correct relative path
-load "../helpers/helper.bash"
-load "$TESTS_DIR/helpers/mocks.bash"
+load "../helpers/base"
+load "$TESTS_DIR/helpers/mocks"
 
 setup() {
     test_setup

@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-load "../../helpers/helper"
+load "../../helpers/base"
 load "$TESTS_DIR/helpers/mocks"
 
 setup() {

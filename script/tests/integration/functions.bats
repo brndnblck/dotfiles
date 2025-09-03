@@ -4,7 +4,7 @@
 # Tests the complete functions and aliases system working together in isolation
 
 # Load helpers
-load "../helpers/helper"
+load "../helpers/base"
 load "../helpers/fixtures" 
 load "../helpers/functions"
 

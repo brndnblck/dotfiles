@@ -4,7 +4,7 @@
 # Validates starship prompt customization, theming, and performance
 
 # Load helpers using correct relative path
-load "../../helpers/helper"
+load "../../helpers/base"
 load "../../helpers/mocks"
 
 describe() { true; }
