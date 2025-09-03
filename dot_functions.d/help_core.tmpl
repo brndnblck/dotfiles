@@ -1,9 +1,9 @@
 # Centralized help and search system for dotfiles
 
-_render_aliases() {
+_render-aliases() {
     # Description: Render alias matches with consistent formatting
-    # Usage: _render_aliases MODULE_NAME MATCHES [SHOW_COMMENTS]
-    # Example: _render_aliases "DEVELOPMENT" "$(grep '^alias' development.tmpl)" true
+    # Usage: _render-aliases MODULE_NAME MATCHES [SHOW_COMMENTS]
+    # Example: _render-aliases "DEVELOPMENT" "$(grep '^alias' development.tmpl)" true
     local module_name="$1"
     local matches="$2"
     local show_comments="${3:-false}"
@@ -49,10 +49,10 @@ _render_aliases() {
     echo
 }
 
-_render_functions() {
+_render-functions() {
     # Description: Render function matches with consistent formatting
-    # Usage: _render_functions MODULE_NAME FUNCTION_BLOCKS
-    # Example: _render_functions "SYSTEM UTILS" "$function_blocks"
+    # Usage: _render-functions MODULE_NAME FUNCTION_BLOCKS
+    # Example: _render-functions "SYSTEM UTILS" "$function_blocks"
     local module_name="$1"
     local function_blocks="$2"
     
@@ -95,7 +95,7 @@ alias-help() {
                 local module_name=$(basename "$alias_file" .tmpl | tr '[:lower:]' '[:upper:]' | tr '_-' ' ' | sed 's/  */ /g')
                 local matches=$(awk -v RS='# ' -v IGNORECASE=1 '/'"$1"'/ {print "# "$0}' "$alias_file")
                 if [ -n "$matches" ]; then
-                    _render_aliases "$module_name" "$matches" true
+                    _render-aliases "$module_name" "$matches" true
                 fi
             fi
         done
@@ -127,7 +127,7 @@ alias-search() {
                 fi
                 
                 if [ -n "$matches" ]; then
-                    _render_aliases "$module_name" "$matches" false
+                    _render-aliases "$module_name" "$matches" false
                 fi
             fi
         done
@@ -168,7 +168,7 @@ function-help() {
                     }
                 ' search_term="$search_term" "$function_file")
                 
-                _render_functions "$module_name" "$function_blocks"
+                _render-functions "$module_name" "$function_blocks"
             fi
         done
     fi
@@ -190,7 +190,7 @@ alias-list() {
                 if [ -z "$category" ] || [[ "$base_name" =~ .*"$category".* ]]; then
                     local matches=$(grep "^alias " "$alias_file")
                     if [ -n "$matches" ]; then
-                        _render_aliases "$module_name" "$matches" false
+                        _render-aliases "$module_name" "$matches" false
                     fi
                 fi
             fi
@@ -232,7 +232,7 @@ function-list() {
                         }
                     ' "$function_file")
                     
-                    _render_functions "$module_name" "$function_blocks"
+                    _render-functions "$module_name" "$function_blocks"
                 fi
             fi
         done

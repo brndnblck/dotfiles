@@ -4,7 +4,7 @@
 # Configuration
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
-.PHONY: help test lint fmt fmt-check clean setup deps
+.PHONY: help test test-verbose test-single lint lint-fix fmt fmt-check clean setup deps check test-ci coverage
 
 # Project paths
 PROJECT_ROOT := $(shell pwd)
@@ -19,11 +19,18 @@ ANSI := script/core/ansi
 FIND_EXCLUDE_PATHS := \( -path "$(TEST_DIR)/support" -o -path "*/vendor" -o -path "*/node_modules" -o -path "*/.git" \) -prune -o
 FIND_SHELL_SCRIPTS := find "$(SCRIPT_DIR)" $(FIND_EXCLUDE_PATHS) -type f \( -name "*.sh" -o -name "*.bash" \) -print 2>/dev/null
 FIND_EXECUTABLE_SCRIPTS := find "$(SCRIPT_DIR)" $(FIND_EXCLUDE_PATHS) -type f -perm +111 -exec file {} \; 2>/dev/null | grep -E "(shell|bash)" | cut -d: -f1
+FIND_TEMPLATE_FILES := find "dot_aliases.d" "dot_functions.d" -name "*.tmpl" -type f 2>/dev/null
 FIND_TEST_FILES := find "$(TEST_DIR)" -name "*.bats" 2>/dev/null | grep -v "/support/"
 
 # Find all shell scripts to process (excluding vendor directories)
 SHELL_SCRIPTS_RAW := $(shell $(FIND_SHELL_SCRIPTS))
 SHELL_SCRIPTS_RAW += $(shell $(FIND_EXECUTABLE_SCRIPTS))
+
+# Template files containing shell code (aliases and functions)
+TEMPLATE_FILES_RAW := $(shell $(FIND_TEMPLATE_FILES))
+
+# Combined shell content files (scripts + templates)
+ALL_SHELL_FILES_RAW := $(SHELL_SCRIPTS_RAW) $(TEMPLATE_FILES_RAW)
 
 # Helper scripts (exclude from some checks)
 HELPER_SCRIPTS_RAW := $(shell find "$(SCRIPT_DIR)/core" -type f -print0 2>/dev/null | tr '\0' '\n')
@@ -147,7 +154,13 @@ help: ## Show this help message
 	@"$(ANSI)" --yellow "Test files found:"
 	@printf "%s\n" $(TEST_FILES_RAW) | grep -v '^$$' | while IFS= read -r file; do [ -n "$$file" ] && echo "  - $$(basename "$$file")"; done
 	@"$(ANSI)" --newline
-	@"$(ANSI)" --yellow "Shell scripts found: $(call count_lines,$(SHELL_SCRIPTS_RAW)) files"
+	@"$(ANSI)" --yellow "Files found for linting/formatting:"
+	@script_count=$$(printf "%s\n" $(SHELL_SCRIPTS_RAW) | grep -c '^' 2>/dev/null || echo 0); \
+	template_count=$$(printf "%s\n" $(TEMPLATE_FILES_RAW) | grep -c '^' 2>/dev/null || echo 0); \
+	total_count=$$(printf "%s\n" $(ALL_SHELL_FILES_RAW) | grep -c '^' 2>/dev/null || echo 0); \
+	"$(ANSI)" --yellow "  Shell scripts: $$script_count files"; \
+	"$(ANSI)" --yellow "  Template files: $$template_count files"; \
+	"$(ANSI)" --yellow "  Total shell content: $$total_count files"
 
 setup: ## Initialize git submodules and install dependencies
 	$(call run_header,Setting up test environment,true)
@@ -180,27 +193,31 @@ test-single: ## Run a single test file (usage: make test-single FILE=bootstrap.b
 	$(call run_header,Running $(FILE))
 	@"$(BATS_PATH)" "$(TEST_DIR)/$(FILE)"
 
-lint: ## Run shellcheck on all shell scripts
-	$(call run_header,Running shellcheck,true)
+lint: ## Run shellcheck on all shell scripts and template files
+	$(call run_header,Running shellcheck on shell scripts and templates,true)
 	@$(call check_tool,shellcheck)
-	$(call process_scripts,$(SHELL_SCRIPTS_RAW),\
+	$(call process_scripts,$(ALL_SHELL_FILES_RAW),\
 		$(call warning_message,Checking $$(basename "$$script")...,true),\
-		if ! shellcheck "$$script"; then error_count=$$((error_count + 1)); fi; "$(ANSI)" --newline,\
-		if [ $$error_count -eq 0 ]; then $(call success_message,All shell scripts passed shellcheck!,true); else $(call error_message,Found issues in $$error_count files,true); exit 1; fi)
+		if echo "$$script" | grep -q '\.tmpl$$'; then \
+			if ! shellcheck -f gcc "$$script"; then error_count=$$((error_count + 1)); fi; \
+		else \
+			if ! shellcheck "$$script"; then error_count=$$((error_count + 1)); fi; \
+		fi; "$(ANSI)" --newline,\
+		if [ $$error_count -eq 0 ]; then $(call success_message,All shell files passed shellcheck!,true); else $(call error_message,Found issues in $$error_count files,true); exit 1; fi)
 
 lint-fix: ## Run shellcheck and attempt to fix simple issues
-	$(call run_header,Running shellcheck with fix suggestions,true)
-	@printf "%s\n" $(SHELL_SCRIPTS_RAW) | grep -v '^$$' | while IFS= read -r script; do \
+	$(call run_header,Running shellcheck with fix suggestions on all shell files,true)
+	@printf "%s\n" $(ALL_SHELL_FILES_RAW) | grep -v '^$$' | while IFS= read -r script; do \
 		if [ -n "$$script" ] && [ -f "$$script" ]; then \
 			$(call warning_message,Checking $$(basename "$$script")...,true); \
 			shellcheck -f diff "$$script" | patch -p1 || true; \
 		fi; \
 	done
 
-fmt: ## Format all shell scripts with shfmt
-	$(call run_header,Formatting shell scripts,true)
+fmt: ## Format all shell scripts and template files with shfmt
+	$(call run_header,Formatting shell scripts and template files,true)
 	@$(call check_tool,shfmt)
-	@printf "%s\n" $(SHELL_SCRIPTS_RAW) | grep -v '^$$' | while IFS= read -r script; do \
+	@printf "%s\n" $(ALL_SHELL_FILES_RAW) | grep -v '^$$' | while IFS= read -r script; do \
 		if [ -n "$$script" ] && [ -f "$$script" ]; then \
 			$(call warning_message,Formatting $$(basename "$$script")...,true); \
 			shfmt -i 4 -ci -sr -w "$$script"; \
@@ -209,8 +226,8 @@ fmt: ## Format all shell scripts with shfmt
 	@"$(ANSI)" --newline
 	@$(call success_message,Formatting complete!)
 
-fmt-check: ## Check if shell scripts are properly formatted
-	$(call run_header,Checking shell script formatting,true)
+fmt-check: ## Check if shell scripts and template files are properly formatted
+	$(call run_header,Checking shell script and template formatting,true)
 	@$(call check_tool,shfmt)
 	@{ \
 		error_count=0; \
@@ -223,10 +240,10 @@ fmt-check: ## Check if shell scripts are properly formatted
 					$(call success_message,✓ $$(basename "$$script"),true); \
 				fi; \
 			fi; \
-		done < <(printf "%s\n" $(SHELL_SCRIPTS_RAW) | grep -v '^$$'); \
+		done < <(printf "%s\n" $(ALL_SHELL_FILES_RAW) | grep -v '^$$'); \
 		if [ $$error_count -eq 0 ]; then \
 			"$(ANSI)" --newline; \
-			$(call success_message,All shell scripts are properly formatted!); \
+			$(call success_message,All shell files are properly formatted!); \
 		else \
 			"$(ANSI)" --newline; \
 			$(call error_message,Found formatting issues in $$error_count files,true); \
