@@ -1,0 +1,106 @@
+# Source control and version management shortcuts
+
+# Git: Basic git command shortcuts
+# Usage: Common git operations
+# Example: gs && gb && gco main
+alias git="git"
+alias gb="git branch"
+alias gbr="git branch --remote"
+alias gba="git branch --all"
+alias gco="git checkout"
+alias gcob="git checkout -b"
+alias gd="git diff"
+alias gs="git status"
+
+# Git Extended: Additional git shortcuts
+# Usage: Extended git operations
+# Example: ga . && gc "commit message" && gp
+alias ga="git add"
+alias gaa="git add --all"
+alias gc="git commit -m"
+alias gca="git commit --amend"
+alias gcane="git commit --amend --no-edit"
+alias gp="git push"
+alias gpf="git push --force-with-lease"
+alias gpl="git pull"
+alias gf="git fetch"
+alias gl="git log --oneline"
+alias glo="git log --oneline --graph"
+alias glp="git log --pretty=format:'%h %ad %s' --date=short"
+alias gst="git stash"
+alias gstp="git stash pop"
+alias gsts="git stash save"
+alias grh="git reset --hard"
+alias grs="git reset --soft"
+
+# Git Advanced: Advanced git operations
+# Usage: Complex git workflows
+# Example: gri HEAD~3 && grb main
+alias gri="git rebase -i"
+alias grb="git rebase"
+alias grc="git rebase --continue"
+alias gra="git rebase --abort"
+alias gcp="git cherry-pick"
+alias gmg="git merge"
+alias gmgn="git merge --no-ff"
+alias gmt="git mergetool"
+alias gdt="git difftool"
+
+# Git Information: Repository information
+# Usage: Get git repository details
+# Example: gurl && gbranch
+alias gurl="git config --get remote.origin.url"
+alias gbranch="git rev-parse --abbrev-ref HEAD"
+alias gtags="git tag -l"
+alias gremotes="git remote -v"
+
+# GitHub CLI: GitHub operations via CLI
+# Usage: GitHub pull request and issue management
+# Example: ghpr && ghprv 123
+alias ghpr="gh pr create"
+alias ghprs="gh pr status"
+alias ghprv="gh pr view"
+alias ghprc="gh pr checkout"
+alias ghprm="gh pr merge"
+alias ghrepo="gh repo view"
+alias ghissue="gh issue create"
+alias ghissues="gh issue list"
+alias ghclone="gh repo clone"
+alias ghfork="gh repo fork"
+
+# GitHub Extended: Additional GitHub CLI shortcuts
+# Usage: Extended GitHub operations
+# Example: ghprd && ghrel
+alias ghprd="gh pr diff"
+alias ghprl="gh pr list"
+alias ghrel="gh release list"
+alias ghrelc="gh release create"
+alias ghwf="gh workflow list"
+alias ghrun="gh run list"
+
+# Git Utilities: Utility functions
+# Usage: Helper functions for common git tasks
+# Example: gclean && guntracked
+alias gclean="git clean -fd"
+alias guntracked="git ls-files --others --exclude-standard"
+alias gignored="git ls-files --ignored --exclude-standard"
+alias glast="git log -1 HEAD --stat"
+alias gwho="git shortlog -sn"
+alias gwhen="git for-each-ref --format='%(refname:short) %(committerdate)' refs/heads"
+
+# Git Search: Search within git repositories  
+# Usage: Search git history and content
+# Example: gsearch "function name" && ggrep "TODO"
+alias gsearch="git log --all --grep"
+alias ggrep="git grep"
+alias gpickaxe="git log -S"
+
+# Subversion: SVN shortcuts (if still needed)
+# Usage: Subversion version control
+# Example: svns && svnu
+alias svns="svn status"
+alias svnu="svn update"
+alias svnc="svn commit"
+alias svna="svn add"
+alias svnd="svn diff"
+alias svnl="svn log"

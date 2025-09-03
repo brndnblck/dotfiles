@@ -1,0 +1,142 @@
+# Infrastructure, databases, and networking shortcuts
+
+# MongoDB: Database management shortcuts
+# Usage: MongoDB operations and management
+# Example: mongostart && mtail
+alias mtail="tail -f /data/db/current/mongod.log"
+alias mongo='mongosh'
+alias mongod='mongod --config /usr/local/etc/mongod.conf'
+alias mongostop='mongo admin --eval "db.shutdownServer()"'
+alias mongostart='mongod --config /usr/local/etc/mongod.conf --fork'
+alias mongorestart='mongostop && mongostart'
+alias mongostat='mongostat --rowcount 0'
+alias mongotop='mongotop'
+alias mongodump='mongodump --out /tmp/mongodump'
+alias mongorestore='mongorestore /tmp/mongodump'
+
+# PostgreSQL: Database management shortcuts
+# Usage: PostgreSQL operations and management
+# Example: pgstart && pgstatus
+alias pgstart="brew services start postgresql"
+alias pgstop="brew services stop postgresql"
+alias pgrestart="brew services restart postgresql"
+alias pgstatus="brew services list | grep postgresql"
+alias psql="psql -U postgres"
+alias pgdump="pg_dump -U postgres"
+alias pgrestore="pg_restore -U postgres"
+
+# MySQL: Database management shortcuts
+# Usage: MySQL operations and management
+# Example: mysqlstart && mysql
+alias mysqlstart="brew services start mysql"
+alias mysqlstop="brew services stop mysql"
+alias mysqlrestart="brew services restart mysql"
+alias mysqlstatus="brew services list | grep mysql"
+alias mysql="mysql -u root -p"
+alias mysqldump="mysqldump -u root -p"
+
+# Redis: In-memory database shortcuts
+# Usage: Redis server management
+# Example: redisstart && rediscli
+alias redisstart="brew services start redis"
+alias redisstop="brew services stop redis"
+alias redisrestart="brew services restart redis"
+alias redisstatus="brew services list | grep redis"
+alias rediscli="redis-cli"
+alias redismon="redis-cli monitor"
+
+# Kubernetes: Container orchestration shortcuts
+# Usage: Kubernetes cluster management
+# Example: kgp && kgs && kaf deployment.yaml
+alias k="kubectl"
+alias kgp="kubectl get pods"
+alias kgs="kubectl get svc"
+alias kgd="kubectl get deployments"
+alias kgn="kubectl get nodes"
+alias kgds="kubectl get ds"
+alias kgc="kubectl get componentstatuses"
+alias kctx="kubectl config current-context"
+alias kcon="kubectl config use-context"
+alias kgc="kubectl config get-contexts"
+alias kdelp="kubectl delete pods"
+alias kdes="kubectl describe"
+alias kaf="kubectl apply -f"
+alias klogs="kubectl logs"
+alias kexec="kubectl exec -it"
+alias kport="kubectl port-forward"
+alias ktop="kubectl top"
+
+# Docker: Container management shortcuts
+# Usage: Docker container and image management
+# Example: dps && dimg && drun ubuntu
+alias d="docker"
+alias dps="docker ps"
+alias dpsa="docker ps -a"
+alias dimg="docker images"
+alias drun="docker run -it"
+alias dexec="docker exec -it"
+alias dstop="docker stop"
+alias drm="docker rm"
+alias drmi="docker rmi"
+alias dprune="docker system prune"
+alias dlog="docker logs"
+alias dinspect="docker inspect"
+
+# Docker Compose: Multi-container application shortcuts
+# Usage: Docker Compose project management
+# Example: dcup && dclogs && dcdown
+alias dc="docker-compose"
+alias dcup="docker-compose up -d"
+alias dcdown="docker-compose down"
+alias dclogs="docker-compose logs -f"
+alias dcps="docker-compose ps"
+alias dcbuild="docker-compose build"
+alias dcrestart="docker-compose restart"
+alias dcexec="docker-compose exec"
+
+# HTTP Requests: Web request utilities
+# Usage: HTTP client shortcuts for API testing
+# Example: get https://api.example.com/users
+alias wget="wget2"
+alias get="curl -X GET"
+alias post="curl -X POST"
+alias put="curl -X PUT"
+alias delete="curl -X DELETE"
+alias patch="curl -X PATCH"
+alias head="curl -I"
+alias json="curl -H 'Content-Type: application/json'"
+alias curl-time="curl -w '@-' -o /dev/null -s"
+alias curl-headers="curl -D- -o /dev/null -s"
+alias curl-follow="curl -L"
+alias curl-silent="curl -s"
+alias curl-verbose="curl -v"
+alias curl-download="curl -O"
+alias curl-resume="curl -C -"
+
+# Network Information: IP and DNS utilities
+# Usage: Network diagnostics and information
+# Example: ip && whois example.com
+alias ip='echo "\nLocal IPs:" && ifconfig | grep "inet " | awk '\''{
+printf "\t%s\n", $2}'\'' && echo "External IP:" && curl -s ipinfo.io/ip | awk '\''{
+printf "\t%s\n", $0}'\''\;'
+alias whois="whois -h whois-servers.net"
+alias nslookup="nslookup"
+alias dig="dig +short"
+alias traceroute="traceroute"
+alias netstat="netstat -tuln"
+alias ss="ss -tuln"
+
+# SSH: Secure shell shortcuts
+# Usage: SSH connection and management
+# Example: sshkey && sshconfig
+alias sshkey="cat ~/.ssh/id_rsa.pub | pbcopy && echo 'SSH key copied to clipboard'"
+alias sshconfig="$EDITOR ~/.ssh/config"
+alias sshlist="grep -E '^Host ' ~/.ssh/config"
+alias sshadd="ssh-add -K ~/.ssh/id_rsa"
+
+# VPN: Virtual private network utilities
+# Usage: VPN connection management (if applicable)
+# Example: vpnstatus && vpnconnect
+alias vpnstatus="scutil --nc list"
+alias vpnconnect="networksetup -connectpppoeservice"
+alias vpndisconnect="networksetup -disconnectpppoeservice"

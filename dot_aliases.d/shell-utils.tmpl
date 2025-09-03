@@ -1,0 +1,190 @@
+# Shell utilities and GNU tool overrides
+
+# GNU Tool Overrides: Use GNU versions on macOS
+# Usage: Override BSD tools with GNU versions
+# Example: grep --color=auto pattern file
+alias awk="gawk"
+alias find="gfind"
+alias grep="ggrep --color=auto"
+alias make="gmake"
+alias sed="gsed"
+alias tar="gtar"
+alias xargs="gxargs"
+alias gzip="pigz"
+
+# Terminal Session: General terminal operations
+# Usage: Common terminal shortcuts
+# Example: h && c && top
+alias h="history"
+alias c="clear"
+alias cls="clear"
+alias top="htop"
+alias ps="ps aux"
+
+# History Management: Command history utilities
+# Usage: Enhanced history operations
+# Example: hg git && h20
+alias hg="history | grep"
+alias h10="history | tail -10"
+alias h20="history | tail -20"
+alias h50="history | tail -50"
+alias hc="history -c"
+
+# Tmux Session Management: Terminal multiplexer shortcuts
+# Usage: Manage tmux sessions efficiently
+# Example: tn work && ta work
+alias t="tmux"
+alias tn="tmux new-session -s"
+alias ta="tmux attach-session -t"
+alias tls="tmux list-sessions"
+alias tk="tmux kill-session -t"
+alias td="tmux detach"
+alias tr="tmux rename-session"
+alias tka="tmux kill-server"
+
+# System Information: System monitoring and info
+# Usage: Quick system information commands
+# Example: df && free && uptime
+alias df="df -h"
+alias free="free -h"
+alias psg="ps aux | grep"
+alias ports="lsof -i"
+alias listening="lsof -i | grep LISTEN"
+
+# Process Management: Process control shortcuts
+# Usage: Process monitoring and management
+# Example: psg firefox && killall firefox
+alias psg="ps aux | grep"
+alias psf="ps -ef | grep"
+alias killall="killall"
+alias jobs="jobs -l"
+
+# Text Processing: Enhanced text utilities
+# Usage: Text manipulation and search
+# Example: count lines file.txt
+alias count="wc -l"
+alias chars="wc -c"
+alias words="wc -w"
+alias bytes="wc -c"
+alias sort="sort"
+alias uniq="uniq"
+
+# Quick Edits: Text editor shortcuts
+# Usage: Open files in preferred editors
+# Example: v file.txt && code .
+alias v="$EDITOR"
+alias vi="vim"
+alias vim="vim"
+alias nv="nvim"
+alias nano="nano"
+alias code="code"
+alias subl="subl"
+
+# Path Utilities: PATH and environment management
+# Usage: Manage and display PATH
+# Example: path && addpath ~/bin
+alias path='echo -e ${PATH//:/\\n}'
+
+# Environment Variables: Environment management
+# Usage: Display and manage environment
+# Example: env | grep PATH
+alias env="env | sort"
+alias printenv="printenv | sort"
+
+# Quick Network: Basic networking utilities
+# Usage: Network diagnostics and information
+# Example: myip && ports
+alias myip="curl -s ipinfo.io/ip"
+alias localip="ipconfig getifaddr en0"
+alias ping="ping -c 5"
+alias flush="sudo dscacheutil -flushcache"
+
+# Date and Time: Date/time utilities
+# Usage: Display dates and times in various formats
+# Example: now && today
+alias now="date '+%Y-%m-%d %H:%M:%S'"
+alias today="date '+%Y-%m-%d'"
+alias timestamp="date '+%s'"
+alias week="date '+%Y-W%V'"
+
+# Reload Shell: Shell configuration reloading
+# Usage: Reload shell configuration files
+# Example: reload && rebash
+alias reload="source ~/.zshrc"
+alias rebash="source ~/.bashrc"
+alias rezsh="source ~/.zshrc"
+
+# Help Functions: Additional utilities
+addpath() {
+    # Description: Add directory to end of PATH
+    # Usage: addpath DIRECTORY
+    # Example: addpath ~/bin
+    if [ $# -eq 0 ]; then
+        echo "Usage: addpath DIRECTORY"
+        return 1
+    fi
+    export PATH="$PATH:$1"
+}
+
+prepath() {
+    # Description: Add directory to beginning of PATH
+    # Usage: prepath DIRECTORY  
+    # Example: prepath /usr/local/bin
+    if [ $# -eq 0 ]; then
+        echo "Usage: prepath DIRECTORY"
+        return 1
+    fi
+    export PATH="$1:$PATH"
+}
+
+weather() {
+    # Description: Get weather information for a location
+    # Usage: weather [LOCATION]
+    # Example: weather "New York"
+    local location="${1:-}"
+    if command -v curl >/dev/null 2>&1; then
+        curl -s "wttr.in/${location}?format=3"
+    else
+        echo "curl is required for weather function"
+        return 1
+    fi
+}
+
+calc() {
+    # Description: Simple calculator using bc
+    # Usage: calc EXPRESSION
+    # Example: calc "2 + 2"
+    if [ $# -eq 0 ]; then
+        echo "Usage: calc EXPRESSION"
+        echo "Example: calc '2 + 2'"
+        return 1
+    fi
+    echo "scale=2; $*" | bc -l
+}
+
+colors() {
+    # Description: Display terminal color palette
+    # Usage: colors
+    # Example: colors
+    for i in {0..255}; do
+        printf "\x1b[38;5;${i}mcolor${i}\x1b[0m "
+        if [ $(($i % 16)) -eq 15 ]; then
+            echo
+        fi
+    done
+}
+
+ports-used() {
+    # Description: Show commonly used ports and their status
+    # Usage: ports-used
+    # Example: ports-used
+    local common_ports=(22 80 443 8080 8443 3000 5000 9000)
+    echo "Checking common ports..."
+    for port in "${common_ports[@]}"; do
+        if lsof -i :$port >/dev/null 2>&1; then
+            printf "Port %d: \033[32mIN USE\033[0m\n" $port
+        else
+            printf "Port %d: \033[90mavailable\033[0m\n" $port
+        fi
+    done
+}

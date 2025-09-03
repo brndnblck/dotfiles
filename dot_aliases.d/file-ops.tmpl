@@ -1,0 +1,154 @@
+# File system operations and navigation shortcuts
+
+# Directory Navigation: Quick navigation shortcuts
+# Usage: Navigate to common directories quickly
+# Example: wrk && proj
+alias oo="open ."
+alias home="cd ~"
+alias wrk="cd ~/Projects/work"
+alias ops="cd ~/Projects/open-source"
+alias pers="cd ~/Projects/personal"
+alias proj="cd ~/Projects"
+alias search="find . -maxdepth 1 -type f | xargs grep -in --color=always "
+
+# Directory Movement: Relative path shortcuts
+# Usage: Navigate up directory levels quickly
+# Example: .. && ... && ....
+alias ..="cd .."
+alias ...="cd ../../"
+alias ....="cd ../../../"
+alias .....="cd ../../../../"
+alias ......="cd ../../../../../"
+
+# Pipe Operations: Output redirection shortcuts
+# Usage: Pipe command output through filters
+# Example: ps aux | g chrome
+alias h="| head"
+alias t="| tail"
+alias g="| grep"
+alias l="| less"
+alias m="| most"
+alias ll="2>&1 | less"
+alias ca="2>&1 | cat -a"
+alias ne="2> /dev/null"
+alias nul="> /dev/null 2>&1"
+
+# File Listing: Enhanced ls with eza
+# Usage: List files with icons and colors
+# Example: ll && lsa && lt
+alias ls="eza --group-directories-first --icons"
+alias ll='eza --group-directories-first --icons -lh'
+alias la='eza --group-directories-first --icons -a'
+alias lla='eza --group-directories-first --icons -lah'
+alias lsa='eza --group-directories-first --icons -lah'
+alias l='eza'
+alias lt='eza --tree'
+alias lm='eza --long --sort=modified'
+alias lsize='eza --long --sort=size'
+alias lext='eza --long --sort=extension'
+alias ldot='eza -a | grep "^\."'
+alias ldir='eza -D'
+alias lfile='eza -f'
+
+# File Operations: Common file management
+# Usage: File manipulation shortcuts
+# Example: mkdir -p new/dir && cdmk new/dir
+alias mkdir="mkdir -p"
+alias cp="cp -i"
+alias mv="mv -i"
+alias rm="rm -i"
+alias rmf="rm -rf"
+
+# File Permissions: Permission management shortcuts
+# Usage: Change file permissions quickly
+# Example: x script.sh
+alias x="chmod +x"
+alias 644="chmod 644"
+alias 755="chmod 755"
+alias 777="chmod 777"
+
+# Archive Operations: Quick archive creation and extraction
+# Usage: Create and extract common archive formats
+# Example: targz myfiles.tar.gz *.txt
+alias targz="tar -czf"
+alias tarxz="tar -cJf"
+alias untargz="tar -xzf"
+alias untarxz="tar -xJf"
+
+# Find Operations: File search shortcuts
+# Usage: Find files and directories efficiently
+# Example: ff "*.py" && fd logs
+alias ff="find . -type f -name"
+alias fd="find . -type d -name"
+alias fh="find . -name '.*'"
+alias fx="find . -type f -executable"
+alias fl="find . -type l"
+
+# Directory Operations: Directory manipulation
+# Usage: Advanced directory operations
+# Example: cdmk new-project
+cdmk() {
+    # Description: Create directory and navigate to it
+    # Usage: cdmk DIRECTORY_NAME
+    # Example: cdmk new-project
+    if [ $# -eq 0 ]; then
+        echo "Usage: cdmk DIRECTORY_NAME"
+        return 1
+    fi
+    mkdir -p "$1" && cd "$1"
+}
+
+# File Content: File content viewing shortcuts
+# Usage: View file contents in various ways
+# Example: cat file.txt
+alias cat="bat --style=plain"
+alias less="bat --style=plain --paging=always"
+alias head="head -n 20"
+alias tail="tail -n 20"
+
+# File Comparison: File difference utilities
+# Usage: Compare files and directories
+# Example: diff file1 file2
+alias diff="diff --color=auto"
+alias diffdir="diff -r"
+
+# Disk Operations: Disk usage and cleanup
+# Usage: Monitor and manage disk usage
+# Example: du && duu
+alias du="du -h"
+alias dus="du -sh"
+alias duu="du -h | sort -hr | head -20"
+
+# Quick File Creation: Create common file types
+# Usage: Quickly create files with templates
+# Example: touchx script.sh
+touchx() {
+    # Description: Create executable file with shebang
+    # Usage: touchx SCRIPT_NAME [INTERPRETER]
+    # Example: touchx script.sh bash
+    if [ $# -eq 0 ]; then
+        echo "Usage: touchx SCRIPT_NAME [INTERPRETER]"
+        return 1
+    fi
+    
+    local filename="$1"
+    local interpreter="${2:-bash}"
+    
+    case "$interpreter" in
+        "bash"|"sh")
+            echo "#!/bin/bash" > "$filename"
+            ;;
+        "python"|"py")
+            echo "#!/usr/bin/env python3" > "$filename"
+            ;;
+        "node"|"js")
+            echo "#!/usr/bin/env node" > "$filename"
+            ;;
+        *)
+            echo "#!/usr/bin/env $interpreter" > "$filename"
+            ;;
+    esac
+    
+    chmod +x "$filename"
+    echo "Created executable $filename with $interpreter shebang"
+}
