@@ -1,18 +1,25 @@
-# Configuration for .test domains
-address=/.test/127.0.0.1
+# Listen on loopback
+listen-address=127.0.0.1,::1
 
-# Only bind to localhost
-listen-address=127.0.0.1
-
-# Don't read /etc/hosts
+# Basic hygiene
+domain-needed
+bogus-priv
 no-hosts
 
-# Don't read upstream servers from /etc/resolv.conf
-no-resolv
+# Keep .test local only
+local=/test/
 
-# Set upstream DNS servers
-server=8.8.8.8
-server=8.8.4.4
+# Send all *.test to localhost
+address=/.test/127.0.0.1
+address=/.test/::1
 
-# Cache size
-cache-size=1000
+# NextDNS upstream (fetched from 1Password)
+server=45.90.28.0#{{ (onepasswordDetailsFields "uwcib3hf6jjqvcfcjv4qiepamu").id.value }}.dns.nextdns.io
+server=45.90.30.0#{{ (onepasswordDetailsFields "uwcib3hf6jjqvcfcjv4qiepamu").id.value }}.dns.nextdns.io
+
+# Cache
+cache-size=10000
+
+# Optional logs
+# log-queries
+# log-facility=/var/log/dnsmasq.log

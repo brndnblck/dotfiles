@@ -1,4 +1,8 @@
 [global]
-load_dotenv = true
+load_dotenv = false
 warn_timeout = "5s"
 strict_env = false
+
+[global.env]
+DEV_TLD = "test"
+ENVIRONMENT = "local"   # default stage: local | test | production

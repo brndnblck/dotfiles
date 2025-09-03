@@ -1,4 +1,5 @@
 # Development workflow and git utility functions
+# Dev infrastructure functions for Caddy + direnv + dnsmasq setup
 
 git-export() {
     # Description: Clone a git repository without git history (export for templates)
@@ -19,7 +20,7 @@ git-export() {
     fi
 
     echo "Cloning repository..."
-    if git clone --quiet --depth=1 "$repo_url" "$project_name"; then
+    if "${GIT_CMD:-git}" clone --quiet --depth=1 "$repo_url" "$project_name"; then
         echo "Removing git history..."
         rm -rf "$project_name"/.git*
         echo "Project exported to: $project_name"
@@ -33,27 +34,27 @@ git-branch-clean() {
     # Description: Delete merged local branches and prune remote tracking branches
     # Usage: git-branch-clean
     # Example: git-branch-clean
-    if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+    if ! "${GIT_CMD:-git}" rev-parse --is-inside-work-tree > /dev/null 2>&1; then
         echo "Error: Not in a git repository"
         return 1
     fi
 
     echo "Cleaning merged branches..."
 
-    local master_branches=$(git branch --merged=master 2> /dev/null | grep -v master | xargs)
+    local master_branches=$("${GIT_CMD:-git}" branch --merged=master 2> /dev/null | grep -v master | xargs)
     if [ -n "$master_branches" ]; then
         echo "Deleting branches merged into master: $master_branches"
-        git branch -d $master_branches
+        "${GIT_CMD:-git}" branch -d $master_branches
     fi
 
-    local main_branches=$(git branch --merged=main 2> /dev/null | grep -v main | xargs)
+    local main_branches=$("${GIT_CMD:-git}" branch --merged=main 2> /dev/null | grep -v main | xargs)
     if [ -n "$main_branches" ]; then
         echo "Deleting branches merged into main: $main_branches"
-        git branch -d $main_branches
+        "${GIT_CMD:-git}" branch -d $main_branches
     fi
 
     echo "Pruning remote tracking branches..."
-    git fetch --prune
+    "${GIT_CMD:-git}" fetch --prune
 
     echo "Branch cleanup complete"
 }
@@ -62,44 +63,44 @@ git-current-branch() {
     # Description: Get the current git branch name
     # Usage: git-current-branch
     # Example: git-current-branch
-    if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+    if ! "${GIT_CMD:-git}" rev-parse --is-inside-work-tree > /dev/null 2>&1; then
         echo "Error: Not in a git repository"
         return 1
     fi
 
-    git rev-parse --abbrev-ref HEAD
+    "${GIT_CMD:-git}" rev-parse --abbrev-ref HEAD
 }
 
 git-root() {
     # Description: Navigate to the root of the current git repository
     # Usage: git-root
     # Example: git-root
-    if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+    if ! "${GIT_CMD:-git}" rev-parse --is-inside-work-tree > /dev/null 2>&1; then
         echo "Error: Not in a git repository"
         return 1
     fi
 
-    cd "$(git rev-parse --show-toplevel)"
+    cd "$("${GIT_CMD:-git}" rev-parse --show-toplevel)" || return
 }
 
 git-uncommitted() {
     # Description: Show all uncommitted changes across the repository
     # Usage: git-uncommitted
     # Example: git-uncommitted
-    if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+    if ! "${GIT_CMD:-git}" rev-parse --is-inside-work-tree > /dev/null 2>&1; then
         echo "Error: Not in a git repository"
         return 1
     fi
 
     echo "=== Uncommitted Changes ==="
-    git status --porcelain | while read -r status file; do
+    "${GIT_CMD:-git}" status --porcelain | while read -r status file; do
         echo "[$status] $file"
     done
 
-    if [ -n "$(git status --porcelain)" ]; then
+    if [ -n "$("${GIT_CMD:-git}" status --porcelain)" ]; then
         echo
         echo "=== Diff Summary ==="
-        git diff --stat
+        "${GIT_CMD:-git}" diff --stat
     else
         echo "No uncommitted changes found."
     fi
@@ -109,7 +110,7 @@ git-recent-branches() {
     # Description: Show recently used git branches sorted by last commit
     # Usage: git-recent-branches [COUNT]
     # Example: git-recent-branches 10
-    if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+    if ! "${GIT_CMD:-git}" rev-parse --is-inside-work-tree > /dev/null 2>&1; then
         echo "Error: Not in a git repository"
         return 1
     fi
@@ -122,7 +123,7 @@ git-recent-branches() {
     fi
 
     echo "Recently used branches:"
-    git for-each-ref --count="$count" --sort=-committerdate refs/heads/ --format='%(refname:short) - %(committerdate:relative) - %(subject)'
+    "${GIT_CMD:-git}" for-each-ref --count="$count" --sort=-committerdate refs/heads/ --format='%(refname:short) - %(committerdate:relative) - %(subject)'
 }
 
 git-file-history() {
@@ -135,160 +136,20 @@ git-file-history() {
         return 1
     fi
 
-    if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+    if ! "${GIT_CMD:-git}" rev-parse --is-inside-work-tree > /dev/null 2>&1; then
         echo "Error: Not in a git repository"
         return 1
     fi
 
     local file_path="$1"
 
-    if [ ! -f "$file_path" ] && ! git ls-files --error-unmatch "$file_path" > /dev/null 2>&1; then
+    if [ ! -f "$file_path" ] && ! "${GIT_CMD:-git}" ls-files --error-unmatch "$file_path" > /dev/null 2>&1; then
         echo "Error: File '$file_path' not found in git repository"
         return 1
     fi
 
     echo "Git history for: $file_path"
-    git log --follow --patch --stat -- "$file_path"
-}
-
-project-init() {
-    # Description: Initialize a new project with common development files
-    # Usage: project-init PROJECT_NAME [LANGUAGE]
-    # Example: project-init my-app javascript
-    if [ $# -lt 1 ]; then
-        echo "Usage: project-init PROJECT_NAME [LANGUAGE]"
-        echo "Supported languages: javascript, python, rust, go, generic (default)"
-        return 1
-    fi
-
-    local project_name="$1"
-    local language="${2:-generic}"
-
-    if [ -d "$project_name" ]; then
-        echo "Error: Directory '$project_name' already exists"
-        return 1
-    fi
-
-    mkdir -p "$project_name"
-    cd "$project_name"
-
-    # Initialize git
-    git init
-
-    # Create basic files
-    echo "# $project_name" > README.md
-    echo "node_modules/" > .gitignore
-    echo ".env" >> .gitignore
-    echo "*.log" >> .gitignore
-    echo ".DS_Store" >> .gitignore
-
-    # Language-specific initialization
-    case "$language" in
-        "javascript" | "js" | "node")
-            echo '{"name": "'$project_name'", "version": "1.0.0", "description": "", "main": "index.js", "scripts": {"start": "node index.js", "test": "echo \"Error: no test specified\" && exit 1"}, "keywords": [], "author": "", "license": "MIT"}' | jq . > package.json 2> /dev/null || echo '{"name": "'$project_name'", "version": "1.0.0", "description": ""}' > package.json
-            echo "dist/" >> .gitignore
-            echo "build/" >> .gitignore
-            echo "coverage/" >> .gitignore
-            touch index.js
-            ;;
-        "python" | "py")
-            echo "__pycache__/" >> .gitignore
-            echo "*.pyc" >> .gitignore
-            echo "*.pyo" >> .gitignore
-            echo "venv/" >> .gitignore
-            echo "env/" >> .gitignore
-            echo ".pytest_cache/" >> .gitignore
-            echo "*.egg-info/" >> .gitignore
-            touch main.py
-            echo "# Requirements" > requirements.txt
-            ;;
-        "rust")
-            echo "/target" > .gitignore
-            echo "Cargo.lock" >> .gitignore
-            echo "**/*.rs.bk" >> .gitignore
-            cargo init --name "$project_name" . 2> /dev/null || echo "Note: cargo not found, manual Cargo.toml creation needed"
-            ;;
-        "go")
-            echo "# Go" > .gitignore
-            echo "*.exe" >> .gitignore
-            echo "*.exe~" >> .gitignore
-            echo "*.dll" >> .gitignore
-            echo "*.so" >> .gitignore
-            echo "*.dylib" >> .gitignore
-            echo "/vendor/" >> .gitignore
-            go mod init "$project_name" 2> /dev/null || echo "Note: go not found, manual go.mod creation needed"
-            touch main.go
-            ;;
-    esac
-
-    # Create initial commit
-    git add .
-    git commit -m "Initial commit"
-
-    echo "Project '$project_name' initialized with $language template"
-    echo "Directory: $(pwd)"
-}
-
-dev-server() {
-    # Description: Start a local development server based on project type
-    # Usage: dev-server [PORT]
-    # Example: dev-server 3000
-    local port="${1:-8000}"
-
-    if ! [[ "$port" =~ ^[0-9]+$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
-        echo "Error: Port must be a number between 1 and 65535"
-        return 1
-    fi
-
-    if [ -f "package.json" ]; then
-        echo "Detected Node.js project..."
-        if command -v yarn > /dev/null 2>&1 && [ -f "yarn.lock" ]; then
-            echo "Starting with yarn..."
-            yarn start
-        elif command -v npm > /dev/null 2>&1; then
-            echo "Starting with npm..."
-            npm start
-        else
-            echo "Error: Neither npm nor yarn found"
-            return 1
-        fi
-    elif [ -f "Cargo.toml" ]; then
-        echo "Detected Rust project..."
-        if command -v cargo > /dev/null 2>&1; then
-            echo "Starting with cargo..."
-            cargo run
-        else
-            echo "Error: cargo not found"
-            return 1
-        fi
-    elif [ -f "go.mod" ]; then
-        echo "Detected Go project..."
-        if command -v go > /dev/null 2>&1; then
-            echo "Starting Go application..."
-            go run .
-        else
-            echo "Error: go not found"
-            return 1
-        fi
-    elif [ -f "requirements.txt" ] || [ -f "pyproject.toml" ] || [ -f "setup.py" ]; then
-        echo "Detected Python project..."
-        if command -v python3 > /dev/null 2>&1; then
-            echo "Starting Python development server on port $port..."
-            python3 -m http.server "$port"
-        else
-            echo "Error: python3 not found"
-            return 1
-        fi
-    else
-        echo "No specific project type detected."
-        if command -v python3 > /dev/null 2>&1; then
-            echo "Starting generic HTTP server on port $port..."
-            python3 -m http.server "$port"
-        else
-            echo "Error: python3 not found for generic server"
-            return 1
-        fi
-    fi
+    "${GIT_CMD:-git}" log --follow --patch --stat -- "$file_path"
 }
 
 code-stats() {
@@ -320,4 +181,1020 @@ code-stats() {
     else
         find "$directory" -type d | head -10
     fi
+}
+
+# =============================================================================
+# Dev Infrastructure Functions (Caddy + direnv + dnsmasq)
+# =============================================================================
+
+_dev_validate_project_name() {
+    # Description: Comprehensive project name validation with security checks
+    # Usage: _dev_validate_project_name PROJECT_NAME
+    local project_name="$1"
+    
+    # Check if empty
+    if [ -z "$project_name" ]; then
+        echo "Error: Project name cannot be empty"
+        return 1
+    fi
+    
+    # Length check (DNS limit)
+    if [ ${#project_name} -gt 63 ]; then
+        echo "Error: Project name too long (max 63 characters)"
+        return 1
+    fi
+    
+    # Check for spaces first (common case, clear error message)
+    if [[ "$project_name" =~ [[:space:]] ]]; then
+        echo "Error: Project name cannot contain spaces"
+        return 1
+    fi
+    
+    # CRITICAL SECURITY: No path traversal sequences
+    if [[ "$project_name" == *".."* ]] || [[ "$project_name" == *"/"* ]]; then
+        echo "Error: Project name cannot contain path separators or traversal sequences"
+        return 1
+    fi
+    
+    # DNS-safe characters only (prevents injection attacks)
+    if ! [[ "$project_name" =~ ^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$ ]] && [ ${#project_name} -gt 1 ]; then
+        echo "Error: Project name must contain only letters, numbers, and hyphens (no leading/trailing hyphens)"
+        return 1
+    fi
+    
+    # Check for single character (allow letters and numbers only)
+    if [ ${#project_name} -eq 1 ] && [[ ! "$project_name" =~ ^[a-zA-Z0-9]$ ]]; then
+        echo "Error: Single character project names must be alphanumeric"
+        return 1
+    fi
+    
+    # CRITICAL SECURITY: Path resolution check to prevent directory traversal
+    # Only perform this check if readlink is available and the project name doesn't already contain forbidden patterns
+    if command -v readlink > /dev/null 2>&1; then
+        local resolved_path current_dir
+        resolved_path=$(readlink -f "$project_name" 2>/dev/null)
+        current_dir=$(readlink -f "." 2>/dev/null)
+        
+        # Only fail if both paths resolved and they show a traversal issue
+        if [ -n "$resolved_path" ] && [ -n "$current_dir" ]; then
+            if [[ "$resolved_path" != "$current_dir/$project_name" ]]; then
+                echo "Error: Project path resolves outside current directory"
+                return 1
+            fi
+        fi
+    fi
+    
+    return 0
+}
+
+_dev_find_available_port() {
+    # Description: Find an available port with conflict resolution
+    # Usage: _dev_find_available_port PREFERRED_PORT [MAX_ATTEMPTS]
+    local preferred_port="$1"
+    local max_attempts="${2:-100}"
+    
+    # Validate port number
+    if ! [[ "$preferred_port" =~ ^[0-9]+$ ]] || [ "$preferred_port" -lt 1 ] || [ "$preferred_port" -gt 65535 ]; then
+        echo "Error: Invalid port number: $preferred_port" >&2
+        return 1
+    fi
+    
+    # Check if preferred port is available
+    if ! lsof -ti tcp:"$preferred_port" >/dev/null 2>&1; then
+        echo "$preferred_port"
+        return 0
+    fi
+    
+    echo "Port $preferred_port is in use, finding alternative..." >&2
+    
+    # Find next available port
+    for ((i=1; i<=max_attempts; i++)); do
+        local test_port=$((preferred_port + i))
+        
+        # Wrap around if we exceed port range
+        if [ "$test_port" -gt 65535 ]; then
+            test_port=$((preferred_port - i))
+        fi
+        
+        # Skip invalid ports
+        if [ "$test_port" -lt 1 ] || [ "$test_port" -gt 65535 ]; then
+            continue
+        fi
+        
+        if ! lsof -ti tcp:"$test_port" >/dev/null 2>&1; then
+            echo "Using port $test_port instead" >&2
+            echo "$test_port"
+            return 0
+        fi
+    done
+    
+    echo "Error: No available ports found near $preferred_port" >&2
+    return 1
+}
+
+_dev_get_port_for_layout() {
+    # Description: Get default port for tech stack layout (for backward compatibility)
+    # Usage: _dev_get_port_for_layout LAYOUT
+    local layout="$1"
+    
+    case "$layout" in
+        "node"|"nodejs")      echo "3000" ;;
+        "python"|"python3")   echo "8000" ;;
+        "ruby")               echo "4000" ;;
+        "go")                 echo "8080" ;;
+        "rust")               echo "8001" ;;  # Fixed conflict with Python
+        "generic"|*)          echo "3000" ;;
+    esac
+}
+
+_dev_get_available_port_for_layout() {
+    # Description: Get available port for tech stack layout with conflict resolution
+    # Usage: _dev_get_available_port_for_layout LAYOUT
+    local layout="$1"
+    local preferred_port
+    
+    case "$layout" in
+        "node"|"nodejs")      preferred_port="3000" ;;
+        "python"|"python3")   preferred_port="8000" ;;
+        "ruby")               preferred_port="4000" ;;
+        "go")                 preferred_port="8080" ;;
+        "rust")               preferred_port="8001" ;;  # Fixed conflict with Python
+        "generic"|*)          preferred_port="3000" ;;
+    esac
+    
+    _dev_find_available_port "$preferred_port"
+}
+
+_dev_get_project_port() {
+    # Description: Safely parse project port from Caddyfile with input validation
+    # Usage: _dev_get_project_port PROJECT_NAME
+    local project_name="$1"
+    local caddyfile_path="${CADDY_CONFIG_DIR:-$HOME/.config/caddy}/Caddyfile"
+    
+    # Validate project name to prevent injection
+    if ! _dev_validate_project_name "$project_name"; then
+        echo "3000"  # Safe fallback
+        return 0
+    fi
+    
+    if [ ! -f "$caddyfile_path" ]; then
+        echo "3000"  # Default fallback
+        return 0
+    fi
+    
+    # Escape special regex characters to prevent injection
+    local escaped_name=$(printf '%s\n' "$project_name" | sed 's/[[\.*^$(){}?+|]/\\&/g')
+    
+    # Safe parsing using grep and sed (more compatible than AWK)
+    # Look for the project block and extract port number
+    local port=$(grep -A5 "^${escaped_name}\.test" "$caddyfile_path" 2>/dev/null | \
+                 grep "reverse_proxy.*localhost:" | \
+                 sed 's/.*localhost://' | \
+                 sed 's/[^0-9].*//' | \
+                 head -1)
+    
+    # Validate extracted port
+    if [[ "$port" =~ ^[0-9]+$ ]] && [ "$port" -ge 1 ] && [ "$port" -le 65535 ]; then
+        echo "$port"
+    else
+        echo "3000"  # Safe fallback
+    fi
+}
+
+_dev_add_to_caddyfile() {
+    # Description: Safely add project to Caddyfile with atomic operations
+    # Usage: _dev_add_to_caddyfile PROJECT_NAME PORT
+    local project_name="$1"
+    local port="$2"
+    local caddyfile_path="${CADDY_CONFIG_DIR:-$HOME/.config/caddy}/Caddyfile"
+    
+    # Validate inputs
+    if ! _dev_validate_project_name "$project_name"; then
+        return 1
+    fi
+    
+    if ! [[ "$port" =~ ^[0-9]+$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
+        echo "Error: Invalid port number: $port"
+        return 1
+    fi
+    
+    if [ ! -f "$caddyfile_path" ]; then
+        echo "Error: Caddyfile not found at $caddyfile_path"
+        return 1
+    fi
+    
+    # Verify write permissions
+    if [ ! -w "$caddyfile_path" ]; then
+        echo "Error: Cannot write to $caddyfile_path"
+        return 1
+    fi
+    
+    # Check if project already exists (safe regex)
+    local escaped_name=$(printf '%s\n' "$project_name" | sed 's/[[\.*^$(){}?+|]/\\&/g')
+    if grep -q "^${escaped_name}\.test" "$caddyfile_path" 2>/dev/null; then
+        echo "Warning: ${project_name}.test already exists in Caddyfile"
+        return 0
+    fi
+    
+    # Create temp file in same directory for atomic operation
+    local temp_file
+    temp_file=$(mktemp "${caddyfile_path}.XXXXXX") || {
+        echo "Error: Cannot create temporary file"
+        return 1
+    }
+    
+    # Cleanup handler
+    cleanup_temp_file() {
+        rm -f "$temp_file"
+    }
+    trap cleanup_temp_file EXIT
+    
+    # Safe AWK-based processing with input validation
+    if ! awk -v project="$project_name" -v port="$port" '
+        # Insert before catch-all or at end
+        /^\*\.test[[:space:]]*{/ && !inserted {
+            print "# " project " development server"
+            print project ".test {"
+            print "  import dev_common"
+            print "  reverse_proxy localhost:" port
+            print "}"
+            print ""
+            inserted = 1
+        }
+        { print }
+        END {
+            if (!inserted) {
+                print ""
+                print "# " project " development server" 
+                print project ".test {"
+                print "  import dev_common"
+                print "  reverse_proxy localhost:" port
+                print "}"
+            }
+        }
+    ' "$caddyfile_path" > "$temp_file"; then
+        echo "Error: Failed to process Caddyfile"
+        return 1
+    fi
+    
+    # Verify temp file has content
+    if [ ! -s "$temp_file" ]; then
+        echo "Error: Generated Caddyfile is empty"
+        return 1
+    fi
+    
+    # Atomic move
+    if ! mv "$temp_file" "$caddyfile_path"; then
+        echo "Error: Failed to update Caddyfile"
+        return 1
+    fi
+    
+    trap - EXIT  # Disable cleanup - file moved successfully
+    return 0
+}
+
+_dev_remove_from_caddyfile() {
+    # Description: Safely remove project from Caddyfile with atomic operations
+    # Usage: _dev_remove_from_caddyfile PROJECT_NAME
+    local project_name="$1"
+    local caddyfile_path="${CADDY_CONFIG_DIR:-$HOME/.config/caddy}/Caddyfile"
+    
+    # Validate inputs
+    if ! _dev_validate_project_name "$project_name"; then
+        return 1
+    fi
+    
+    if [ ! -f "$caddyfile_path" ]; then
+        echo "Error: Caddyfile not found at $caddyfile_path"
+        return 1
+    fi
+    
+    # Verify write permissions
+    if [ ! -w "$caddyfile_path" ]; then
+        echo "Error: Cannot write to $caddyfile_path"
+        return 1
+    fi
+    
+    # Create temp file in same directory for atomic operation
+    local temp_file
+    temp_file=$(mktemp "${caddyfile_path}.XXXXXX") || {
+        echo "Error: Cannot create temporary file"
+        return 1
+    }
+    
+    # Cleanup handler
+    cleanup_temp_file() {
+        rm -f "$temp_file"
+    }
+    trap cleanup_temp_file EXIT
+    
+    # Safe AWK-based removal with escaped project name
+    local escaped_name=$(printf '%s\n' "$project_name" | sed 's/[[\.*^$(){}?+|]/\\&/g')
+    
+    if ! awk -v project="$project_name" -v escaped="$escaped_name" '
+        BEGIN { skip = 0 }
+        /^# .* development server$/ && $2 == project { skip = 1; next }
+        $0 ~ ("^" escaped "\\.test[[:space:]]*\\{$") { skip = 1; next }
+        skip && /^[[:space:]]*}[[:space:]]*$/ { skip = 0; next }
+        skip { next }
+        !skip { print }
+    ' "$caddyfile_path" > "$temp_file"; then
+        echo "Error: Failed to process Caddyfile"
+        return 1
+    fi
+    
+    # Verify temp file has content (even if empty, should exist)
+    if [ ! -f "$temp_file" ]; then
+        echo "Error: Failed to create processed Caddyfile"
+        return 1
+    fi
+    
+    # Atomic move
+    if ! mv "$temp_file" "$caddyfile_path"; then
+        echo "Error: Failed to update Caddyfile"
+        return 1
+    fi
+    
+    trap - EXIT  # Disable cleanup - file moved successfully
+    return 0
+}
+
+_dev_stop_project_processes() {
+    # Description: Safely stop processes using project port with user validation
+    # Usage: _dev_stop_project_processes PORT PROJECT_NAME
+    local port="$1"
+    local project_name="$2"
+    
+    # Validate port
+    if ! [[ "$port" =~ ^[0-9]+$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
+        echo "Error: Invalid port number: $port"
+        return 1
+    fi
+    
+    local pids=$(lsof -ti tcp:"$port" 2>/dev/null || true)
+    
+    if [ -z "$pids" ]; then
+        return 0
+    fi
+    
+    echo "Found processes using port $port:"
+    local valid_pids=""
+    local current_user=$(whoami)
+    
+    for pid in $pids; do
+        # Validate process exists and get owner
+        if ! kill -0 "$pid" 2>/dev/null; then
+            echo "  Process $pid no longer exists, skipping"
+            continue
+        fi
+        
+        local proc_user=$(ps -o user= -p "$pid" 2>/dev/null | tr -d ' ')
+        if [ -z "$proc_user" ]; then
+            echo "  Warning: Cannot determine owner of process $pid, skipping"
+            continue
+        fi
+        
+        # SECURITY: Only stop processes owned by current user
+        if [ "$proc_user" != "$current_user" ]; then
+            echo "  Warning: Process $pid belongs to $proc_user (not $current_user), skipping"
+            continue
+        fi
+        
+        # Show process info for confirmation
+        local proc_info=$(ps -o pid,command= -p "$pid" 2>/dev/null || echo "$pid <command unavailable>")
+        echo "  $proc_info"
+        valid_pids="$valid_pids $pid"
+    done
+    
+    if [ -n "$valid_pids" ]; then
+        echo
+        printf "Stop these processes? [y/N] "
+        read -r response
+        case "$response" in
+            [Yy]|[Yy][Ee][Ss])
+                for pid in $valid_pids; do
+                    # Graceful shutdown first
+                    if kill -TERM "$pid" 2>/dev/null; then
+                        echo "Sent SIGTERM to process $pid"
+                        
+                        # Wait for graceful shutdown (5 seconds max)
+                        local count=0
+                        while [ $count -lt 50 ] && kill -0 "$pid" 2>/dev/null; do
+                            sleep 0.1
+                            count=$((count + 1))
+                        done
+                        
+                        # Force kill if needed
+                        if kill -0 "$pid" 2>/dev/null; then
+                            echo "Process $pid still running, forcing shutdown..."
+                            kill -KILL "$pid" 2>/dev/null || true
+                            
+                            # Final verification
+                            sleep 0.1
+                            if kill -0 "$pid" 2>/dev/null; then
+                                echo "Warning: Process $pid could not be stopped"
+                            else
+                                echo "Process $pid forcibly stopped"
+                            fi
+                        else
+                            echo "Process $pid gracefully stopped"
+                        fi
+                    else
+                        echo "Warning: Could not signal process $pid (may have already exited)"
+                    fi
+                done
+                ;;
+            *)
+                echo "Process stop cancelled"
+                return 1
+                ;;
+        esac
+    fi
+    
+    return 0
+}
+
+dev-create() {
+    # Description: Create new project with security hardening and rollback mechanisms
+    # Usage: dev-create PROJECT_NAME [LAYOUT]
+    # Example: dev-create myapp node
+    if [ $# -lt 1 ]; then
+        echo "Usage: dev-create PROJECT_NAME [LAYOUT]"
+        echo "Supported layouts: node, nodejs, python, python3, ruby, go, rust, generic"
+        echo "Example: dev-create myapp node"
+        return 1
+    fi
+    
+    local project_name="$1"
+    local layout="${2:-generic}"
+    local cleanup_needed=false
+    local caddyfile_modified=false
+    local original_dir="$PWD"
+    
+    # SECURITY: Comprehensive validation first
+    if ! _dev_validate_project_name "$project_name"; then
+        return 1
+    fi
+    
+    # Validate layout parameter
+    case "$layout" in
+        "node"|"nodejs"|"python"|"python3"|"ruby"|"go"|"rust"|"generic")
+            # Valid layouts
+            ;;
+        *)
+            echo "Error: Invalid layout '$layout'"
+            echo "Supported layouts: node, nodejs, python, python3, ruby, go, rust, generic"
+            return 1
+            ;;
+    esac
+    
+    # Check if Caddy is available
+    if ! command -v "${CADDY_CMD:-caddy}" > /dev/null 2>&1; then
+        echo "Error: Caddy not found. Please install Caddy first:"
+        echo "  brew install caddy"
+        return 1
+    fi
+    
+    # Check if project directory already exists
+    if [ -d "$project_name" ]; then
+        echo "Error: Directory '$project_name' already exists"
+        return 1
+    fi
+    
+    # Get available port for layout (with conflict resolution)
+    local port
+    if ! port=$(_dev_get_available_port_for_layout "$layout"); then
+        echo "Error: Could not find available port for $layout layout"
+        return 1
+    fi
+    
+    # Cleanup handler for failures
+    cleanup_on_failure() {
+        if [ "$cleanup_needed" = "true" ]; then
+            echo "Cleaning up failed project creation..." >&2
+            cd "$original_dir" || true
+            [ -d "$project_name" ] && rm -rf "$project_name"
+        fi
+        if [ "$caddyfile_modified" = "true" ]; then
+            echo "Removing project from Caddyfile..." >&2
+            _dev_remove_from_caddyfile "$project_name" 2>/dev/null || true
+        fi
+    }
+    
+    trap cleanup_on_failure EXIT
+    
+    echo "Creating project '$project_name' with $layout layout..."
+    echo "Using port: $port"
+    
+    # Create project directory
+    if ! mkdir -p "$project_name"; then
+        echo "Error: Failed to create project directory"
+        return 1
+    fi
+    cleanup_needed=true
+    
+    if ! cd "$project_name"; then
+        echo "Error: Failed to enter project directory"
+        return 1
+    fi
+    
+    # Initialize git repository
+    if ! "${GIT_CMD:-git}" init --quiet; then
+        echo "Error: Failed to initialize git repository"
+        return 1
+    fi
+    
+    # Create .envrc file
+    cat > .envrc << EOF
+# Load env files in layers
+dotenv_if_exists() { has dotenv && dotenv "\$1"; }
+
+: "\${ENVIRONMENT:=local}"
+
+dotenv_if_exists .env
+case "\$ENVIRONMENT" in
+  test)        dotenv_if_exists .env.test ;;
+  production)  dotenv_if_exists .env.production ;;
+esac
+dotenv_if_exists .env.local
+dotenv_if_exists ".env.\${ENVIRONMENT}.local"
+
+EOF
+    
+    # Add layout if not generic
+    if [ "$layout" != "generic" ]; then
+        echo "layout $layout" >> .envrc
+    fi
+    
+    # Create basic env files
+    cat > .env << EOF
+# Base environment variables
+PROJECT_NAME=$project_name
+PORT=$port
+EOF
+    
+    cat > .env.local << EOF
+# Local development overrides (not committed)
+# Add local-specific variables here
+EOF
+    
+    # Add .env.local to gitignore
+    echo "# Environment files" > .gitignore
+    echo ".env.local" >> .gitignore
+    echo ".env.*.local" >> .gitignore
+    echo "" >> .gitignore
+    
+    # Add common ignores based on layout
+    case "$layout" in
+        "node"|"nodejs")
+            echo "# Node.js" >> .gitignore
+            echo "node_modules/" >> .gitignore
+            echo "npm-debug.log*" >> .gitignore
+            echo "dist/" >> .gitignore
+            echo "build/" >> .gitignore
+            ;;
+        "python"|"python3")
+            echo "# Python" >> .gitignore
+            echo "__pycache__/" >> .gitignore
+            echo "*.pyc" >> .gitignore
+            echo "*.pyo" >> .gitignore
+            echo "venv/" >> .gitignore
+            echo ".pytest_cache/" >> .gitignore
+            ;;
+        "ruby")
+            echo "# Ruby" >> .gitignore
+            echo ".bundle/" >> .gitignore
+            echo "vendor/bundle" >> .gitignore
+            echo "*.gem" >> .gitignore
+            ;;
+        "go")
+            echo "# Go" >> .gitignore
+            echo "*.exe" >> .gitignore
+            echo "*.exe~" >> .gitignore
+            echo "*.dll" >> .gitignore
+            echo "*.so" >> .gitignore
+            echo "*.dylib" >> .gitignore
+            ;;
+        "rust")
+            echo "# Rust" >> .gitignore
+            echo "/target" >> .gitignore
+            echo "Cargo.lock" >> .gitignore
+            echo "**/*.rs.bk" >> .gitignore
+            ;;
+    esac
+    
+    # Add common ignores
+    echo "" >> .gitignore
+    echo "# General" >> .gitignore
+    echo ".DS_Store" >> .gitignore
+    echo "*.log" >> .gitignore
+    
+    # Create README
+    cat > README.md << EOF
+# $project_name
+
+Development server: https://$project_name.test
+
+## Getting Started
+
+\`\`\`bash
+# Enter project directory (direnv will load .envrc automatically)
+cd $project_name
+
+# Start your development server on port $port
+# (configure Caddy to proxy https://$project_name.test -> localhost:$port)
+\`\`\`
+
+## Environment
+
+- **Local**: .env + .env.local
+- **Test**: .env + .env.test + .env.local + .env.test.local  
+- **Production**: .env + .env.production + .env.local + .env.production.local
+
+Switch environments: \`dev-env ENVIRONMENT\`
+EOF
+    
+    # Add to Caddyfile (secure)
+    if _dev_add_to_caddyfile "$project_name" "$port"; then
+        echo "Added $project_name.test -> localhost:$port to Caddyfile"
+        caddyfile_modified=true
+    else
+        echo "Warning: Failed to add to Caddyfile"
+        # Continue but note the issue
+    fi
+    
+    # Allow direnv
+    if command -v "${DIRENV_CMD:-direnv}" > /dev/null 2>&1; then
+        "${DIRENV_CMD:-direnv}" allow
+        echo "Allowed .envrc with direnv"
+    else
+        echo "Note: direnv not found, .envrc created but not activated"
+    fi
+    
+    # Reload Caddy if running
+    if pgrep -x "${CADDY_CMD:-caddy}" > /dev/null 2>&1; then
+        local caddyfile_path="${CADDY_CONFIG_DIR:-$HOME/.config/caddy}/Caddyfile"
+        
+        if "${CADDY_CMD:-caddy}" reload --config "$caddyfile_path" 2>/dev/null; then
+            echo "Reloaded Caddy configuration"
+        else
+            echo "Note: Failed to reload Caddy (may need to restart manually)"
+        fi
+    else
+        echo "Note: Caddy not running, start with 'dev-start' to use https://$project_name.test"
+    fi
+    
+    # Initial commit
+    "${GIT_CMD:-git}" add .
+    "${GIT_CMD:-git}" commit --quiet -m "Initial project setup with $layout layout"
+    
+    echo ""
+    echo "✅ Project '$project_name' created successfully!"
+    echo ""
+    echo "🌐 URL: https://$project_name.test"
+    echo "🔧 Backend: localhost:$port"
+    echo "📁 Path: $(pwd)"
+    echo ""
+    echo "Next steps:"
+    echo "1. Start your development server on port $port"
+    echo "2. Visit https://$project_name.test"
+    echo "3. Use 'dev-info' to see project status"
+    
+    # Success - disable cleanup
+    cleanup_needed=false
+    caddyfile_modified=false
+    trap - EXIT
+}
+
+dev-stop() {
+    # Description: Stop development server for current project
+    # Usage: dev-stop [PROJECT_NAME]
+    # Example: dev-stop myapp
+    local project_name="${1:-}"
+    
+    # Auto-detect project name from current directory if not provided
+    if [ -z "$project_name" ]; then
+        project_name=$(basename "$PWD")
+        echo "Auto-detected project: $project_name"
+    fi
+    
+    # Validate project name
+    if ! _dev_validate_project_name "$project_name"; then
+        return 1
+    fi
+    
+    # Get project port
+    local port=$(_dev_get_project_port "$project_name")
+    
+    echo "Stopping development server for $project_name (port $port)..."
+    
+    # Use secure process management
+    _dev_stop_project_processes "$port" "$project_name"
+}
+
+dev-restart() {
+    # Description: Restart development server for current project
+    # Usage: dev-restart [PROJECT_NAME]
+    # Example: dev-restart myapp
+    local project_name="${1:-}"
+    
+    # Auto-detect project name from current directory if not provided
+    if [ -z "$project_name" ]; then
+        project_name=$(basename "$PWD")
+        echo "Auto-detected project: $project_name"
+    fi
+    
+    # Validate project name
+    if ! _dev_validate_project_name "$project_name"; then
+        return 1
+    fi
+    
+    echo "Restarting development environment for $project_name..."
+    
+    # Stop the development server
+    dev-stop "$project_name"
+    
+    echo ""
+    echo "Reloading Caddy configuration..."
+    
+    # Reload Caddy config
+    local caddyfile_path="${CADDY_CONFIG_DIR:-$HOME/.config/caddy}/Caddyfile"
+    
+    if [ -f "$caddyfile_path" ]; then
+        if "${CADDY_CMD:-caddy}" reload --config "$caddyfile_path" 2>/dev/null; then
+            echo "✅ Caddy configuration reloaded"
+        else
+            echo "Warning: Failed to reload Caddy configuration"
+        fi
+    else
+        echo "Warning: Caddyfile not found at $caddyfile_path"
+    fi
+    
+    echo ""
+    echo "✅ Restart complete for $project_name"
+    echo "Start your development server and visit https://$project_name.test"
+}
+
+dev-delete() {
+    # Description: Remove project and clean up configuration  
+    # Usage: dev-delete PROJECT_NAME
+    # Example: dev-delete myapp
+    if [ $# -lt 1 ]; then
+        echo "Usage: dev-delete PROJECT_NAME"
+        echo "Example: dev-delete myapp"
+        return 1
+    fi
+    
+    local project_name="$1"
+    
+    # Validate project name
+    if ! _dev_validate_project_name "$project_name"; then
+        return 1
+    fi
+    
+    echo "This will permanently delete project '$project_name' and its configuration."
+    echo ""
+    
+    # Show what will be deleted
+    if [ -d "$project_name" ]; then
+        echo "📁 Directory: $(realpath "$project_name")"
+    fi
+    
+    local caddyfile_path="${CADDY_CONFIG_DIR:-$HOME/.config/caddy}/Caddyfile"
+    
+    if [ -f "$caddyfile_path" ] && grep -q "^${project_name}\.test" "$caddyfile_path"; then
+        echo "🌐 Domain: $project_name.test (from Caddyfile)"
+    fi
+    
+    echo ""
+    printf "Are you sure you want to continue? [y/N] "
+    read -r response
+    
+    if [[ ! "$response" =~ ^[Yy]$ ]]; then
+        echo "Deletion cancelled."
+        return 0
+    fi
+    
+    echo ""
+    echo "Deleting project '$project_name'..."
+    
+    # Stop any running processes first
+    dev-stop "$project_name" 2>/dev/null || true
+    
+    # Remove project directory
+    if [ -d "$project_name" ]; then
+        if rm -rf "$project_name"; then
+            echo "✅ Removed project directory"
+        else
+            echo "❌ Failed to remove project directory"
+        fi
+    else
+        echo "📁 Project directory not found (already removed?)"
+    fi
+    
+    # Remove from Caddyfile
+    if [ -f "$caddyfile_path" ]; then
+        if _dev_remove_from_caddyfile "$project_name"; then
+            echo "✅ Removed $project_name.test from Caddyfile"
+            
+            # Reload Caddy if running
+            if pgrep -x "${CADDY_CMD:-caddy}" > /dev/null 2>&1; then
+                if "${CADDY_CMD:-caddy}" reload --config "$caddyfile_path" 2>/dev/null; then
+                    echo "✅ Reloaded Caddy configuration"
+                else
+                    echo "⚠️  Failed to reload Caddy (restart manually if needed)"
+                fi
+            fi
+        else
+            echo "⚠️  Failed to remove from Caddyfile (may need manual cleanup)"
+        fi
+    else
+        echo "⚠️  Caddyfile not found"
+    fi
+    
+    echo ""
+    echo "✅ Project '$project_name' deleted successfully!"
+}
+
+dev-info() {
+    # Description: Show project development info
+    # Usage: dev-info [PROJECT_NAME]
+    # Example: dev-info myapp
+    local project_name="${1:-}"
+    
+    # Auto-detect project name from current directory if not provided
+    if [ -z "$project_name" ]; then
+        if [ -f ".envrc" ] || [ -f ".env" ]; then
+            project_name=$(basename "$PWD")
+            echo "Auto-detected project: $project_name"
+        else
+            echo "Usage: dev-info [PROJECT_NAME]"
+            echo "Run from project directory or specify project name"
+            return 1
+        fi
+    fi
+    
+    # Validate project name
+    if ! _dev_validate_project_name "$project_name"; then
+        return 1
+    fi
+    
+    echo "Development info for '$project_name'"
+    echo "=================================="
+    
+    # Show URLs
+    echo "🌐 Project URL: https://$project_name.test"
+    
+    # Show backend port
+    local port=$(_dev_get_project_port "$project_name")
+    echo "🔧 Backend Port: $port"
+    echo "🔗 Backend URL: http://localhost:$port"
+    
+    # Check if port is in use
+    if lsof -ti tcp:$port > /dev/null 2>&1; then
+        echo "🟢 Status: Server running on port $port"
+    else
+        echo "🔴 Status: No server running on port $port"
+    fi
+    
+    # Show environment info if we're in the project directory
+    if [ -f ".envrc" ]; then
+        echo "📝 Environment: ${ENVIRONMENT:-local}"
+        
+        # Show which env files would be loaded
+        echo "📄 Env Files:"
+        [ -f ".env" ] && echo "   ✅ .env"
+        [ -f ".env.local" ] && echo "   ✅ .env.local"
+        case "${ENVIRONMENT:-local}" in
+            "test")
+                [ -f ".env.test" ] && echo "   ✅ .env.test" || echo "   ❌ .env.test (missing)"
+                [ -f ".env.test.local" ] && echo "   ✅ .env.test.local"
+                ;;
+            "production")
+                [ -f ".env.production" ] && echo "   ✅ .env.production" || echo "   ❌ .env.production (missing)"
+                [ -f ".env.production.local" ] && echo "   ✅ .env.production.local"
+                ;;
+        esac
+        
+        # Show direnv status
+        if command -v "${DIRENV_CMD:-direnv}" > /dev/null 2>&1; then
+            if "${DIRENV_CMD:-direnv}" status 2>/dev/null | grep -q "Found RC allowed"; then
+                echo "✅ direnv: Allowed and active"
+            else
+                echo "⚠️  direnv: Not allowed (run 'direnv allow')"
+            fi
+        else
+            echo "❌ direnv: Not installed"
+        fi
+    else
+        echo "📝 Environment: Not a development project (no .envrc found)"
+    fi
+    
+    # Show Caddy status
+    if command -v "${CADDY_CMD:-caddy}" > /dev/null 2>&1; then
+        if pgrep -x "${CADDY_CMD:-caddy}" > /dev/null 2>&1; then
+            echo "✅ Caddy: Running"
+            
+            # Check if domain is configured
+            local caddyfile_path="${CADDY_CONFIG_DIR:-$HOME/.config/caddy}/Caddyfile"
+            
+            if [ -f "$caddyfile_path" ] && grep -q "^${project_name}\.test" "$caddyfile_path"; then
+                echo "✅ Domain: Configured in Caddyfile"
+            else
+                echo "❌ Domain: Not configured in Caddyfile"
+            fi
+        else
+            echo "🔴 Caddy: Not running (start with 'dev-start')"
+        fi
+    else
+        echo "❌ Caddy: Not installed"
+    fi
+    
+    # Show dnsmasq status for .test domains
+    if dig +short test >/dev/null 2>&1; then
+        echo "✅ DNS: .test domains configured"
+    else
+        echo "⚠️  DNS: .test domains may not be configured"
+    fi
+    
+    echo ""
+    echo "Quick commands:"
+    echo "• dev-env [environment]  - Switch environment (local/test/production)"
+    echo "• dev-stop              - Stop development server"
+    echo "• dev-restart           - Restart development environment"
+}
+
+dev-env() {
+    # Description: Switch environment for current project
+    # Usage: dev-env ENVIRONMENT
+    # Example: dev-env test
+    if [ $# -lt 1 ]; then
+        echo "Usage: dev-env ENVIRONMENT"
+        echo "Environments: local, test, production"
+        echo "Example: dev-env test"
+        return 1
+    fi
+    
+    local environment="$1"
+    
+    # Validate environment
+    case "$environment" in
+        "local"|"test"|"production")
+            # Valid environments
+            ;;
+        *)
+            echo "Error: Invalid environment '$environment'"
+            echo "Valid environments: local, test, production"
+            return 1
+            ;;
+    esac
+    
+    # Check if we're in a project directory
+    if [ ! -f ".envrc" ]; then
+        echo "Error: Not in a development project directory"
+        echo "Run this command from a directory with .envrc file"
+        return 1
+    fi
+    
+    echo "Switching to '$environment' environment..."
+    
+    # Set environment variable
+    export ENVIRONMENT="$environment"
+    
+    # Reload direnv if available
+    if command -v "${DIRENV_CMD:-direnv}" > /dev/null 2>&1; then
+        "${DIRENV_CMD:-direnv}" reload
+        echo "✅ Reloaded environment with direnv"
+    else
+        echo "⚠️  direnv not available, please restart your shell or source .envrc manually"
+    fi
+    
+    # Show which env files will be loaded
+    echo ""
+    echo "Environment files for '$environment':"
+    [ -f ".env" ] && echo "✅ .env"
+    [ -f ".env.local" ] && echo "✅ .env.local"
+    
+    case "$environment" in
+        "test")
+            if [ -f ".env.test" ]; then
+                echo "✅ .env.test"
+            else
+                echo "❌ .env.test (create this file for test-specific variables)"
+            fi
+            [ -f ".env.test.local" ] && echo "✅ .env.test.local"
+            ;;
+        "production")
+            if [ -f ".env.production" ]; then
+                echo "✅ .env.production"
+            else
+                echo "❌ .env.production (create this file for production variables)"
+            fi
+            [ -f ".env.production.local" ] && echo "✅ .env.production.local"
+            ;;
+    esac
+    
+    echo ""
+    echo "✅ Switched to '$environment' environment"
+    echo "Current ENVIRONMENT=$ENVIRONMENT"
 }

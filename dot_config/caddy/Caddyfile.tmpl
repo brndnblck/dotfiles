@@ -1,16 +1,43 @@
-# Global Caddyfile for personal development projects
-# Add your personal .test domains here
-#
-# Example:
-# myapp.test {
-#     reverse_proxy localhost:3000
-# }
-#
-# api.test {
-#     reverse_proxy localhost:8080
-# }
+# Global options
+{
+  # Issue certs for .test with Caddy's internal CA
+  certificates {
+    automate *.test
+    issuers internal
+  }
+
+  # Access logs to stdout
+  logging {
+    logs {
+      default {
+        level INFO
+        output stdout
+      }
+    }
+  }
+
+  # Turn on HTTP→HTTPS and HTTP/3
+  servers {
+    protocol {
+      experimental_http3
+    }
+    metrics off
+  }
+}
+
+# Reusable dev snippet
+(dev_common) {
+  encode zstd gzip
+  header {
+    # Helpful in dev
+    X-Frame-Options SAMEORIGIN
+    X-Content-Type-Options nosniff
+  }
+  log
+}
 
 # Default catch-all for undefined .test domains
 *.test {
-    respond "No service configured for {host}" 404
+  import dev_common
+  respond "No service configured for {host}" 404
 }
