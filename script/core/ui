@@ -6,12 +6,15 @@ show_standard_header() {
     clear
     
 
-    local git_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-    local git_hash=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+    local git_tag
+    git_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+    local git_hash
+    git_hash=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
     local version_string
     if [ -n "$git_tag" ]; then
 
-        local version_num=$(echo "$git_tag" | sed 's/^v//')
+        local version_num
+        version_num=$(echo "$git_tag" | sed 's/^v//')
         version_string="v${version_num}.${git_hash}"
     else
         version_string="v.${git_hash}"
@@ -33,7 +36,7 @@ _______  .___________.  __________   __          __________     _______.
 |  |  |  |    |  |    /  / |   __|  |  |      /  / |   __|     \   \    
 |  '--'  |    |  |   /  /  |  |     |  `----./  /  |  |____.----)   |   
 |_______/     |__|  /__/   |__|     |_______/__/   |_______|_______/    
-                                                                           
+                                                                            
 EOF
     
     ansi --newline

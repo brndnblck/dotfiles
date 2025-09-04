@@ -24,6 +24,7 @@ add_temp_file_cleanup() {
 }
 
 cleanup_temp_files() {
+    local file
     for file in "${TEMP_FILES_FOR_CLEANUP[@]}"; do
         if [ -f "$file" ]; then
             rm -f "$file" 2>/dev/null || true
@@ -73,7 +74,7 @@ process_template() {
     template_error "$template_file" "false"
 
     rm -f "$output_file" 2>/dev/null || true
-            return "$EXIT_GENERAL_ERROR"
+    return "$EXIT_GENERAL_ERROR"
 }
 
 process_template_fallback() {
@@ -82,12 +83,18 @@ process_template_fallback() {
     
 
     if cp "$template_file" "$output_file" 2>/dev/null; then
+        local date_str
+        date_str=$(date '+%Y-%m-%d')
+        local hostname_str
+        hostname_str=$(hostname)
+        local os_str
+        os_str=$(uname -s | tr '[:upper:]' '[:lower:]')
 
         sed -i.bak \
-            -e "s/{{ \.user }}/${USER:-unknown}/g" \
-            -e "s/{{ now\.Format \"[^\"]*\" }}/$(date '+%Y-%m-%d')/g" \
-            -e "s/{{ \.chezmoi\.hostname }}/$(hostname)/g" \
-            -e "s/{{ \.chezmoi\.os }}/$(uname -s | tr '[:upper:]' '[:lower:]')/g" \
+            -e "s/{{ \\.user }}/${USER:-unknown}/g" \
+            -e "s/{{ now\\.Format \"[^\"]*\" }}/$date_str/g" \
+            -e "s/{{ \\.chezmoi\\.hostname }}/$hostname_str/g" \
+            -e "s/{{ \\.chezmoi\\.os }}/$os_str/g" \
             "$output_file" 2>/dev/null && rm -f "${output_file}.bak"
         
         info_log "Applied basic template substitutions"
@@ -107,7 +114,7 @@ prompt_restart() {
     ansi --newline
     ansi "$message"
     ansi --newline
-    read -p "Restart now? (y/N): " restart_choice
+    read -r -p "Restart now? (y/N): " restart_choice
     if [[ "$restart_choice" =~ ^[Yy]$ ]]; then
         sudo shutdown -r +1
         ansi --green "System will restart in 1 minute..."
@@ -165,7 +172,7 @@ process_templated_package_file() {
     if process_template "$source_file" "$temp_file"; then
         local command
         # Replace {FILE} placeholder with actual temp file path
-        command=$(echo "$command_template" | sed "s|{FILE}|$temp_file|g")
+        command=${command_template//\{FILE\}/$temp_file}
         execute_package_file "$temp_file" "$command" "$description" "true"
     else
         error_log "Failed to process template" "true"
@@ -182,7 +189,7 @@ process_static_package_file() {
     info_log "Using static $(basename "$file_path")"
     local command
     # Replace {FILE} placeholder with actual file path
-    command=$(echo "$command_template" | sed "s|{FILE}|$file_path|g")
+    command=${command_template//\{FILE\}/$file_path}
     execute_package_file "$file_path" "$command" "$description" "false"
 }
 
@@ -229,7 +236,7 @@ process_individual_package() {
             return 0
         else
             installation_error "$package_type" "$package" "false"
-    return "$EXIT_GENERAL_ERROR"
+            return "$EXIT_GENERAL_ERROR"
         fi
     fi
 }
@@ -244,7 +251,8 @@ parse_package_file() {
         [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
         
         # Extract package name (first word)
-        local package=$(echo "$line" | awk '{print $1}')
+        local package
+        package=$(echo "$line" | awk '{print $1}')
         [ -n "$package" ] && packages+=("$package")
     done < "$file_path"
     
@@ -275,6 +283,7 @@ process_package_file() {
     count=${#packages[@]}
     
     # Process each package
+    local package
     for package in "${packages[@]}"; do
         if process_individual_package "$package" "$package_type" "$install_command" "$check_command"; then
             installed=$((installed + 1))

@@ -13,39 +13,40 @@ source "$(dirname "${BASH_SOURCE[0]}")/common"
 # ============================================================================
 
 apply_dotfiles_and_shell() {
-	# Apply dotfiles with chezmoi
-	if check_command "chezmoi" "Chezmoi"; then
-		info_log "Applying dotfiles configuration..."
-		chezmoi apply --force || error_log "Failed to apply dotfiles" "true"
-	else
-		error_log "Chezmoi not found" "true"
-	fi
-	
-	# Ensure zsh is the default shell
-	local current_shell="$SHELL"
-	local zsh_path=$(which zsh)
-	
-	if echo "$current_shell" | grep -q "zsh"; then
-		info_log "Zsh is already the default shell"
-	else
-		info_log "Setting zsh as default shell..."
-		# Add zsh to /etc/shells if not already there
-		if ! grep -q "$zsh_path" /etc/shells; then
-			echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
-		fi
-		chsh -s "$zsh_path" || warn_log "Failed to set zsh as default shell"
-	fi
+    # Apply dotfiles with chezmoi
+    if check_command "chezmoi" "Chezmoi"; then
+        info_log "Applying dotfiles configuration..."
+        chezmoi apply --force || error_log "Failed to apply dotfiles" "true"
+    else
+        error_log "Chezmoi not found" "true"
+    fi
+    
+    # Ensure zsh is the default shell
+    local current_shell="$SHELL"
+    local zsh_path
+    zsh_path=$(command -v zsh)
+    
+    if echo "$current_shell" | grep -q "zsh"; then
+        info_log "Zsh is already the default shell"
+    else
+        info_log "Setting zsh as default shell..."
+        # Add zsh to /etc/shells if not already there
+        if ! grep -q "$zsh_path" /etc/shells; then
+            echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
+        fi
+        chsh -s "$zsh_path" || warn_log "Failed to set zsh as default shell"
+    fi
 }
 
 configure_macos_preferences() {
-	# Ensure sudo session is active before running preferences
-	if check_file_exists "/tmp/.bootstrap_sudo_authenticated" "sudo auth marker"; then
-		if ! silent "sudo -n true"; then
-			warn_log "sudo session expired, re-authenticating..."
-			sudo -v || show_error "Authentication failed. Exiting." "true"
-		fi
-	fi
-	run "$(dirname "${BASH_SOURCE[0]}")/preferences"
+    # Ensure sudo session is active before running preferences
+    if check_file_exists "/tmp/.bootstrap_sudo_authenticated" "sudo auth marker"; then
+        if ! silent "sudo -n true"; then
+            warn_log "sudo session expired, re-authenticating..."
+            sudo -v || show_error "Authentication failed. Exiting." "true"
+        fi
+    fi
+    run "$(dirname "${BASH_SOURCE[0]}")/preferences"
 }
 
 # ============================================================================
@@ -54,13 +55,10 @@ configure_macos_preferences() {
 
 
 ensure_fonts() {
-	if check_directory_exists "${DOTFILES_PARENT_DIR:-$PWD}/fonts" "fonts directory"; then
-		silent "cp ${DOTFILES_PARENT_DIR:-$PWD}/fonts/*.ttf ~/Library/Fonts" || warn_log "Failed to install fonts"
-	else
-		warn_log "No fonts directory found"
-	fi
+    local fonts_dir="${DOTFILES_PARENT_DIR:-$PWD}/fonts"
+    if check_directory_exists "$fonts_dir" "fonts directory"; then
+        silent "cp \"$fonts_dir\"/*.ttf ~/Library/Fonts" || warn_log "Failed to install fonts"
+    else
+        warn_log "No fonts directory found"
+    fi
 }
-
-
-
-

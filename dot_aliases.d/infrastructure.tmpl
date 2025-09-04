@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Infrastructure, databases, and networking shortcuts
 
 # MongoDB: Database management shortcuts
@@ -116,9 +117,14 @@ alias curl-resume="curl -C -"
 # Network Information: IP and DNS utilities
 # Usage: Network diagnostics and information
 # Example: ip && whois example.com
-alias ip='echo "\nLocal IPs:" && ifconfig | grep "inet " | awk '\''{
-printf "\t%s\n", $2}'\'' && echo "External IP:" && curl -s ipinfo.io/ip | awk '\''{
-printf "\t%s\n", $0}'\''\;'
+# Convert alias with positional parameters to function
+ip() {
+    printf "\nLocal IPs:\n"
+    ifconfig | grep "inet " | awk '{printf "\t%s\n", $2}'
+    printf "External IP:\n"
+    curl -s ipinfo.io/ip | awk '{printf "\t%s\n", $0}'
+}
+
 alias whois="whois -h whois-servers.net"
 alias nslookup="nslookup"
 alias dig="dig +short"
@@ -130,7 +136,7 @@ alias ss="ss -tuln"
 # Usage: SSH connection and management
 # Example: sshkey && sshconfig
 alias sshkey="cat ~/.ssh/id_rsa.pub | pbcopy && echo 'SSH key copied to clipboard'"
-alias sshconfig="$EDITOR ~/.ssh/config"
+alias sshconfig="\$EDITOR ~/.ssh/config"
 alias sshlist="grep -E '^Host ' ~/.ssh/config"
 alias sshadd="ssh-add -K ~/.ssh/id_rsa"
 

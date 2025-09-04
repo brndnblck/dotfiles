@@ -12,7 +12,8 @@ get_debug_log_file() {
 write_log() {
     local level="$1"
     local message="$2"
-    local debug_file=$(get_debug_log_file)
+    local debug_file
+    debug_file=$(get_debug_log_file)
     
 
     mkdir -p "$(dirname "$debug_file")"
@@ -32,6 +33,7 @@ output_log() { write_log "OUTPUT" "$1"; }
 
 
 get_debug_log_path() {
-    local debug_file=$(get_debug_log_file)
+    local debug_file
+    debug_file=$(get_debug_log_file)
     echo "${debug_file#${DOTFILES_PARENT_DIR:-$PWD}/}"
 }

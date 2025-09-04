@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # File system operations and navigation shortcuts
 
 # Directory Navigation: Quick navigation shortcuts
@@ -95,7 +96,7 @@ cdmk() {
         echo "Usage: cdmk DIRECTORY_NAME"
         return 1
     fi
-    mkdir -p "$1" && cd "$1"
+    mkdir -p "$1" && cd "$1" || exit
 }
 
 # File Content: File content viewing shortcuts

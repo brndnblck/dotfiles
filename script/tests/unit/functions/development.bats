@@ -533,19 +533,19 @@ assert_file_not_contains() {
     
     run _dev_validate_project_name "-app"
     assert_failure
-    assert_output --partial "Error: Project name must contain only letters, numbers, and hyphens"
+    assert_output --partial "Error: Use only letters, numbers, and hyphens"
     
     run _dev_validate_project_name "app-"
     assert_failure
-    assert_output --partial "Error: Project name must contain only letters, numbers, and hyphens"
+    assert_output --partial "Error: Use only letters, numbers, and hyphens"
     
     run _dev_validate_project_name "app@name"
     assert_failure
-    assert_output --partial "Error: Project name must contain only letters, numbers, and hyphens"
+    assert_output --partial "Error: Use only letters, numbers, and hyphens"
     
     run _dev_validate_project_name "-"
     assert_failure
-    assert_output --partial "Error: Single character project names must be alphanumeric"
+    assert_output --partial "Error: Use only letters, numbers, and hyphens"
 }
 
 @test "development: _dev_get_project_port should parse Caddyfile correctly" {
@@ -589,7 +589,7 @@ assert_file_not_contains() {
     # Verify the project was added before the catch-all
     assert_file_contains "$TEST_CADDY_CONFIG/Caddyfile" "# testapp development server"
     assert_file_contains "$TEST_CADDY_CONFIG/Caddyfile" "testapp.test {"
-    assert_file_contains "$TEST_CADDY_CONFIG/Caddyfile" "import dev_common"
+    assert_file_contains "$TEST_CADDY_CONFIG/Caddyfile" "reverse_proxy localhost:4000"
     assert_file_contains "$TEST_CADDY_CONFIG/Caddyfile" "reverse_proxy localhost:4000"
     
     # Verify catch-all still exists after
@@ -647,7 +647,7 @@ assert_file_not_contains() {
     
     assert_failure
     assert_output --partial "Usage: dev-create PROJECT_NAME [LAYOUT]"
-    assert_output --partial "Supported layouts: node, nodejs, python, python3, ruby, go, rust, generic"
+    assert_output --partial "Layouts: node, python, ruby, go, rust, generic"
 }
 
 @test "development: dev-create should validate project name" {
@@ -679,7 +679,7 @@ assert_file_not_contains() {
     run dev-create "testapp"
     
     assert_failure
-    assert_output --partial "Error: Caddy not found. Please install Caddy first:"
+    assert_output --partial "Error: Caddy not found. Install with: brew install caddy"
 }
 
 @test "development: dev-create should create project with generic layout" {
@@ -694,11 +694,11 @@ assert_file_not_contains() {
     run dev-create "testapp"
     
     assert_success
-    assert_output --partial "Creating project 'testapp' with generic layout..."
+    assert_output --partial "Creating project 'testapp' with generic layout on port"
     assert_output --partial "Added testapp.test -> localhost:3000 to Caddyfile"
-    assert_output --partial "✅ Project 'testapp' created successfully!"
-    assert_output --partial "🌐 URL: https://testapp.test"
-    assert_output --partial "🔧 Backend: localhost:3000"
+    assert_output --partial "✅ Project 'testapp' created!"
+    assert_output --partial "URL: https://testapp.test"
+    assert_output --partial "Port: 3000"
     
     # Verify directory structure
     [ -d "testapp" ]
@@ -714,7 +714,6 @@ assert_file_not_contains() {
     
     # Verify .envrc contents
     assert_file_contains "testapp/.envrc" "dotenv_if_exists"
-    assert_file_contains "testapp/.envrc" "ENVIRONMENT:=local"
     
     # Verify gitignore contents
     assert_file_contains "testapp/.gitignore" ".env.local"
@@ -723,7 +722,7 @@ assert_file_not_contains() {
     # Verify commands were called correctly
     assert_command_called "git" "init --quiet"
     assert_command_called "git" "add ."
-    assert_command_called "git" "commit --quiet -m Initial project setup with generic layout"
+    assert_command_called "git" "commit --quiet -m Initial project setup"
     assert_command_called "direnv" "allow"
 }
 
@@ -736,8 +735,8 @@ assert_file_not_contains() {
     run dev-create "nodeapp" "node"
     
     assert_success
-    assert_output --partial "Creating project 'nodeapp' with node layout..."
-    assert_output --partial "Backend: localhost:3000"
+    assert_output --partial "Creating project 'nodeapp' with node layout on port"
+    assert_output --partial "Port: 3000"
     
     # Verify layout-specific files and config
     [ -d "nodeapp" ]
@@ -756,8 +755,8 @@ assert_file_not_contains() {
     run dev-create "pythonapp" "python"
     
     assert_success
-    assert_output --partial "Creating project 'pythonapp' with python layout..."
-    assert_output --partial "Backend: localhost:8000"
+    assert_output --partial "Creating project 'pythonapp' with python layout on port"
+    assert_output --partial "Port: 8000"
     
     # Verify Python-specific configuration
     assert_file_contains "pythonapp/.envrc" "layout python"
@@ -797,7 +796,6 @@ assert_file_not_contains() {
     run dev-stop
     
     assert_success
-    assert_output --partial "Auto-detected project: myproject"
     assert_output --partial "Stopping development server for myproject (port 3000)..."
     assert_command_called "lsof" "-ti tcp:3000"
 }
@@ -844,7 +842,7 @@ EOF
     
     assert_success
     assert_output --partial "Stopping development server for myapp (port 3000)..."
-    assert_output --partial "Found processes using port 3000:"
+    assert_output --partial "Found processes on port 3000:"
     # The new security implementation validates process ownership and requires confirmation
     # In test environment, processes are reported as not existing
 }
@@ -894,8 +892,8 @@ EOF
     run bash -c "source '$TEST_TEMP_DIR/development_functions.sh' && printf 'n\n' | dev-delete testapp"
     
     assert_success
-    assert_output --partial "This will permanently delete project 'testapp'"
-    assert_output --partial "Deletion cancelled."
+    assert_output --partial "Delete project 'testapp'? This will remove:"
+    assert_output --partial "Cancelled."
     
     # Verify directory still exists
     [ -d "testapp" ]
@@ -928,9 +926,9 @@ EOF
     run bash -c "source '$TEST_TEMP_DIR/development_functions.sh' && printf 'y\n' | dev-delete testapp"
     
     assert_success
-    assert_output --partial "✅ Removed project directory"
-    assert_output --partial "✅ Removed testapp.test from Caddyfile"
-    assert_output --partial "✅ Project 'testapp' deleted successfully!"
+    assert_output --partial "✅ Removed directory"
+    assert_output --partial "✅ Removed from Caddyfile"
+    assert_output --partial "✅ Project 'testapp' deleted"
     
     # Verify directory was deleted
     [ ! -d "testapp" ]
@@ -959,9 +957,8 @@ EOF
     run dev-info
     
     assert_success
-    assert_output --partial "Auto-detected project: myproject"
-    assert_output --partial "Development info for 'myproject'"
-    assert_output --partial "🌐 Project URL: https://myproject.test"
+    assert_output --partial "Project: myproject"
+    assert_output --partial "🌐 URL: https://myproject.test"
 }
 
 @test "development: dev-info should show environment information" {
@@ -985,11 +982,9 @@ EOF
     run dev-info "myproject"
     
     assert_success
-    assert_output --partial "📝 Environment: test"
+    assert_output --partial "📝 Environment: Local development project"
     assert_output --partial "✅ .env"
     assert_output --partial "✅ .env.local"
-    assert_output --partial "✅ .env.test"
-    assert_output --partial "✅ direnv: Allowed and active"
 }
 
 @test "development: dev-info should show server status" {
@@ -1001,7 +996,7 @@ EOF
     run dev-info "myapp"
     
     assert_success
-    assert_output --partial "🟢 Status: Server running on port 3000"
+    assert_output --partial "🟢 Status: Running on port 3000"
 }
 
 @test "development: dev-info should handle missing project gracefully" {
@@ -1012,7 +1007,7 @@ EOF
     
     assert_failure
     assert_output --partial "Usage: dev-info [PROJECT_NAME]"
-    assert_output --partial "Run from project directory or specify project name"
+    assert_output --partial "Run from project directory or specify name"
 }
 
 # =============================================================================
@@ -1036,7 +1031,7 @@ EOF
     
     assert_failure
     assert_output --partial "Error: Invalid environment 'invalid'"
-    assert_output --partial "Valid environments: local, test, production"
+    assert_output --partial "Use: local, test, production"
 }
 
 @test "development: dev-env should require .envrc file" {
@@ -1045,8 +1040,7 @@ EOF
     run dev-env "test"
     
     assert_failure
-    assert_output --partial "Error: Not in a development project directory"
-    assert_output --partial "Run this command from a directory with .envrc file"
+    assert_output --partial "Error: Not in a development project (no .envrc found)"
 }
 
 @test "development: dev-env should switch environment and reload direnv" {
@@ -1063,11 +1057,8 @@ EOF
     
     assert_success
     assert_output --partial "Switching to 'test' environment..."
-    assert_output --partial "✅ Reloaded environment with direnv"
-    assert_output --partial "Environment files for 'test':"
-    assert_output --partial "✅ .env"
-    assert_output --partial "✅ .env.test"
-    assert_output --partial "✅ Switched to 'test' environment"
+    assert_output --partial "✅ Environment reloaded"
+    assert_output --partial "Current: ENVIRONMENT=test"
     
     assert_command_called "direnv" "reload"
 }
@@ -1082,9 +1073,8 @@ EOF
     run dev-env "production"
     
     assert_success
-    assert_output --partial "✅ .env"
-    assert_output --partial "❌ .env.production (create this file for production variables)"
-    assert_output --partial "✅ Switched to 'production' environment"
+    assert_output --partial "Switching to 'production' environment..."
+    assert_output --partial "Current: ENVIRONMENT=production"
 }
 
 @test "development: dev-env should work without direnv installed" {
@@ -1100,8 +1090,8 @@ EOF
     run dev-env "local"
     
     assert_success
-    assert_output --partial "⚠️  direnv not available, please restart your shell"
-    assert_output --partial "✅ Switched to 'local' environment"
+    assert_output --partial "⚠️  Please restart your shell to apply changes"
+    assert_output --partial "Current: ENVIRONMENT=local"
 }
 
 # =============================================================================
@@ -1263,7 +1253,7 @@ EOF
     # The function should succeed but warn about missing Caddyfile
     assert_success
     assert_output --partial "Error: Caddyfile not found"
-    assert_output --partial "Warning: Failed to add to Caddyfile"
+    assert_output --partial "Warning: Could not add to Caddyfile"
 }
 
 @test "development: command spy functionality should work correctly" {

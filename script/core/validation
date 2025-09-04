@@ -11,7 +11,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/errors"
 
 check_file_exists() {
     local file_path="$1"
-    local description="$2"
+    # Parameter description is available but not currently used
+    # local description="$2"
     
     if [ -f "$file_path" ]; then
         return 0
@@ -22,7 +23,8 @@ check_file_exists() {
 
 check_directory_exists() {
     local dir_path="$1"
-    local description="$2"
+    # Parameter description is available but not currently used
+    # local description="$2"
     
     if [ -d "$dir_path" ]; then
         return 0
@@ -33,7 +35,8 @@ check_directory_exists() {
 
 check_command() {
     local command="$1"
-    local description="$2"
+    # Parameter description is available but not currently used
+    # local description="$2"
     
     if command -v "$command" >/dev/null 2>&1; then
         return 0

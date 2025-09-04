@@ -27,6 +27,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/errors"
 colored_divider() {
     local char="${1:-▓}"
     local width="${2:-$INTERFACE_WIDTH}"
+    # shellcheck disable=SC2046
     gum style --foreground "$INTERFACE_SECONDARY" "$(printf "${char}%.0s" $(seq 1 "$width"))"
 }
 
@@ -50,12 +51,15 @@ fi
 
 
 get_architecture() {
-    local arch=$(uname -m)
+    local arch
+    arch=$(uname -m)
     echo "$arch"
 }
 
 get_homebrew_prefix() {
-    if [[ $(get_architecture) == "arm64" ]]; then
+    local arch
+    arch=$(get_architecture)
+    if [[ "$arch" == "arm64" ]]; then
         echo "$HOMEBREW_PREFIX_ARM"
     else
         echo "$HOMEBREW_PREFIX_INTEL"
@@ -67,12 +71,12 @@ get_homebrew_bin() {
 }
 
 setup_homebrew_env() {
-    if check_command \"brew\" \"Homebrew\"; then
-        eval "$($(get_homebrew_bin) shellenv)"
+    if check_command "brew" "Homebrew"; then
+        local brew_bin
+        brew_bin=$(get_homebrew_bin)
+        eval "$("$brew_bin" shellenv)"
     fi
 }
-
-
 
 
 

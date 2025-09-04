@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Centralized help and search system for dotfiles
 
 _render-aliases() {
@@ -10,19 +11,20 @@ _render-aliases() {
 
     echo -e "\e[1;36m=== $module_name ===\e[0m"
 
-    local max_width=$(echo "$matches" | grep "^alias " | sed -E 's/^alias ([^=]+)=.*/\1/' | awk '{if(length > max) max = length} END {print max+0}')
+    local max_width
+    max_width=$(echo "$matches" | grep "^alias " | sed -E 's/^alias ([^=]+)=.*/\1/' | awk '{if(length > max) max = length} END {print max+0}')
 
     local in_multiline_alias=false
-    local current_alias_name=""
     local first_line=true
     echo "$matches" | while IFS= read -r line; do
         if [[ "$line" =~ ^alias\ .* ]]; then
-            local alias_name=$(echo "$line" | sed -E 's/^alias ([^=]+)=.*/\1/')
-            local alias_cmd=$(echo "$line" | cut -d'=' -f2-)
+            local alias_name
+            alias_name=$(echo "$line" | sed -E 's/^alias ([^=]+)=.*/\1/')
+            local alias_cmd
+            alias_cmd=$(echo "$line" | cut -d'=' -f2-)
 
             if [[ "$line" =~ \'\$$ ]] || [[ "$alias_cmd" =~ [^\\]\&\&\s*$ ]]; then
                 in_multiline_alias=true
-                current_alias_name="$alias_name"
                 alias_cmd=$(echo "$alias_cmd" | sed 's/^["\x27]//' | sed 's/["\x27]$//' | tr '\n' ' ')
             else
                 alias_cmd=$(echo "$alias_cmd" | sed 's/^["\x27]//' | sed 's/["\x27]$//')
@@ -32,10 +34,9 @@ _render-aliases() {
                 alias_cmd="${alias_cmd:0:77}..."
             fi
 
-            printf "\e[1;32m%-*s\e[0m \e[1;30m%s\e[0m\n" $max_width "$alias_name" "$alias_cmd"
+            printf "\e[1;32m%-*s\e[0m \e[1;30m%s\e[0m\n" "$max_width" "$alias_name" "$alias_cmd"
         elif [[ "$in_multiline_alias" == true ]] && [[ "$line" =~ \'\;?\'?\s*$ ]]; then
             in_multiline_alias=false
-            current_alias_name=""
         elif [[ "$in_multiline_alias" == false ]] && [[ "$show_comments" == true ]]; then
             if [[ "$line" =~ ^#.* ]] && [[ ! "$line" =~ ^#[[:space:]]*$ ]]; then
                 if [[ "$first_line" != true ]]; then
@@ -92,8 +93,10 @@ alias-help() {
     if [ -d ~/.aliases.d ]; then
         for alias_file in ~/.aliases.d/*; do
             if [ -r "$alias_file" ]; then
-                local module_name=$(basename "$alias_file" .tmpl | tr '[:lower:]' '[:upper:]' | tr '_-' ' ' | sed 's/  */ /g')
-                local matches=$(awk -v RS='# ' -v IGNORECASE=1 '/'"$1"'/ {print "# "$0}' "$alias_file")
+                local module_name
+                module_name=$(basename "$alias_file" .tmpl | tr '[:lower:]' '[:upper:]' | tr '_-' ' ' | sed 's/  */ /g')
+                local matches
+                matches=$(awk -v RS='# ' -v IGNORECASE=1 '/'"$1"'/ {print "# "$0}' "$alias_file")
                 if [ -n "$matches" ]; then
                     _render-aliases "$module_name" "$matches" true
                 fi
@@ -115,14 +118,16 @@ alias-search() {
     if [ -d ~/.aliases.d ]; then
         for alias_file in ~/.aliases.d/*; do
             if [ -r "$alias_file" ]; then
-                local module_name=$(basename "$alias_file" .tmpl | tr '[:lower:]' '[:upper:]' | tr '_-' ' ' | sed 's/  */ /g')
-                local base_name=$(basename "$alias_file" .tmpl)
+                local module_name
+                module_name=$(basename "$alias_file" .tmpl | tr '[:lower:]' '[:upper:]' | tr '_-' ' ' | sed 's/  */ /g')
+                local base_name
+                base_name=$(basename "$alias_file" .tmpl)
 
-                local matches=$(grep -i "$1" "$alias_file" | grep "^alias ")
-                local module_matches=false
+                local matches
+                matches=$(grep -i "$1" "$alias_file" | grep "^alias ")
 
+                # Check if search term matches module name or filename for broader match
                 if [[ "$module_name" =~ .*$(echo "$1" | tr '[:lower:]' '[:upper:]').* ]] || [[ "$base_name" =~ .*$(echo "$1" | tr '[:upper:]' '[:lower:]').* ]]; then
-                    module_matches=true
                     matches=$(grep "^alias " "$alias_file")
                 fi
 
@@ -144,9 +149,11 @@ function-help() {
     if [ -d ~/.functions.d ]; then
         for function_file in ~/.functions.d/*; do
             if [ -r "$function_file" ]; then
-                local module_name=$(basename "$function_file" .tmpl | tr '[:lower:]' '[:upper:]' | tr '_-' ' ' | sed 's/  */ /g')
+                local module_name
+                module_name=$(basename "$function_file" .tmpl | tr '[:lower:]' '[:upper:]' | tr '_-' ' ' | sed 's/  */ /g')
 
-                local function_blocks=$(awk '
+                local function_blocks
+                function_blocks=$(awk '
                     /^function [a-zA-Z_-]+\(\)/ || /^[a-zA-Z_-]+\(\)/ {
                         func_name = $0
                         gsub(/^function /, "", func_name)
@@ -184,11 +191,14 @@ alias-list() {
     if [ -d ~/.aliases.d ]; then
         for alias_file in ~/.aliases.d/*; do
             if [ -r "$alias_file" ]; then
-                local module_name=$(basename "$alias_file" .tmpl | tr '[:lower:]' '[:upper:]' | tr '_-' ' ' | sed 's/  */ /g')
-                local base_name=$(basename "$alias_file" .tmpl)
+                local module_name
+                module_name=$(basename "$alias_file" .tmpl | tr '[:lower:]' '[:upper:]' | tr '_-' ' ' | sed 's/  */ /g')
+                local base_name
+                base_name=$(basename "$alias_file" .tmpl)
 
                 if [ -z "$category" ] || [[ "$base_name" =~ .*"$category".* ]]; then
-                    local matches=$(grep "^alias " "$alias_file")
+                    local matches
+                    matches=$(grep "^alias " "$alias_file")
                     if [ -n "$matches" ]; then
                         _render-aliases "$module_name" "$matches" false
                     fi
@@ -208,11 +218,14 @@ function-list() {
     if [ -d ~/.functions.d ]; then
         for function_file in ~/.functions.d/*; do
             if [ -r "$function_file" ]; then
-                local module_name=$(basename "$function_file" .tmpl | tr '[:lower:]' '[:upper:]' | tr '_-' ' ' | sed 's/  */ /g')
-                local base_name=$(basename "$function_file" .tmpl)
+                local module_name
+                module_name=$(basename "$function_file" .tmpl | tr '[:lower:]' '[:upper:]' | tr '_-' ' ' | sed 's/  */ /g')
+                local base_name
+                base_name=$(basename "$function_file" .tmpl)
 
                 if [ -z "$category" ] || [[ "$base_name" =~ .*"$category".* ]]; then
-                    local function_blocks=$(awk '
+                    local function_blocks
+                    function_blocks=$(awk '
                         /^function [a-zA-Z_-]+\(\)/ || /^[a-zA-Z_-]+\(\)/ {
                             func_name = $0
                             gsub(/^function /, "", func_name)

@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Shell utilities and GNU tool overrides
 
 # GNU Tool Overrides: Use GNU versions on macOS
@@ -72,7 +73,7 @@ alias uniq="uniq"
 # Quick Edits: Text editor shortcuts
 # Usage: Open files in preferred editors
 # Example: v file.txt && code .
-alias v="$EDITOR"
+alias v="\$EDITOR"
 alias vi="vim"
 alias vim="vim"
 alias nv="nvim"
@@ -167,8 +168,8 @@ colors() {
     # Usage: colors
     # Example: colors
     for i in {0..255}; do
-        printf "\x1b[38;5;${i}mcolor${i}\x1b[0m "
-        if [ $(($i % 16)) -eq 15 ]; then
+        printf "\x1b[38;5;%smcolor%s\x1b[0m " "$i" "$i"
+        if [ $((i % 16)) -eq 15 ]; then
             echo
         fi
     done
@@ -181,10 +182,10 @@ ports-used() {
     local common_ports=(22 80 443 8080 8443 3000 5000 9000)
     echo "Checking common ports..."
     for port in "${common_ports[@]}"; do
-        if lsof -i :$port > /dev/null 2>&1; then
-            printf "Port %d: \033[32mIN USE\033[0m\n" $port
+        if lsof -i :"$port" > /dev/null 2>&1; then
+            printf "Port %d: \033[32mIN USE\033[0m\n" "$port"
         else
-            printf "Port %d: \033[90mavailable\033[0m\n" $port
+            printf "Port %d: \033[90mavailable\033[0m\n" "$port"
         fi
     done
 }

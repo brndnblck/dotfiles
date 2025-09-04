@@ -24,8 +24,12 @@ source_asdf_env() {
 	# Source asdf to ensure it's available in PATH
 	if [ -f "$HOME/.asdf/asdf.sh" ]; then
 		source "$HOME/.asdf/asdf.sh"
-	elif [ -f "$(brew --prefix asdf)/libexec/asdf.sh" ]; then
-		source "$(brew --prefix asdf)/libexec/asdf.sh"
+	else
+		local asdf_prefix
+		asdf_prefix=$(brew --prefix asdf 2>/dev/null)
+		if [ -f "$asdf_prefix/libexec/asdf.sh" ]; then
+			source "$asdf_prefix/libexec/asdf.sh"
+		fi
 	fi
 }
 
@@ -37,7 +41,7 @@ wait_for_npm_availability() {
 	
 	info_log "Checking npm availability after Node.js installation..."
 	
-	while [ $retry_count -lt $max_retries ]; do
+	while [ "$retry_count" -lt "$max_retries" ]; do
 		# Re-source asdf environment and reshim
 		source_asdf_env
 		silent "asdf reshim nodejs" 2>/dev/null || true
@@ -50,7 +54,7 @@ wait_for_npm_availability() {
 		
 		retry_count=$((retry_count + 1))
 		info_log "npm not yet available, retrying in ${retry_interval}s... (attempt $retry_count/$max_retries)"
-		sleep $retry_interval
+		sleep "$retry_interval"
 	done
 	
 	error_log "npm is not available after $max_retries attempts"
@@ -360,4 +364,3 @@ update_development() {
 		warn_log "asdf not found. Skipping npm package installation."
 	fi
 }
-

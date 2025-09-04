@@ -1,417 +1,16 @@
-#!/usr/bin/env bash
+# BATS test helpers for functions
+# shellcheck source=script/tests/helpers/base.bash
+source "$(dirname "$BATS_TEST_FILENAME")/helpers/base.bash"
 
-# Function Test Helpers for Dotfiles Testing
-# Provides specialized utilities for testing function files
-
-# Create mock alias files with realistic content
-create_test_alias_files() {
-    local aliases_dir="$1"
-    mkdir -p "$aliases_dir"
-
-    # Development tools aliases
-    cat > "$aliases_dir/dev-tools.tmpl" << 'EOF'
-# Development Tools Aliases
-# Common tools and shortcuts for development work
-
-# Basic file operations
-alias ll='ls -la'
-alias la='ls -A'
-alias l='ls -CF'
-
-# Git shortcuts
-alias gs='git status'
-alias gp='git push'
-alias gl='git pull'
-alias gc='git commit -m'
-alias gco='git checkout'
-alias gb='git branch'
-alias gd='git diff'
-
-# Docker shortcuts  
-alias dps='docker ps'
-alias dimg='docker images'
-alias dstop='docker stop $(docker ps -q)'
-alias drm='docker rm $(docker ps -aq)'
-
-# Node.js shortcuts
-alias ni='npm install'
-alias ns='npm start'
-alias nt='npm test'
-alias nb='npm run build'
-EOF
-
-    # File operations aliases
-    cat > "$aliases_dir/file-ops.tmpl" << 'EOF'
-# File Operations Aliases
-# Shortcuts for common file operations
-
-# Navigation shortcuts
-alias ..='cd ..'
-alias ...='cd ../..'
-alias ....='cd ../../..'
-alias .....='cd ../../../..'
-
-# Safety aliases
-alias rm='rm -i'
-alias cp='cp -i'
-alias mv='mv -i'
-alias ln='ln -i'
-
-# Directory operations
-alias md='mkdir -p'
-alias rd='rmdir'
-
-# File viewing
-alias cat='cat -n'
-alias less='less -R'
-alias tree='tree -C'
-EOF
-
-    # Infrastructure aliases
-    cat > "$aliases_dir/infrastructure.tmpl" << 'EOF'
-# Infrastructure Aliases
-# Tools for managing infrastructure and deployments
-
-# SSH shortcuts
-alias ssh-config='vim ~/.ssh/config'
-alias ssh-keys='ls -la ~/.ssh/'
-
-# Network tools
-alias myip='curl -s https://ipinfo.io/ip'
-alias ports='netstat -tulanp'
-alias listening='lsof -i -P -n | grep LISTEN'
-
-# System monitoring
-alias top='htop'
-alias df='df -h'
-alias du='du -h'
-alias free='free -h'
-EOF
-}
-
-# Create mock function files with realistic content
-create_test_function_files() {
-    local functions_dir="$1"
-    mkdir -p "$functions_dir"
-
-    # Development workflow functions
-    cat > "$functions_dir/dev-workflow.tmpl" << 'EOF'
-# Development workflow and git utility functions
-
-git-export() {
-    # Description: Clone a git repository without git history (export for templates)
-    # Usage: git-export REPO_URL PROJECT_NAME
-    # Example: git-export https://github.com/user/template.git my-new-project
-    echo "Mock git-export function"
-}
-
-git-branch-clean() {
-    # Description: Delete merged local branches and prune remote tracking branches  
-    # Usage: git-branch-clean
-    # Example: git-branch-clean
-    echo "Mock git-branch-clean function"
-}
-
-git-current-branch() {
-    # Description: Get the current git branch name
-    # Usage: git-current-branch  
-    # Example: git-current-branch
-    echo "main"
-}
-
-project-init() {
-    # Description: Initialize a new project with common development files
-    # Usage: project-init PROJECT_NAME [LANGUAGE]
-    # Example: project-init my-app javascript
-    echo "Mock project initialization"
-}
-
-_private_helper_function() {
-    # Description: This is a private function and should not appear in listings
-    # Usage: _private_helper_function
-    # Example: _private_helper_function  
-    echo "This is private"
-}
-EOF
-
-    # System utilities functions
-    cat > "$functions_dir/system.tmpl" << 'EOF'
-# System utilities and helper functions
-
-run-repeat() {
-    # Description: Execute a command multiple times with optional delay
-    # Usage: run-repeat COUNT COMMAND [ARGS...]
-    # Example: run-repeat 5 echo "hello world"
-    echo "Mock run-repeat function"
-}
-
-dig-host() {
-    # Description: Perform DNS lookup and reverse DNS lookup for a hostname
-    # Usage: dig-host HOSTNAME
-    # Example: dig-host google.com
-    echo "Mock dig-host function"  
-}
-
-remind() {
-    # Description: Add a reminder to the Reminders.app (macOS only)
-    # Usage: remind "TEXT" or echo "text" | remind
-    # Example: remind "Buy milk at 5pm" or echo "Meeting tomorrow" | remind
-    echo "Mock reminder function"
-}
-
-system-info() {
-    # Description: Display comprehensive system information
-    # Usage: system-info
-    # Example: system-info
-    echo "Mock system info"
-}
-EOF
-
-    # Help core functions (smaller subset for testing)
-    cat > "$functions_dir/help-core.tmpl" << 'EOF'
-# Help and documentation functions
-
-_render_aliases() {
-    # Description: Internal function to render alias matches with formatting
-    # Usage: _render_aliases MODULE_NAME MATCHES [SHOW_COMMENTS] 
-    # Example: _render_aliases "DEV TOOLS" "$matches" true
-    echo "Mock render aliases"
-}
-
-alias-help() {
-    # Description: Search for and display help for specific aliases with context
-    # Usage: alias-help SEARCH_TERM
-    # Example: alias-help git
-    echo "Mock alias help"
-}
-
-function-help() {
-    # Description: Display help for all custom functions
-    # Usage: function-help [SEARCH_TERM] 
-    # Example: function-help git
-    echo "Mock function help"
-}
-EOF
-}
-
-# Set up git repository mock for testing git functions
-setup_git_repository_mock() {
-    local test_dir="$1"
-    mkdir -p "$test_dir/.git"
-
-    # Create mock git config
-    cat > "$test_dir/.git/config" << 'EOF'
-[core]
-	repositoryformatversion = 0
-	filemode = true
-	bare = false
-	logallrefupdates = true
-[remote "origin"]
-	url = https://github.com/test/repo.git
-	fetch = +refs/heads/*:refs/remotes/origin/*
-EOF
-
-    # Create mock HEAD file
-    echo "ref: refs/heads/main" > "$test_dir/.git/HEAD"
-
-    # Create refs structure
-    mkdir -p "$test_dir/.git/refs/heads"
-    echo "abc123def456" > "$test_dir/.git/refs/heads/main"
-    echo "def456abc123" > "$test_dir/.git/refs/heads/feature"
-}
-
-# Create mock project structures for testing project functions
-create_test_project_structure() {
-    local project_type="$1"
-    local project_dir="$2"
-
-    mkdir -p "$project_dir"
-
-    case "$project_type" in
-        "javascript" | "js" | "node")
-            cat > "$project_dir/package.json" << 'EOF'
-{
-  "name": "test-project",
-  "version": "1.0.0", 
-  "scripts": {
-    "start": "node index.js",
-    "test": "jest",
-    "build": "webpack"
-  },
-  "dependencies": {
-    "express": "^4.18.0"
-  }
-}
-EOF
-            echo "console.log('Hello World');" > "$project_dir/index.js"
-            mkdir -p "$project_dir/src" "$project_dir/test"
-            ;;
-        "python" | "py")
-            echo "flask==2.0.0" > "$project_dir/requirements.txt"
-            echo "print('Hello World')" > "$project_dir/main.py"
-            mkdir -p "$project_dir/src" "$project_dir/tests"
-            ;;
-        "rust")
-            cat > "$project_dir/Cargo.toml" << 'EOF'
-[package]
-name = "test-project"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-EOF
-            mkdir -p "$project_dir/src"
-            echo 'fn main() { println!("Hello World"); }' > "$project_dir/src/main.rs"
-            ;;
-        "go")
-            echo "module test-project" > "$project_dir/go.mod"
-            echo 'package main
-import "fmt"
-func main() { fmt.Println("Hello World") }' > "$project_dir/main.go"
-            ;;
-    esac
-}
-
-# Mock system command responses for different scenarios
-setup_system_command_mocks() {
-    local mock_dir="$1"
-
-    # DNS resolution mocks
-    cat > "$mock_dir/dig" << 'EOF'
-#!/bin/bash
-case "$*" in
-    "+short google.com")
-        echo "172.217.14.206"
-        ;;
-    "+short github.com")
-        echo "140.82.112.4"
-        ;;  
-    "+short invalid.domain")
-        exit 1
-        ;;
-    *)
-        echo "192.168.1.1"
-        ;;
-esac
-EOF
-    chmod +x "$mock_dir/dig"
-
-    # File system mocks
-    cat > "$mock_dir/find" << 'EOF'
-#!/bin/bash
-if [[ "$*" == *"-size +100M"* ]]; then
-    echo "/tmp/largefile1.bin"
-    echo "/tmp/largefile2.iso"
-elif [[ "$*" == *"-mtime +7"* ]]; then
-    echo "/tmp/oldfile1.tmp"
-    echo "/tmp/oldfile2.cache"  
-elif [[ "$*" == *"-mtime +30"* ]]; then
-    echo "$HOME/Downloads/old1.zip"
-    echo "$HOME/Downloads/old2.dmg"
-fi
-EOF
-    chmod +x "$mock_dir/find"
-
-    # Process monitoring mocks
-    cat > "$mock_dir/lsof" << 'EOF'
-#!/bin/bash
-if [[ "$*" == *":8080"* ]]; then
-    echo "COMMAND  PID USER   FD   TYPE DEVICE SIZE/OFF NODE NAME"
-    echo "node    1234  user   20u  IPv4  0x1234      0t0  TCP *:8080 (LISTEN)"
-elif [[ "$*" == *":3000"* ]]; then
-    # Empty response - no process using port
-    exit 0
-else
-    echo "Mock lsof output for $*"
-fi
-EOF
-    chmod +x "$mock_dir/lsof"
-
-    # System information mocks
-    cat > "$mock_dir/uptime" << 'EOF'
-#!/bin/bash
-echo " 10:30AM  up 2 days, 14:45,  2 users,  load average: 1.23, 1.45, 1.67"
-EOF
-    chmod +x "$mock_dir/uptime"
-
-    cat > "$mock_dir/hostname" << 'EOF'
-#!/bin/bash  
-echo "test-macbook-pro.local"
-EOF
-    chmod +x "$mock_dir/hostname"
-}
-
-# Assert function documentation format is correct
-assert_function_documentation() {
-    local function_name="$1"
-    local output="$2"
-
-    # Check that function name appears
-    if ! echo "$output" | grep -q "$function_name"; then
-        fail "Function name '$function_name' not found in output"
-    fi
-
-    # Check for required documentation elements
-    if ! echo "$output" | grep -q "Description:"; then
-        fail "Function '$function_name' missing Description in documentation"
-    fi
-
-    if ! echo "$output" | grep -q "Usage:"; then
-        fail "Function '$function_name' missing Usage in documentation"
-    fi
-
-    if ! echo "$output" | grep -q "Example:"; then
-        fail "Function '$function_name' missing Example in documentation"
-    fi
-}
-
-# Assert alias formatting is consistent
-assert_alias_formatting() {
-    local output="$1"
-
-    # Check for section headers
-    if ! echo "$output" | grep -q "===.*==="; then
-        fail "Missing section headers in alias output"
-    fi
-
-    # Check for alias entries (basic format validation)
-    if echo "$output" | grep -q "alias.*="; then
-        # Good - found alias entries
-        :
-    else
-        fail "No properly formatted alias entries found"
-    fi
-}
-
-# Validate that private functions are excluded from listings
-assert_no_private_functions() {
-    local output="$1"
-
-    if echo "$output" | grep -q "_.*function"; then
-        fail "Private functions (starting with _) should not appear in listings"
-    fi
-}
-
-# Create temporary function source file for testing
-create_temp_function_file() {
-    local temp_file="$1"
-    local function_content="$2"
-
-    cat > "$temp_file" << EOF
-#!/usr/bin/env bash
-# Temporary function file for testing
-
-$function_content
-EOF
-}
-
-# Test function argument validation helper
-test_function_argument_validation() {
+# Generic function argument validation test
+# Usage: test_function_args "function_name" "min_required_args" "test_file_path"
+test_function_args() {
     local function_name="$1"
     local required_args="$2"
     local test_file="$3"
 
     # Source the function file
+    # shellcheck source=/dev/null
     source "$test_file"
 
     # Test with no arguments
@@ -427,76 +26,455 @@ test_function_argument_validation() {
     fi
 }
 
-# Setup mock environment variables for testing
-setup_test_environment_vars() {
-    export TEST_MODE=true
-    export MOCK_COMMANDS=true
-    export DISABLE_INTERACTIVE=true
-    export NO_COLOR=true
-}
+# Test that a function exists and is callable
+# Usage: test_function_exists "function_name" "test_file_path"
+test_function_exists() {
+    local function_name="$1"
+    local test_file="$2"
 
-# Clean up test environment variables
-cleanup_test_environment_vars() {
-    unset TEST_MODE
-    unset MOCK_COMMANDS
-    unset DISABLE_INTERACTIVE
-    unset NO_COLOR
-}
+    # Source the function file
+    # shellcheck source=/dev/null
+    source "$test_file"
 
-# Verify command exists in mocked environment
-assert_mock_command_available() {
-    local command_name="$1"
-    local mock_bin_dir="$2"
-
-    if [ ! -x "$mock_bin_dir/$command_name" ]; then
-        fail "Mock command '$command_name' not found in $mock_bin_dir"
+    # Check if function is defined
+    if ! command -v "$function_name" &> /dev/null; then
+        fail "Function $function_name is not defined"
     fi
 }
 
-# Create comprehensive test project with multiple file types
-create_comprehensive_test_project() {
-    local project_dir="$1"
+# Test function output format
+# Usage: test_function_output "function_name" "expected_pattern" "test_file_path" "args..."
+test_function_output() {
+    local function_name="$1"
+    local expected_pattern="$2"
+    local test_file="$3"
+    shift 3
+    local args=("$@")
 
-    mkdir -p "$project_dir/src/components"
-    mkdir -p "$project_dir/tests/unit"
-    mkdir -p "$project_dir/docs"
+    # Source the function file
+    # shellcheck source=/dev/null
+    source "$test_file"
 
-    # JavaScript files
-    echo "console.log('main');" > "$project_dir/src/main.js"
-    echo "export const utils = {};" > "$project_dir/src/utils.js"
-    echo "import React from 'react';" > "$project_dir/src/components/App.jsx"
-
-    # Python files
-    echo "def main(): pass" > "$project_dir/src/main.py"
-    echo "import unittest" > "$project_dir/tests/unit/test_main.py"
-
-    # Go files
-    echo "package main" > "$project_dir/main.go"
-    echo "package utils" > "$project_dir/src/utils.go"
-
-    # Rust files
-    echo "fn main() {}" > "$project_dir/src/main.rs"
-    echo "#[cfg(test)]" > "$project_dir/src/lib.rs"
-
-    # Configuration files
-    echo "{}" > "$project_dir/package.json"
-    echo "requirements.txt content" > "$project_dir/requirements.txt"
-    echo "# README" > "$project_dir/README.md"
-    echo ".env" > "$project_dir/.gitignore"
+    # Run function with provided arguments
+    run "$function_name" "${args[@]}"
+    assert_success
+    assert_output --partial "$expected_pattern"
 }
 
-# Export all functions for use in test files
-export -f create_test_alias_files
-export -f create_test_function_files
-export -f setup_git_repository_mock
-export -f create_test_project_structure
-export -f setup_system_command_mocks
-export -f assert_function_documentation
-export -f assert_alias_formatting
-export -f assert_no_private_functions
-export -f create_temp_function_file
-export -f test_function_argument_validation
-export -f setup_test_environment_vars
-export -f cleanup_test_environment_vars
-export -f assert_mock_command_available
-export -f create_comprehensive_test_project
+# Validate function error handling
+# Usage: test_function_error_handling "function_name" "test_file_path" "invalid_args..."
+test_function_error_handling() {
+    local function_name="$1"
+    local test_file="$2"
+    shift 2
+    local invalid_args=("$@")
+
+    # Source the function file
+    # shellcheck source=/dev/null
+    source "$test_file"
+
+    # Test with invalid arguments
+    run "$function_name" "${invalid_args[@]}"
+    assert_failure
+}
+
+# Test function with valid arguments
+# Usage: test_function_success "function_name" "test_file_path" "valid_args..."
+test_function_success() {
+    local function_name="$1"
+    local test_file="$2"
+    shift 2
+    local valid_args=("$@")
+
+    # Source the function file
+    # shellcheck source=/dev/null
+    source "$test_file"
+
+    # Test with valid arguments
+    run "$function_name" "${valid_args[@]}"
+    assert_success
+}
+
+# Helper to create temporary test files
+create_temp_test_file() {
+    local content="$1"
+    local temp_file
+    temp_file=$(mktemp)
+    echo "$content" > "$temp_file"
+    echo "$temp_file"
+}
+
+# Helper to cleanup temporary test files
+cleanup_temp_test_file() {
+    local temp_file="$1"
+    if [ -f "$temp_file" ]; then
+        rm "$temp_file"
+    fi
+}
+
+# Test function that should create files
+# Usage: test_function_creates_file "function_name" "expected_file_path" "test_file_path" "args..."
+test_function_creates_file() {
+    local function_name="$1"
+    local expected_file="$2"
+    local test_file="$3"
+    shift 3
+    local args=("$@")
+
+    # Source the function file
+    # shellcheck source=/dev/null
+    source "$test_file"
+
+    # Clean up any existing file
+    [ -f "$expected_file" ] && rm "$expected_file"
+
+    # Run function
+    run "$function_name" "${args[@]}"
+    assert_success
+
+    # Check if file was created
+    [ -f "$expected_file" ] || fail "Expected file $expected_file was not created"
+}
+
+# Test function that should modify files
+# Usage: test_function_modifies_file "function_name" "file_path" "test_file_path" "args..."
+test_function_modifies_file() {
+    local function_name="$1"
+    local target_file="$2"
+    local test_file="$3"
+    shift 3
+    local args=("$@")
+
+    # Source the function file
+    # shellcheck source=/dev/null
+    source "$test_file"
+
+    # Get initial modification time
+    local initial_mtime
+    if [ -f "$target_file" ]; then
+        initial_mtime=$(stat -f "%m" "$target_file" 2> /dev/null || stat -c "%Y" "$target_file" 2> /dev/null)
+    else
+        initial_mtime="0"
+    fi
+
+    # Wait a moment to ensure different timestamp
+    sleep 1
+
+    # Run function
+    run "$function_name" "${args[@]}"
+    assert_success
+
+    # Check if file was modified
+    local final_mtime
+    if [ -f "$target_file" ]; then
+        final_mtime=$(stat -f "%m" "$target_file" 2> /dev/null || stat -c "%Y" "$target_file" 2> /dev/null)
+    else
+        final_mtime="0"
+    fi
+
+    if [ "$initial_mtime" = "$final_mtime" ] && [ "$initial_mtime" != "0" ]; then
+        fail "File $target_file was not modified"
+    fi
+}
+
+# Validate function dependency requirements
+# Usage: test_function_dependencies "function_name" "test_file_path" "required_commands..."
+test_function_dependencies() {
+    local function_name="$1"
+    local test_file="$2"
+    shift 2
+    local required_commands=("$@")
+
+    # Source the function file
+    # shellcheck source=/dev/null
+    source "$test_file"
+
+    # Check each required command
+    for cmd in "${required_commands[@]}"; do
+        if ! command -v "$cmd" &> /dev/null; then
+            skip "Required command '$cmd' not available"
+        fi
+    done
+
+    # If we get here, all dependencies are met
+    assert_success
+}
+
+# Test function with environment variable requirements
+# Usage: test_function_with_env "function_name" "test_file_path" "env_var=value" "args..."
+test_function_with_env() {
+    local function_name="$1"
+    local test_file="$2"
+    local env_setting="$3"
+    shift 3
+    local args=("$@")
+
+    # Source the function file
+    # shellcheck source=/dev/null
+    source "$test_file"
+
+    # Set environment variable and run function
+    env "$env_setting" "$function_name" "${args[@]}"
+}
+
+# Validate function behavior with different working directories
+# Usage: test_function_in_directory "function_name" "test_directory" "test_file_path" "args..."
+test_function_in_directory() {
+    local function_name="$1"
+    local test_dir="$2"
+    local test_file="$3"
+    shift 3
+    local args=("$@")
+
+    # Create test directory if it doesn't exist
+    [ -d "$test_dir" ] || mkdir -p "$test_dir"
+
+    # Source the function file
+    # shellcheck source=/dev/null
+    source "$test_file"
+
+    # Run function in the specified directory
+    (cd "$test_dir" && "$function_name" "${args[@]}")
+}
+
+# Test function timeout behavior
+# Usage: test_function_timeout "function_name" "timeout_seconds" "test_file_path" "args..."
+test_function_timeout() {
+    local function_name="$1"
+    local timeout_seconds="$2"
+    local test_file="$3"
+    shift 3
+    local args=("$@")
+
+    # Source the function file
+    # shellcheck source=/dev/null
+    source "$test_file"
+
+    # Run function with timeout
+    run timeout "$timeout_seconds" "$function_name" "${args[@]}"
+
+    # Check if it completed within timeout
+    # Note: $status is set by the `run` command from bats framework
+    # shellcheck disable=SC2154
+    if [ "$status" -eq 124 ]; then
+        fail "Function $function_name timed out after $timeout_seconds seconds"
+    fi
+}
+
+# Test function handles signals properly
+# Usage: test_function_signal_handling "function_name" "signal" "test_file_path" "args..."
+test_function_signal_handling() {
+    local function_name="$1"
+    local signal="$2"
+    local test_file="$3"
+    shift 3
+    local args=("$@")
+
+    # Source the function file
+    # shellcheck source=/dev/null
+    source "$test_file"
+
+    # Start function in background
+    "$function_name" "${args[@]}" &
+    local pid=$!
+
+    # Wait a moment then send signal
+    sleep 0.1
+    kill -"$signal" "$pid" 2> /dev/null || true
+
+    # Wait for process to finish
+    wait "$pid" 2> /dev/null || true
+}
+
+# Validate function performs cleanup on exit
+# Usage: test_function_cleanup "function_name" "cleanup_indicator" "test_file_path" "args..."
+test_function_cleanup() {
+    local function_name="$1"
+    local cleanup_indicator="$2" # File or directory that should be cleaned up
+    local test_file="$3"
+    shift 3
+    local args=("$@")
+
+    # Source the function file
+    # shellcheck source=/dev/null
+    source "$test_file"
+
+    # Run function
+    run "$function_name" "${args[@]}"
+
+    # Check that cleanup occurred
+    if [ -e "$cleanup_indicator" ]; then
+        fail "Cleanup failed: $cleanup_indicator still exists"
+    fi
+}
+
+# Test function with mock commands
+# Usage: test_function_with_mock "function_name" "mock_command" "mock_output" "test_file_path" "args..."
+test_function_with_mock() {
+    local function_name="$1"
+    local mock_command="$2"
+    local mock_output="$3"
+    local test_file="$4"
+    shift 4
+    local args=("$@")
+
+    # Create mock command
+    local mock_path
+    mock_path=$(mktemp -d)/mock_bin
+    mkdir -p "$mock_path"
+
+    cat > "$mock_path/$mock_command" << EOF
+#!/bin/bash
+echo "$mock_output"
+EOF
+    chmod +x "$mock_path/$mock_command"
+
+    # Source the function file
+    # shellcheck source=/dev/null
+    source "$test_file"
+
+    # Run function with mocked command in PATH
+    PATH="$mock_path:$PATH" run "$function_name" "${args[@]}"
+
+    # Cleanup
+    rm -rf "$(dirname "$mock_path")"
+}
+
+# Test function performance (basic timing)
+# Usage: test_function_performance "function_name" "max_seconds" "test_file_path" "args..."
+test_function_performance() {
+    local function_name="$1"
+    local max_seconds="$2"
+    local test_file="$3"
+    shift 3
+    local args=("$@")
+
+    # Source the function file
+    # shellcheck source=/dev/null
+    source "$test_file"
+
+    # Time the function execution
+    local start_time
+    start_time=$(date +%s)
+
+    run "$function_name" "${args[@]}"
+
+    local end_time
+    end_time=$(date +%s)
+    local duration=$((end_time - start_time))
+
+    if [ "$duration" -gt "$max_seconds" ]; then
+        fail "Function $function_name took $duration seconds, expected <= $max_seconds"
+    fi
+}
+
+# Test function idempotency (running twice should be safe)
+# Usage: test_function_idempotent "function_name" "test_file_path" "args..."
+test_function_idempotent() {
+    local function_name="$1"
+    local test_file="$2"
+    shift 2
+    local args=("$@")
+
+    # Source the function file
+    # shellcheck source=/dev/null
+    source "$test_file"
+
+    # Run function first time
+    run "$function_name" "${args[@]}"
+    # Note: $output and $status are set by the `run` command from bats framework
+    # shellcheck disable=SC2154
+    local first_output="$output"
+    # shellcheck disable=SC2154
+    local first_status="$status"
+
+    # Run function second time
+    run "$function_name" "${args[@]}"
+    local second_output="$output"
+    local second_status="$status"
+
+    # Results should be the same (compare exit status for idempotency)
+    if [ "$first_status" != "$second_status" ]; then
+        fail "Function $function_name is not idempotent: status changed from $first_status to $second_status"
+    fi
+
+    # Compare output if both runs were successful and produced output
+    if [ "$first_status" -eq 0 ] && [ "$second_status" -eq 0 ] && [ -n "$first_output" ] && [ -n "$second_output" ]; then
+        # For most functions, idempotent execution should produce consistent output
+        # We'll log the difference but not fail automatically since some legitimate
+        # differences might exist (timestamps, temp files, etc.)
+        if [ "$first_output" != "$second_output" ]; then
+            echo "Note: Function $function_name output differs between runs (this may be expected for functions with timestamps or temp data)" >&3
+            echo "First run output: $first_output" >&3
+            echo "Second run output: $second_output" >&3
+        fi
+    fi
+}
+
+# Helper to set up common test fixtures
+setup_common_fixtures() {
+    export TEST_TEMP_DIR
+    TEST_TEMP_DIR=$(mktemp -d)
+    export TEST_HOME="$TEST_TEMP_DIR/home"
+    mkdir -p "$TEST_HOME"
+}
+
+# Helper to clean up common test fixtures
+teardown_common_fixtures() {
+    if [ -n "$TEST_TEMP_DIR" ] && [ -d "$TEST_TEMP_DIR" ]; then
+        rm -rf "$TEST_TEMP_DIR"
+    fi
+}
+
+# Test function configuration file handling
+# Usage: test_function_config_handling "function_name" "config_file_path" "test_file_path" "args..."
+test_function_config_handling() {
+    local function_name="$1"
+    local config_file="$2"
+    local test_file="$3"
+    shift 3
+    local args=("$@")
+
+    # Create test config
+    local test_config
+    test_config=$(mktemp)
+    echo "test_setting=test_value" > "$test_config"
+
+    # Source the function file
+    # shellcheck source=/dev/null
+    source "$test_file"
+
+    # Run function with test config
+    if [ -n "$config_file" ]; then
+        # Function expects config file argument
+        run "$function_name" "$test_config" "${args[@]}"
+    else
+        # Function uses default config location
+        export CONFIG_FILE="$test_config"
+        run "$function_name" "${args[@]}"
+    fi
+
+    # Cleanup
+    rm -f "$test_config"
+}
+
+# Comprehensive function validation
+# Usage: validate_function "function_name" "min_args" "test_file_path" "optional_test_args..."
+validate_function() {
+    local function_name="$1"
+    local min_args="$2"
+    local test_file="$3"
+    shift 3
+    local test_args=("$@")
+
+    # Basic existence test
+    test_function_exists "$function_name" "$test_file"
+
+    # Argument validation test
+    test_function_args "$function_name" "$min_args" "$test_file"
+
+    # If test args provided, test with them
+    if [ ${#test_args[@]} -gt 0 ]; then
+        test_function_success "$function_name" "$test_file" "${test_args[@]}"
+    fi
+}

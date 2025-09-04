@@ -78,14 +78,17 @@
         "baseURL": "http://localhost:11434/v1"
       },
       "models": {
-        "llama3.1": {
-          "name": "Llama 3"
+        "qwen3-coder:30b": {
+          "name": "Qwen3 Coder 30B",
+          "options": {
+            "textVerbosity": "low"
+          }
         },
-        "qwen3": {
-          "name": "Qwen 3"
-        },
-        "gpt-oss": {
-          "name": "GPT-OSS"
+        "Omoeba/gpt-oss-coder:20b": {
+          "name": "GPT-OSS Coder 20B",
+          "options": {
+            "textVerbosity": "low"
+          }
         }
       }
     }

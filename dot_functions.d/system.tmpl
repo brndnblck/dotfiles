@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # System utilities and helper functions
 
 run-repeat() {
@@ -18,7 +19,7 @@ run-repeat() {
         return 1
     fi
 
-    for i in $(seq 1 $count); do
+    for i in $(seq 1 "$count"); do
         echo "[$i/$count] Running: $*"
         "$@"
     done
@@ -28,156 +29,98 @@ dig-host() {
     # Description: Perform DNS lookup and reverse DNS lookup for a hostname
     # Usage: dig-host HOSTNAME
     # Example: dig-host google.com
-    if [ $# -lt 1 ]; then
+    if [ $# -ne 1 ]; then
         echo "Usage: dig-host HOSTNAME"
-        echo "Example: dig-host google.com"
         return 1
     fi
 
     local hostname="$1"
-    local ip=$(dig +short "$hostname" | tail -n 1)
+    echo "DNS lookup for $hostname:"
+    dig +short "$hostname"
 
-    if [ -z "$ip" ]; then
-        echo "Error: No IP found for $hostname"
-        return 1
-    fi
-
-    echo "Forward lookup for $hostname: $ip"
-    echo "Reverse lookup for $ip:"
-    host "$ip"
+    echo -e "\nReverse DNS lookup:"
+    dig +short -x "$(dig +short "$hostname" | head -1)"
 }
 
-remind() {
-    # Description: Add a reminder to the Reminders.app (macOS only)
-    # Usage: remind "TEXT" or echo "text" | remind
-    # Example: remind "Buy milk at 5pm" or echo "Meeting tomorrow" | remind
-    local text
+get-cpu-temp() {
+    # Description: Get CPU temperature (macOS only)
+    # Usage: get-cpu-temp
+    # Example: get-cpu-temp
+    if command -v osx-cpu-temp > /dev/null 2>&1; then
+        osx-cpu-temp
+    elif [ -f /sys/class/thermal/thermal_zone0/temp ]; then
+        awk '{printf "%.1f°C\n", $1/1000}' /sys/class/thermal/thermal_zone0/temp
+    else
+        echo "Temperature monitoring not available on this system"
+        return 1
+    fi
+}
 
-    if [ -t 0 ]; then
-        if [ $# -eq 0 ]; then
-            echo "Usage: remind \"TEXT\""
-            echo "Example: remind \"Buy groceries\""
+battery-status() {
+    # Description: Display battery status and health information
+    # Usage: battery-status
+    # Example: battery-status
+    if command -v pmset > /dev/null 2>&1; then
+        # macOS
+        pmset -g batt | grep -Eo "\d+%" | head -1
+        system_profiler SPPowerDataType | grep -E "(Condition|Cycle Count|Maximum Capacity)"
+    else
+        # Linux - Use a for loop to check if any BAT* directories exist
+        local battery_found=false
+        for battery in /sys/class/power_supply/BAT*; do
+            if [ -d "$battery" ]; then
+                battery_found=true
+                echo "Battery: $(basename "$battery")"
+                [ -f "$battery/capacity" ] && echo "  Capacity: $(cat "$battery/capacity")%"
+                [ -f "$battery/status" ] && echo "  Status: $(cat "$battery/status")"
+                [ -f "$battery/health" ] && echo "  Health: $(cat "$battery/health")"
+            fi
+        done
+        
+        if [ "$battery_found" = false ]; then
+            echo "Battery information not available on this system"
             return 1
         fi
-        text="$1"
-    else
-        text=$(cat)
     fi
-
-    if [ -z "$text" ]; then
-        echo "Error: No reminder text provided"
-        return 1
-    fi
-
-    if ! command -v osascript > /dev/null 2>&1; then
-        echo "Error: osascript not found. This function only works on macOS."
-        return 1
-    fi
-
-    osascript > /dev/null << EOF
-tell application "Reminders"
-    tell list "Personal" of default account
-        make new reminder with properties {name:"$text"}
-    end tell
-end tell
-EOF
-
-    echo "Reminder added: $text"
 }
 
-extract() {
-    # Description: Extract various archive formats automatically
-    # Usage: extract ARCHIVE_FILE
-    # Example: extract myfile.tar.gz
-    if [ $# -eq 0 ]; then
-        echo "Usage: extract ARCHIVE_FILE"
-        echo "Supported formats: tar.gz, tar.bz2, zip, rar, 7z, dmg, and more"
-        return 1
-    fi
-
-    if [ ! -f "$1" ]; then
-        echo "Error: '$1' is not a valid file"
-        return 1
-    fi
-
-    case "$1" in
-        *.tar.bz2) tar -jxvf "$1" ;;
-        *.tar.gz) tar -zxvf "$1" ;;
-        *.tar.xz) tar -Jxvf "$1" ;;
-        *.bz2) bunzip2 "$1" ;;
-        *.dmg) hdiutil mount "$1" ;;
-        *.gz) gunzip "$1" ;;
-        *.tar) tar -xvf "$1" ;;
-        *.tbz2) tar -jxvf "$1" ;;
-        *.tgz) tar -zxvf "$1" ;;
-        *.zip) unzip "$1" ;;
-        *.ZIP) unzip "$1" ;;
-        *.pax) cat "$1" | pax -r ;;
-        *.pax.Z) uncompress "$1" --stdout | pax -r ;;
-        *.Z) uncompress "$1" ;;
-        *.7z) 7z x "$1" ;;
-        *.rar) unrar x "$1" ;;
-        *.deb) ar x "$1" ;;
-        *)
-            echo "Error: '$1' cannot be extracted via extract()"
-            echo "Unsupported format. Try extracting manually."
-            return 1
-            ;;
-    esac
-
-    echo "Extraction completed for: $1"
-}
-
-find-large() {
-    # Description: Find large files in the current directory or specified path
-    # Usage: find-large [PATH] [SIZE]
-    # Example: find-large /Users/john 100M
-    local search_path="${1:-.}"
-    local size="${2:-100M}"
-
-    if [ ! -d "$search_path" ]; then
-        echo "Error: '$search_path' is not a valid directory"
-        return 1
-    fi
-
-    echo "Finding files larger than $size in $search_path..."
-    find "$search_path" -type f -size +$size -exec ls -lh {} \; | sort -k5 -hr
-}
-
-disk-usage() {
-    # Description: Show disk usage for directories with human-readable sizes
-    # Usage: disk-usage [PATH]
-    # Example: disk-usage /Users/john
-    local path="${1:-.}"
-
-    if [ ! -d "$path" ]; then
-        echo "Error: '$path' is not a valid directory"
-        return 1
-    fi
-
-    echo "Disk usage for: $path"
-    du -h "$path"/* 2> /dev/null | sort -hr | head -20
-}
-
-process-port() {
-    # Description: Find which process is using a specific port
-    # Usage: process-port PORT
-    # Example: process-port 8080
-    if [ $# -eq 0 ]; then
-        echo "Usage: process-port PORT"
-        echo "Example: process-port 8080"
+port-check() {
+    # Description: Check if a port is open on localhost
+    # Usage: port-check PORT
+    # Example: port-check 8080
+    if [ $# -ne 1 ]; then
+        echo "Usage: port-check PORT"
         return 1
     fi
 
     local port="$1"
 
-    if ! [[ "$port" =~ ^[0-9]+$ ]]; then
-        echo "Error: PORT must be a number"
+    if ! [[ "$port" =~ ^[0-9]+$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
+        echo "Error: PORT must be a number between 1 and 65535"
         return 1
     fi
 
-    echo "Checking port $port..."
-    lsof -i ":$port"
+    if command -v nc > /dev/null 2>&1; then
+        if nc -z localhost "$port" 2> /dev/null; then
+            echo "Port $port is open"
+            return 0
+        else
+            echo "Port $port is closed"
+            return 1
+        fi
+    elif command -v lsof > /dev/null 2>&1; then
+        if lsof -i :"$port" > /dev/null 2>&1; then
+            echo "Port $port is in use"
+            lsof -i :"$port"
+            return 0
+        else
+            echo "Port $port is not in use"
+            return 1
+        fi
+    else
+        echo "Neither nc nor lsof available for port checking"
+        return 1
+    fi
 }
 
 system-info() {
@@ -186,66 +129,163 @@ system-info() {
     # Example: system-info
     echo "=== System Information ==="
     echo "Hostname: $(hostname)"
-    echo "Uptime: $(uptime)"
-    echo
-
-    echo "=== Operating System ==="
-    if command -v sw_vers > /dev/null 2>&1; then
-        sw_vers
-    elif [ -f /etc/os-release ]; then
-        cat /etc/os-release
-    else
-        uname -a
-    fi
-    echo
-
-    echo "=== Hardware ==="
+    echo "Operating System: $(uname -s)"
+    echo "Kernel Version: $(uname -r)"
     echo "Architecture: $(uname -m)"
-    if command -v sysctl > /dev/null 2>&1; then
-        echo "CPU: $(sysctl -n machdep.cpu.brand_string 2> /dev/null || echo 'N/A')"
-        echo "Memory: $(sysctl -n hw.memsize 2> /dev/null | awk '{print $1/1024/1024/1024 " GB"}' || echo 'N/A')"
-    fi
-    echo
 
-    echo "=== Storage ==="
-    df -h | head -10
+    if command -v sw_vers > /dev/null 2>&1; then
+        echo "macOS Version: $(sw_vers -productVersion)"
+    elif [ -f /etc/os-release ]; then
+        . /etc/os-release
+        echo "Distribution: $PRETTY_NAME"
+    fi
+
+    echo -e "\n=== Hardware Information ==="
+    if command -v system_profiler > /dev/null 2>&1; then
+        system_profiler SPHardwareDataType | grep -E "(Model|Processor|Memory)"
+    elif [ -f /proc/cpuinfo ] && [ -f /proc/meminfo ]; then
+        echo "CPU: $(grep -m1 "model name" /proc/cpuinfo | cut -d: -f2 | sed 's/^ *//')"
+        echo "Memory: $(grep MemTotal /proc/meminfo | awk '{printf "%.1f GB", $2/1024/1024}')"
+    fi
+
+    echo -e "\n=== Network Information ==="
+    if command -v ifconfig > /dev/null 2>&1; then
+        ifconfig | grep "inet " | grep -v "127.0.0.1" | awk '{print "IP Address: " $2}'
+    fi
+
+    echo -e "\n=== Disk Usage ==="
+    df -h / | tail -1 | awk '{print "Root Disk: " $3 " used / " $2 " total (" $5 " usage)"}'
 }
 
-backup-file() {
-    # Description: Create a timestamped backup copy of a file
-    # Usage: backup-file FILE_PATH
-    # Example: backup-file important-config.conf
-    if [ $# -eq 0 ]; then
-        echo "Usage: backup-file FILE_PATH"
-        echo "Example: backup-file important-config.conf"
+find-large-files() {
+    # Description: Find the largest files in a directory tree
+    # Usage: find-large-files [DIRECTORY] [SIZE_LIMIT]
+    # Example: find-large-files /home/user +100M
+    local directory="${1:-.}"
+    local size_limit="${2:-+10M}"
+
+    if [ ! -d "$directory" ]; then
+        echo "Error: Directory '$directory' does not exist"
         return 1
     fi
 
-    local file_path="$1"
+    echo "Finding files larger than $size_limit in $directory..."
+    find "$directory" -type f -size "$size_limit" -exec ls -lh {} \; 2> /dev/null |
+        awk '{ print $5 "\t" $9 }' | sort -hr | head -20
+}
 
-    if [ ! -f "$file_path" ]; then
-        echo "Error: '$file_path' is not a valid file"
+find-old-files() {
+    # Description: Find files older than specified days
+    # Usage: find-old-files [DIRECTORY] [DAYS]
+    # Example: find-old-files /tmp 30
+    local directory="${1:-.}"
+    local days="${2:-7}"
+
+    if [ ! -d "$directory" ]; then
+        echo "Error: Directory '$directory' does not exist"
         return 1
     fi
 
-    local timestamp=$(date +"%Y%m%d_%H%M%S")
-    local backup_path="${file_path}.backup_${timestamp}"
+    if ! [[ "$days" =~ ^[0-9]+$ ]]; then
+        echo "Error: DAYS must be a positive integer"
+        return 1
+    fi
 
-    if cp "$file_path" "$backup_path"; then
-        echo "Backup created: $backup_path"
+    echo "Finding files older than $days days in $directory..."
+    find "$directory" -type f -mtime +"$days" -ls 2> /dev/null | head -20
+}
+
+process-tree() {
+    # Description: Display process tree for a given process
+    # Usage: process-tree [PROCESS_NAME]
+    # Example: process-tree chrome
+    local process_name="${1:-}"
+
+    if [ -z "$process_name" ]; then
+        # Show full process tree
+        if command -v pstree > /dev/null 2>&1; then
+            pstree -p
+        elif command -v ps > /dev/null 2>&1; then
+            ps auxf
+        else
+            echo "Neither pstree nor ps available"
+            return 1
+        fi
     else
-        echo "Error: Failed to create backup"
+        # Show tree for specific process
+        if command -v pgrep > /dev/null 2>&1; then
+            local pids
+            pids=$(pgrep -f "$process_name")
+            if [ -n "$pids" ]; then
+                echo "Process tree for '$process_name':"
+                for pid in $pids; do
+                    if command -v pstree > /dev/null 2>&1; then
+                        pstree -p "$pid"
+                    else
+                        ps -p "$pid" -o pid,ppid,cmd
+                    fi
+                done
+            else
+                echo "No processes found matching '$process_name'"
+                return 1
+            fi
+        else
+            echo "pgrep not available"
+            return 1
+        fi
+    fi
+}
+
+kill-process() {
+    # Description: Kill processes by name with confirmation
+    # Usage: kill-process PROCESS_NAME [SIGNAL]
+    # Example: kill-process chrome SIGTERM
+    if [ $# -lt 1 ]; then
+        echo "Usage: kill-process PROCESS_NAME [SIGNAL]"
+        return 1
+    fi
+
+    local process_name="$1"
+    local signal="${2:-SIGTERM}"
+
+    if command -v pgrep > /dev/null 2>&1; then
+        local pids
+        pids=$(pgrep -f "$process_name")
+
+        if [ -z "$pids" ]; then
+            echo "No processes found matching '$process_name'"
+            return 1
+        fi
+
+        echo "Found processes:"
+        ps -p "$pids" -o pid,cmd
+
+        printf "Kill these processes with %s? (y/N): " "$signal"
+        read -r response
+
+        if [[ "$response" =~ ^[Yy]$ ]]; then
+            # Use pkill instead of kill for better process matching
+            if pkill -"${signal#SIG}" -f "$process_name"; then
+                echo "Processes killed successfully"
+            else
+                echo "Failed to kill processes"
+                return 1
+            fi
+        else
+            echo "Operation cancelled"
+        fi
+    else
+        echo "pgrep/pkill not available"
         return 1
     fi
 }
 
 monitor-process() {
-    # Description: Monitor CPU and memory usage of a process by name
+    # Description: Monitor a process and display resource usage
     # Usage: monitor-process PROCESS_NAME [INTERVAL]
-    # Example: monitor-process firefox 2
-    if [ $# -eq 0 ]; then
+    # Example: monitor-process chrome 2
+    if [ $# -lt 1 ]; then
         echo "Usage: monitor-process PROCESS_NAME [INTERVAL]"
-        echo "Example: monitor-process firefox 2"
         return 1
     fi
 
@@ -262,7 +302,19 @@ monitor-process() {
     echo "=============================="
 
     while true; do
-        ps aux | grep -i "$process_name" | grep -v grep | awk '{printf "%-6s %-6s %-6s %s\n", $2, $3, $4, $11}'
+        # Use pgrep instead of ps | grep to avoid the grep process issue
+        if command -v pgrep > /dev/null 2>&1; then
+            local pids
+            pids=$(pgrep -f "$process_name")
+            if [ -n "$pids" ]; then
+                ps -p "$pids" -o pid,%cpu,%mem,comm --no-headers |
+                    awk '{printf "%-6s %-6s %-6s %s\n", $1, $2, $3, $4}'
+            fi
+        else
+            # Use pgrep-based approach instead of ps | grep
+            echo "pgrep not available - cannot reliably monitor processes"
+            return 1
+        fi
         sleep "$interval"
     done
 }
@@ -278,44 +330,136 @@ cleanup-temp() {
         shift
     fi
 
-    echo "=== Cleaning temporary files ==="
+    echo "Cleaning temporary files..."
 
-    # Clean user temp directory
-    local temp_dir="/tmp"
-    if [ -d "$temp_dir" ]; then
-        local temp_files=$(find "$temp_dir" -name "*" -user "$(whoami)" -mtime +7 2> /dev/null | wc -l | tr -d ' ')
-        if [ "$temp_files" -gt 0 ]; then
+    # Define cleanup locations
+    local cleanup_paths=(
+        "/tmp"
+        "$HOME/.cache"
+        "$HOME/Library/Caches"     # macOS
+        "$HOME/.local/share/Trash" # Linux
+    )
+
+    local total_freed=0
+
+    for path in "${cleanup_paths[@]}"; do
+        if [ -d "$path" ]; then
+            echo "Checking $path..."
+            local before_size
+            before_size=$(du -sk "$path" 2> /dev/null | awk '{print $1}' || echo "0")
+
             if [ "$force_mode" = true ]; then
-                find "$temp_dir" -name "*" -user "$(whoami)" -mtime +7 -delete 2> /dev/null
-                echo "Removed $temp_files temporary files from $temp_dir"
+                find "$path" -type f -mtime +7 -delete 2> /dev/null || true
+                find "$path" -type d -empty -delete 2> /dev/null || true
             else
-                echo "Found $temp_files temporary files older than 7 days in $temp_dir"
-                echo "Run with --force to delete them"
+                local file_count
+                file_count=$(find "$path" -type f -mtime +7 2> /dev/null | wc -l)
+                if [ "$file_count" -gt 0 ]; then
+                    printf "  Found %d old files. Remove? (y/N): " "$file_count"
+                    read -r response
+                    if [[ "$response" =~ ^[Yy]$ ]]; then
+                        find "$path" -type f -mtime +7 -delete 2> /dev/null || true
+                        find "$path" -type d -empty -delete 2> /dev/null || true
+                    fi
+                fi
             fi
-        else
-            echo "No old temporary files found in $temp_dir"
+
+            local after_size
+            after_size=$(du -sk "$path" 2> /dev/null | awk '{print $1}' || echo "0")
+            local freed=$((before_size - after_size))
+            total_freed=$((total_freed + freed))
+
+            if [ "$freed" -gt 0 ]; then
+                echo "  Freed $(numfmt --to=iec $((freed * 1024)))"
+            fi
+        fi
+    done
+
+    if [ "$total_freed" -gt 0 ]; then
+        echo "Total space freed: $(numfmt --to=iec $((total_freed * 1024)))"
+    else
+        echo "No temporary files were removed"
+    fi
+}
+
+watch-directory() {
+    # Description: Watch a directory for changes and execute a command
+    # Usage: watch-directory DIRECTORY COMMAND [ARGS...]
+    # Example: watch-directory /var/log echo "Log changed"
+    if [ $# -lt 2 ]; then
+        echo "Usage: watch-directory DIRECTORY COMMAND [ARGS...]"
+        return 1
+    fi
+
+    local directory="$1"
+    shift
+    local command=("$@")
+
+    if [ ! -d "$directory" ]; then
+        echo "Error: Directory '$directory' does not exist"
+        return 1
+    fi
+
+    if command -v fswatch > /dev/null 2>&1; then
+        echo "Watching $directory for changes..."
+        fswatch -o "$directory" | while read -r; do
+            "${command[@]}"
+        done
+    elif command -v inotifywait > /dev/null 2>&1; then
+        echo "Watching $directory for changes..."
+        while inotifywait -r -e modify,create,delete "$directory" > /dev/null 2>&1; do
+            "${command[@]}"
+        done
+    else
+        echo "Error: Neither fswatch nor inotifywait available for directory watching"
+        echo "Install one of these tools to use this function"
+        return 1
+    fi
+}
+
+network-scan() {
+    # Description: Scan local network for active hosts
+    # Usage: network-scan [NETWORK]
+    # Example: network-scan 192.168.1.0/24
+    local network="$1"
+
+    if [ -z "$network" ]; then
+        # Try to detect local network
+        if command -v ip > /dev/null 2>&1; then
+            network=$(ip route | grep -E "192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\." | grep -v default | head -1 | awk '{print $1}')
+        elif command -v route > /dev/null 2>&1; then
+            network=$(route -n get default | grep interface | awk '{print $2}' | head -1)
+            if [ -n "$network" ]; then
+                network=$(ifconfig "$network" | grep "inet " | awk '{print $2}' | head -1)
+                # Convert IP to network (rough estimation)
+                network=$(echo "$network" | sed 's/\.[^.]*$/\.0\/24/')
+            fi
         fi
     fi
 
-    # Clean Downloads folder (files older than 30 days)
-    local downloads_dir="$HOME/Downloads"
-    if [ -d "$downloads_dir" ]; then
-        local download_files=$(find "$downloads_dir" -type f -mtime +30 2> /dev/null | wc -l | tr -d ' ')
-        if [ "$download_files" -gt 0 ]; then
-            if [ "$force_mode" = true ]; then
-                find "$downloads_dir" -type f -mtime +30 -delete 2> /dev/null
-                echo "Removed $download_files old downloads"
-            else
-                echo "Found $download_files download files older than 30 days"
-                echo "Run with --force to delete them"
-            fi
-        else
-            echo "No old download files found"
-        fi
+    if [ -z "$network" ]; then
+        echo "Usage: network-scan NETWORK"
+        echo "Example: network-scan 192.168.1.0/24"
+        return 1
     fi
 
-    if [ "$force_mode" = false ]; then
-        echo
-        echo "Note: This was a dry run. Use --force to actually delete files"
+    echo "Scanning network $network for active hosts..."
+
+    if command -v nmap > /dev/null 2>&1; then
+        nmap -sn "$network"
+    elif command -v ping > /dev/null 2>&1; then
+        # Basic ping sweep for common networks
+        local base_ip
+        base_ip=$(echo "$network" | cut -d/ -f1 | sed 's/\.[^.]*$//')
+
+        echo "Performing ping sweep on $base_ip.1-254..."
+        for i in {1..254}; do
+            if ping -c 1 -W 1 "$base_ip.$i" > /dev/null 2>&1; then
+                echo "Host $base_ip.$i is up"
+            fi
+        done
+    else
+        echo "Neither nmap nor ping available for network scanning"
+        return 1
     fi
 }
