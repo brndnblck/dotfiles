@@ -220,7 +220,7 @@ fmt: ## Format all shell scripts and template files with shfmt
 	@printf "%s\n" $(ALL_SHELL_FILES_RAW) | grep -v '^$$' | while IFS= read -r script; do \
 		if [ -n "$$script" ] && [ -f "$$script" ]; then \
 			$(call warning_message,Formatting $$(basename "$$script")...,true); \
-			shfmt -i 4 -ci -sr -w "$$script"; \
+			shfmt -i 4 -ci -w "$$script"; \
 		fi; \
 	done
 	@"$(ANSI)" --newline
@@ -233,7 +233,7 @@ fmt-check: ## Check if shell scripts and template files are properly formatted
 		error_count=0; \
 		while IFS= read -r script; do \
 			if [ -n "$$script" ] && [ -f "$$script" ]; then \
-				if ! shfmt -i 4 -ci -sr -d "$$script" >/dev/null 2>&1; then \
+				if ! shfmt -i 4 -ci -d "$$script" >/dev/null 2>&1; then \
 					$(call error_message,✗ $$(basename "$$script") is not properly formatted,true); \
 					error_count=$$((error_count + 1)); \
 				else \

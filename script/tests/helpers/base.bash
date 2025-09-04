@@ -60,14 +60,14 @@ teardown_test_environment() {
     # Clean up any background processes
     if [ -f "/tmp/.bootstrap_sudo_keepalive_pid" ]; then
         local pid
-        pid=$(cat "/tmp/.bootstrap_sudo_keepalive_pid" 2> /dev/null)
-        if [ -n "$pid" ] && kill -0 "$pid" 2> /dev/null; then
-            kill "$pid" 2> /dev/null || true
+        pid=$(cat "/tmp/.bootstrap_sudo_keepalive_pid" 2>/dev/null)
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            kill "$pid" 2>/dev/null || true
             # Wait a moment for graceful shutdown
             sleep 0.1
             # Force kill if still running
-            if kill -0 "$pid" 2> /dev/null; then
-                kill -9 "$pid" 2> /dev/null || true
+            if kill -0 "$pid" 2>/dev/null; then
+                kill -9 "$pid" 2>/dev/null || true
             fi
         fi
         rm -f "/tmp/.bootstrap_sudo_keepalive_pid"
@@ -76,11 +76,11 @@ teardown_test_environment() {
     # Clean up any other test-related background processes
     # Only target specific patterns and avoid the current test process
     local test_pids pid
-    test_pids=$(pgrep -f "dotfiles.*bootstrap.*sudo" 2> /dev/null || true)
+    test_pids=$(pgrep -f "dotfiles.*bootstrap.*sudo" 2>/dev/null || true)
     if [ -n "$test_pids" ]; then
         for pid in $test_pids; do
-            if [ -n "$pid" ] && [ "$pid" != "$$" ] && [ "$pid" != "$PPID" ] && kill -0 "$pid" 2> /dev/null; then
-                kill "$pid" 2> /dev/null || true
+            if [ -n "$pid" ] && [ "$pid" != "$$" ] && [ "$pid" != "$PPID" ] && kill -0 "$pid" 2>/dev/null; then
+                kill "$pid" 2>/dev/null || true
             fi
         done
     fi
@@ -96,7 +96,7 @@ create_mock_script() {
     local output="${3:-}"
     local script_path="$MOCK_BREW_PREFIX/bin/$script_name"
 
-    cat > "$script_path" << EOF
+    cat >"$script_path" <<EOF
 #!/bin/bash
 echo "$output"
 exit $exit_code
@@ -110,7 +110,7 @@ create_logging_mock() {
     local log_file="$TEST_TEMP_DIR/mock_calls.log"
     local script_path="$MOCK_BREW_PREFIX/bin/$command_name"
 
-    cat > "$script_path" << 'EOF'
+    cat >"$script_path" <<'EOF'
 #!/bin/bash
 echo "$(date '+%H:%M:%S') MOCK_CALL: $0 $*" >> "LOG_FILE_PLACEHOLDER"
 case "$1" in
@@ -167,7 +167,7 @@ setup_fake_filesystem() {
 
     # Create mock PAM directory
     mkdir -p "$TEST_TEMP_DIR/etc/pam.d"
-    cat > "$TEST_TEMP_DIR/etc/pam.d/sudo" << 'EOF'
+    cat >"$TEST_TEMP_DIR/etc/pam.d/sudo" <<'EOF'
 # sudo: auth account password session
 auth       sufficient     pam_smartcard.so
 auth       required       pam_opendirectory.so
@@ -177,7 +177,7 @@ session    required       pam_permit.so
 EOF
 
     # Create mock Brewfiles
-    cat > "$DOTFILES_PARENT_DIR/dependencies/dependencies.brewfile" << 'EOF'
+    cat >"$DOTFILES_PARENT_DIR/dependencies/dependencies.brewfile" <<'EOF'
 # Essential dependencies
 brew "git"
 brew "curl"
@@ -185,7 +185,7 @@ brew "wget"
 cask "1password-cli"
 EOF
 
-    cat > "$DOTFILES_PARENT_DIR/dependencies/applications.brewfile" << 'EOF'
+    cat >"$DOTFILES_PARENT_DIR/dependencies/applications.brewfile" <<'EOF'
 # Applications
 cask "visual-studio-code"
 cask "firefox"
@@ -243,7 +243,7 @@ create_test_script() {
     local content="$2"
     local script_path="$DOTFILES_PARENT_DIR/script/$script_name"
 
-    cat > "$script_path" << EOF
+    cat >"$script_path" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
 $content
@@ -335,7 +335,7 @@ create_env_check_script() {
     local script_path="$1"
     local mode="$2"
 
-    cat > "$script_path" << 'EOF'
+    cat >"$script_path" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -352,7 +352,7 @@ echo "Log files configured properly"
 EOF
 
     if [ "$mode" = "pass" ]; then
-        cat >> "$script_path" << 'EOF'
+        cat >>"$script_path" <<'EOF'
 echo "Script running successfully"
 EOF
     fi
@@ -365,7 +365,7 @@ create_gum_check_script() {
     local script_path="$1"
     local mode="$2"
 
-    cat > "$script_path" << 'EOF'
+    cat >"$script_path" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -382,7 +382,7 @@ fi
 EOF
 
     if [ "$mode" = "pass" ]; then
-        cat >> "$script_path" << 'EOF'
+        cat >>"$script_path" <<'EOF'
 echo "Gum is available and working"
 EOF
     fi
@@ -394,7 +394,7 @@ EOF
 create_minimal_ui_script() {
     local script_path="$1"
 
-    cat > "$script_path" << 'EOF'
+    cat >"$script_path" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 

@@ -137,16 +137,16 @@ touchx() {
 
     case "$interpreter" in
         "bash" | "sh")
-            echo "#!/bin/bash" > "$filename"
+            echo "#!/bin/bash" >"$filename"
             ;;
         "python" | "py")
-            echo "#!/usr/bin/env python3" > "$filename"
+            echo "#!/usr/bin/env python3" >"$filename"
             ;;
         "node" | "js")
-            echo "#!/usr/bin/env node" > "$filename"
+            echo "#!/usr/bin/env node" >"$filename"
             ;;
         *)
-            echo "#!/usr/bin/env $interpreter" > "$filename"
+            echo "#!/usr/bin/env $interpreter" >"$filename"
             ;;
     esac
 

@@ -12,14 +12,14 @@ create_brewfile_fixture() {
 
     case "$fixture_type" in
         "minimal")
-            cat > "$target_file" << 'EOF'
+            cat >"$target_file" <<'EOF'
 brew "git"
 brew "curl"
 brew "wget"
 EOF
             ;;
         "complex")
-            cat > "$target_file" << 'EOF'
+            cat >"$target_file" <<'EOF'
 tap "homebrew/bundle"
 
 # Core utilities
@@ -36,7 +36,7 @@ brew "rustup"
 EOF
             ;;
         "missing-deps")
-            cat > "$target_file" << 'EOF'
+            cat >"$target_file" <<'EOF'
 brew "git"
 brew "nonexistent-package"
 brew "another-missing-tool"
@@ -54,14 +54,14 @@ create_applications_fixture() {
 
     case "$fixture_type" in
         "minimal")
-            cat > "$target_file" << 'EOF'
+            cat >"$target_file" <<'EOF'
 cask "visual-studio-code"
 cask "firefox"
 mas "Xcode", id: 497799835
 EOF
             ;;
         "complex")
-            cat > "$target_file" << 'EOF'
+            cat >"$target_file" <<'EOF'
 tap "homebrew/bundle"
 
 # Development apps
@@ -108,7 +108,7 @@ create_installed_packages_fixture() {
 # Mock package managers with realistic responses
 mock_package_managers() {
     # Mock brew with controlled responses
-    cat > "$MOCK_BREW_PREFIX/bin/brew" << 'EOF'
+    cat >"$MOCK_BREW_PREFIX/bin/brew" <<'EOF'
 #!/bin/bash
 case "$1" in
     "list")
@@ -131,7 +131,7 @@ EOF
     chmod +x "$MOCK_BREW_PREFIX/bin/brew"
 
     # Mock npm with controlled responses
-    cat > "$MOCK_BREW_PREFIX/bin/npm" << 'EOF'
+    cat >"$MOCK_BREW_PREFIX/bin/npm" <<'EOF'
 #!/bin/bash
 case "$1" in
     "list")
@@ -144,7 +144,7 @@ EOF
     chmod +x "$MOCK_BREW_PREFIX/bin/npm"
 
     # Mock cargo with controlled responses
-    cat > "$MOCK_BREW_PREFIX/bin/cargo" << 'EOF'
+    cat >"$MOCK_BREW_PREFIX/bin/cargo" <<'EOF'
 #!/bin/bash
 case "$1" in
     "install")
@@ -157,7 +157,7 @@ EOF
     chmod +x "$MOCK_BREW_PREFIX/bin/cargo"
 
     # Mock mas with controlled responses
-    cat > "$MOCK_BREW_PREFIX/bin/mas" << 'EOF'
+    cat >"$MOCK_BREW_PREFIX/bin/mas" <<'EOF'
 #!/bin/bash
 case "$1" in
     "list")
@@ -214,7 +214,7 @@ create_sample_brewfile() {
     case "$type" in
         "dependencies")
             # Create a brewfile with both formulae and casks for comprehensive testing
-            cat > "$target_file" << 'EOF'
+            cat >"$target_file" <<'EOF'
 # Core utilities
 brew "git"
 brew "curl"

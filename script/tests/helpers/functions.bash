@@ -37,7 +37,7 @@ test_function_exists() {
     source "$test_file"
 
     # Check if function is defined
-    if ! command -v "$function_name" &> /dev/null; then
+    if ! command -v "$function_name" &>/dev/null; then
         fail "Function $function_name is not defined"
     fi
 }
@@ -100,7 +100,7 @@ create_temp_test_file() {
     local content="$1"
     local temp_file
     temp_file=$(mktemp)
-    echo "$content" > "$temp_file"
+    echo "$content" >"$temp_file"
     echo "$temp_file"
 }
 
@@ -152,7 +152,7 @@ test_function_modifies_file() {
     # Get initial modification time
     local initial_mtime
     if [ -f "$target_file" ]; then
-        initial_mtime=$(stat -f "%m" "$target_file" 2> /dev/null || stat -c "%Y" "$target_file" 2> /dev/null)
+        initial_mtime=$(stat -f "%m" "$target_file" 2>/dev/null || stat -c "%Y" "$target_file" 2>/dev/null)
     else
         initial_mtime="0"
     fi
@@ -167,7 +167,7 @@ test_function_modifies_file() {
     # Check if file was modified
     local final_mtime
     if [ -f "$target_file" ]; then
-        final_mtime=$(stat -f "%m" "$target_file" 2> /dev/null || stat -c "%Y" "$target_file" 2> /dev/null)
+        final_mtime=$(stat -f "%m" "$target_file" 2>/dev/null || stat -c "%Y" "$target_file" 2>/dev/null)
     else
         final_mtime="0"
     fi
@@ -191,7 +191,7 @@ test_function_dependencies() {
 
     # Check each required command
     for cmd in "${required_commands[@]}"; do
-        if ! command -v "$cmd" &> /dev/null; then
+        if ! command -v "$cmd" &>/dev/null; then
             skip "Required command '$cmd' not available"
         fi
     done
@@ -280,10 +280,10 @@ test_function_signal_handling() {
 
     # Wait a moment then send signal
     sleep 0.1
-    kill -"$signal" "$pid" 2> /dev/null || true
+    kill -"$signal" "$pid" 2>/dev/null || true
 
     # Wait for process to finish
-    wait "$pid" 2> /dev/null || true
+    wait "$pid" 2>/dev/null || true
 }
 
 # Validate function performs cleanup on exit
@@ -323,7 +323,7 @@ test_function_with_mock() {
     mock_path=$(mktemp -d)/mock_bin
     mkdir -p "$mock_path"
 
-    cat > "$mock_path/$mock_command" << EOF
+    cat >"$mock_path/$mock_command" <<EOF
 #!/bin/bash
 echo "$mock_output"
 EOF
@@ -438,7 +438,7 @@ test_function_config_handling() {
     # Create test config
     local test_config
     test_config=$(mktemp)
-    echo "test_setting=test_value" > "$test_config"
+    echo "test_setting=test_value" >"$test_config"
 
     # Source the function file
     # shellcheck source=/dev/null

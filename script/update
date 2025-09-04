@@ -66,13 +66,13 @@ main() {
     show_standard_header
     show_section_header "SYSTEM UPDATE"
 
-    get_debug_log_file > /dev/null
+    get_debug_log_file >/dev/null
     gum style --foreground "$INTERFACE_SECONDARY" "DEBUG LOG: $(get_debug_log_path)"
     ansi --newline
 
     export TASK_TITLE="SYSTEM UPDATE"
 
-    if command -v brew > /dev/null 2>&1; then
+    if command -v brew >/dev/null 2>&1; then
         run_with_progressive_spinner "UPDATING PACKAGE REGISTRY..." \
             "brew update"
 
@@ -83,23 +83,23 @@ main() {
             "brew upgrade --cask"
     fi
 
-    if command -v mas > /dev/null 2>&1; then
+    if command -v mas >/dev/null 2>&1; then
         run_with_progressive_spinner "UPDATING APP STORE APPS..." \
             "mas upgrade"
     fi
 
-    if command -v chezmoi > /dev/null 2>&1; then
+    if command -v chezmoi >/dev/null 2>&1; then
 
-        if ! chezmoi source-path > /dev/null 2>&1; then
+        if ! chezmoi source-path >/dev/null 2>&1; then
             info_log "Chezmoi not properly initialized, setting up..."
             run_with_progressive_spinner "INITIALIZING DOTFILE CONFIG..." \
                 "chezmoi init --force --source '$DOTFILES_PARENT_DIR'"
         else
 
-            current_source=$(chezmoi source-path 2> /dev/null || echo "")
+            current_source=$(chezmoi source-path 2>/dev/null || echo "")
             if [ -n "$current_source" ] && [ "$current_source" != "$DOTFILES_PARENT_DIR" ]; then
 
-                if [ -L "$current_source" ] && [ "$(readlink "$current_source" 2> /dev/null || echo "")" = "$DOTFILES_PARENT_DIR" ]; then
+                if [ -L "$current_source" ] && [ "$(readlink "$current_source" 2>/dev/null || echo "")" = "$DOTFILES_PARENT_DIR" ]; then
 
                     info_log "Chezmoi source symlink verified"
                 else

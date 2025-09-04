@@ -57,7 +57,7 @@ assert_development_stack_versions() {
 
     for tool in "${tools[@]}"; do
         # Only assert if tool should be present
-        if command -v "$tool" > /dev/null 2>&1; then
+        if command -v "$tool" >/dev/null 2>&1; then
             assert_output --partial "✓ $tool"
         fi
     done
@@ -217,7 +217,7 @@ test_tool_version_detection() {
     local expected_version="$2"
     local version_flag="${3:---version}"
 
-    if command -v "$tool_name" > /dev/null 2>&1; then
+    if command -v "$tool_name" >/dev/null 2>&1; then
         run "$tool_name" "$version_flag"
         assert_success
         assert_output --partial "$expected_version"

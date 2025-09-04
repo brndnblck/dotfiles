@@ -129,7 +129,7 @@ fi
 # Restart affected applications
 info_log "Restarting affected applications..."
 for app in "Dock" "Finder" "SystemUIServer"; do
-    killall "$app" > /dev/null 2>&1 || true
+    killall "$app" >/dev/null 2>&1 || true
 done
 
 info_log "OS preferences configured successfully!"

@@ -46,7 +46,7 @@ get-cpu-temp() {
     # Description: Get CPU temperature (macOS only)
     # Usage: get-cpu-temp
     # Example: get-cpu-temp
-    if command -v osx-cpu-temp > /dev/null 2>&1; then
+    if command -v osx-cpu-temp >/dev/null 2>&1; then
         osx-cpu-temp
     elif [ -f /sys/class/thermal/thermal_zone0/temp ]; then
         awk '{printf "%.1f°C\n", $1/1000}' /sys/class/thermal/thermal_zone0/temp
@@ -60,7 +60,7 @@ battery-status() {
     # Description: Display battery status and health information
     # Usage: battery-status
     # Example: battery-status
-    if command -v pmset > /dev/null 2>&1; then
+    if command -v pmset >/dev/null 2>&1; then
         # macOS
         pmset -g batt | grep -Eo "\d+%" | head -1
         system_profiler SPPowerDataType | grep -E "(Condition|Cycle Count|Maximum Capacity)"
@@ -76,7 +76,7 @@ battery-status() {
                 [ -f "$battery/health" ] && echo "  Health: $(cat "$battery/health")"
             fi
         done
-        
+
         if [ "$battery_found" = false ]; then
             echo "Battery information not available on this system"
             return 1
@@ -100,16 +100,16 @@ port-check() {
         return 1
     fi
 
-    if command -v nc > /dev/null 2>&1; then
-        if nc -z localhost "$port" 2> /dev/null; then
+    if command -v nc >/dev/null 2>&1; then
+        if nc -z localhost "$port" 2>/dev/null; then
             echo "Port $port is open"
             return 0
         else
             echo "Port $port is closed"
             return 1
         fi
-    elif command -v lsof > /dev/null 2>&1; then
-        if lsof -i :"$port" > /dev/null 2>&1; then
+    elif command -v lsof >/dev/null 2>&1; then
+        if lsof -i :"$port" >/dev/null 2>&1; then
             echo "Port $port is in use"
             lsof -i :"$port"
             return 0
@@ -133,7 +133,7 @@ system-info() {
     echo "Kernel Version: $(uname -r)"
     echo "Architecture: $(uname -m)"
 
-    if command -v sw_vers > /dev/null 2>&1; then
+    if command -v sw_vers >/dev/null 2>&1; then
         echo "macOS Version: $(sw_vers -productVersion)"
     elif [ -f /etc/os-release ]; then
         . /etc/os-release
@@ -141,7 +141,7 @@ system-info() {
     fi
 
     echo -e "\n=== Hardware Information ==="
-    if command -v system_profiler > /dev/null 2>&1; then
+    if command -v system_profiler >/dev/null 2>&1; then
         system_profiler SPHardwareDataType | grep -E "(Model|Processor|Memory)"
     elif [ -f /proc/cpuinfo ] && [ -f /proc/meminfo ]; then
         echo "CPU: $(grep -m1 "model name" /proc/cpuinfo | cut -d: -f2 | sed 's/^ *//')"
@@ -149,7 +149,7 @@ system-info() {
     fi
 
     echo -e "\n=== Network Information ==="
-    if command -v ifconfig > /dev/null 2>&1; then
+    if command -v ifconfig >/dev/null 2>&1; then
         ifconfig | grep "inet " | grep -v "127.0.0.1" | awk '{print "IP Address: " $2}'
     fi
 
@@ -170,7 +170,7 @@ find-large-files() {
     fi
 
     echo "Finding files larger than $size_limit in $directory..."
-    find "$directory" -type f -size "$size_limit" -exec ls -lh {} \; 2> /dev/null |
+    find "$directory" -type f -size "$size_limit" -exec ls -lh {} \; 2>/dev/null |
         awk '{ print $5 "\t" $9 }' | sort -hr | head -20
 }
 
@@ -192,7 +192,7 @@ find-old-files() {
     fi
 
     echo "Finding files older than $days days in $directory..."
-    find "$directory" -type f -mtime +"$days" -ls 2> /dev/null | head -20
+    find "$directory" -type f -mtime +"$days" -ls 2>/dev/null | head -20
 }
 
 process-tree() {
@@ -203,9 +203,9 @@ process-tree() {
 
     if [ -z "$process_name" ]; then
         # Show full process tree
-        if command -v pstree > /dev/null 2>&1; then
+        if command -v pstree >/dev/null 2>&1; then
             pstree -p
-        elif command -v ps > /dev/null 2>&1; then
+        elif command -v ps >/dev/null 2>&1; then
             ps auxf
         else
             echo "Neither pstree nor ps available"
@@ -213,13 +213,13 @@ process-tree() {
         fi
     else
         # Show tree for specific process
-        if command -v pgrep > /dev/null 2>&1; then
+        if command -v pgrep >/dev/null 2>&1; then
             local pids
             pids=$(pgrep -f "$process_name")
             if [ -n "$pids" ]; then
                 echo "Process tree for '$process_name':"
                 for pid in $pids; do
-                    if command -v pstree > /dev/null 2>&1; then
+                    if command -v pstree >/dev/null 2>&1; then
                         pstree -p "$pid"
                     else
                         ps -p "$pid" -o pid,ppid,cmd
@@ -248,7 +248,7 @@ kill-process() {
     local process_name="$1"
     local signal="${2:-SIGTERM}"
 
-    if command -v pgrep > /dev/null 2>&1; then
+    if command -v pgrep >/dev/null 2>&1; then
         local pids
         pids=$(pgrep -f "$process_name")
 
@@ -303,7 +303,7 @@ monitor-process() {
 
     while true; do
         # Use pgrep instead of ps | grep to avoid the grep process issue
-        if command -v pgrep > /dev/null 2>&1; then
+        if command -v pgrep >/dev/null 2>&1; then
             local pids
             pids=$(pgrep -f "$process_name")
             if [ -n "$pids" ]; then
@@ -346,26 +346,26 @@ cleanup-temp() {
         if [ -d "$path" ]; then
             echo "Checking $path..."
             local before_size
-            before_size=$(du -sk "$path" 2> /dev/null | awk '{print $1}' || echo "0")
+            before_size=$(du -sk "$path" 2>/dev/null | awk '{print $1}' || echo "0")
 
             if [ "$force_mode" = true ]; then
-                find "$path" -type f -mtime +7 -delete 2> /dev/null || true
-                find "$path" -type d -empty -delete 2> /dev/null || true
+                find "$path" -type f -mtime +7 -delete 2>/dev/null || true
+                find "$path" -type d -empty -delete 2>/dev/null || true
             else
                 local file_count
-                file_count=$(find "$path" -type f -mtime +7 2> /dev/null | wc -l)
+                file_count=$(find "$path" -type f -mtime +7 2>/dev/null | wc -l)
                 if [ "$file_count" -gt 0 ]; then
                     printf "  Found %d old files. Remove? (y/N): " "$file_count"
                     read -r response
                     if [[ "$response" =~ ^[Yy]$ ]]; then
-                        find "$path" -type f -mtime +7 -delete 2> /dev/null || true
-                        find "$path" -type d -empty -delete 2> /dev/null || true
+                        find "$path" -type f -mtime +7 -delete 2>/dev/null || true
+                        find "$path" -type d -empty -delete 2>/dev/null || true
                     fi
                 fi
             fi
 
             local after_size
-            after_size=$(du -sk "$path" 2> /dev/null | awk '{print $1}' || echo "0")
+            after_size=$(du -sk "$path" 2>/dev/null | awk '{print $1}' || echo "0")
             local freed=$((before_size - after_size))
             total_freed=$((total_freed + freed))
 
@@ -400,14 +400,14 @@ watch-directory() {
         return 1
     fi
 
-    if command -v fswatch > /dev/null 2>&1; then
+    if command -v fswatch >/dev/null 2>&1; then
         echo "Watching $directory for changes..."
         fswatch -o "$directory" | while read -r; do
             "${command[@]}"
         done
-    elif command -v inotifywait > /dev/null 2>&1; then
+    elif command -v inotifywait >/dev/null 2>&1; then
         echo "Watching $directory for changes..."
-        while inotifywait -r -e modify,create,delete "$directory" > /dev/null 2>&1; do
+        while inotifywait -r -e modify,create,delete "$directory" >/dev/null 2>&1; do
             "${command[@]}"
         done
     else
@@ -425,9 +425,9 @@ network-scan() {
 
     if [ -z "$network" ]; then
         # Try to detect local network
-        if command -v ip > /dev/null 2>&1; then
+        if command -v ip >/dev/null 2>&1; then
             network=$(ip route | grep -E "192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\." | grep -v default | head -1 | awk '{print $1}')
-        elif command -v route > /dev/null 2>&1; then
+        elif command -v route >/dev/null 2>&1; then
             network=$(route -n get default | grep interface | awk '{print $2}' | head -1)
             if [ -n "$network" ]; then
                 network=$(ifconfig "$network" | grep "inet " | awk '{print $2}' | head -1)
@@ -445,16 +445,16 @@ network-scan() {
 
     echo "Scanning network $network for active hosts..."
 
-    if command -v nmap > /dev/null 2>&1; then
+    if command -v nmap >/dev/null 2>&1; then
         nmap -sn "$network"
-    elif command -v ping > /dev/null 2>&1; then
+    elif command -v ping >/dev/null 2>&1; then
         # Basic ping sweep for common networks
         local base_ip
         base_ip=$(echo "$network" | cut -d/ -f1 | sed 's/\.[^.]*$//')
 
         echo "Performing ping sweep on $base_ip.1-254..."
         for i in {1..254}; do
-            if ping -c 1 -W 1 "$base_ip.$i" > /dev/null 2>&1; then
+            if ping -c 1 -W 1 "$base_ip.$i" >/dev/null 2>&1; then
                 echo "Host $base_ip.$i is up"
             fi
         done

@@ -14,7 +14,7 @@ create_system_info_mocks() {
     local hostname="${3:-test-macbook-pro.local}"
 
     # sw_vers with configurable version
-    cat > "$MOCK_BREW_PREFIX/bin/sw_vers" << EOF
+    cat >"$MOCK_BREW_PREFIX/bin/sw_vers" <<EOF
 #!/bin/bash
 case "\$1" in
     "-productVersion")
@@ -46,7 +46,7 @@ create_dev_tools_mocks() {
     local docker_version="${6:-24.0.5}"
 
     # Git
-    cat > "$MOCK_BREW_PREFIX/bin/git" << EOF
+    cat >"$MOCK_BREW_PREFIX/bin/git" <<EOF
 #!/bin/bash
 case "\$1" in
     "--version")
@@ -74,7 +74,7 @@ EOF
     create_mock_script "rustc" 0 "rustc $rust_version (8ede3aae2 2023-07-12)" "--version"
 
     # Go
-    cat > "$MOCK_BREW_PREFIX/bin/go" << EOF
+    cat >"$MOCK_BREW_PREFIX/bin/go" <<EOF
 #!/bin/bash
 case "\$1" in
     "version")
@@ -95,7 +95,7 @@ create_package_aware_brew_mock() {
     local outdated_formulae="${3:-curl wget}"
     local outdated_casks="${4:-firefox}"
 
-    cat > "$MOCK_BREW_PREFIX/bin/brew" << EOF
+    cat >"$MOCK_BREW_PREFIX/bin/brew" <<EOF
 #!/bin/bash
 case "\$1" in
     "--version")
@@ -141,7 +141,7 @@ EOF
 create_standardized_gum_mock() {
     local default_choice="${1:-first}" # "first", "abort", "confirm"
 
-    cat > "$MOCK_BREW_PREFIX/bin/gum" << EOF
+    cat >"$MOCK_BREW_PREFIX/bin/gum" <<EOF
 #!/bin/bash
 case "\$1" in
     "choose")
@@ -225,7 +225,7 @@ setup_status_test_mocks() {
     create_standardized_gum_mock
 
     # Enhanced chezmoi mock
-    cat > "$MOCK_BREW_PREFIX/bin/chezmoi" << EOF
+    cat >"$MOCK_BREW_PREFIX/bin/chezmoi" <<EOF
 #!/bin/bash
 case "\$1" in
     "source-path")

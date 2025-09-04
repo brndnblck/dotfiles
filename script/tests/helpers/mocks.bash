@@ -9,7 +9,7 @@ export MOCK_STATE_DIR="$TEST_TEMP_DIR/mock_state"
 # Initialize mock state tracking
 init_mock_state() {
     mkdir -p "$MOCK_STATE_DIR"
-    echo "0" > "$MOCK_STATE_DIR/call_count"
+    echo "0" >"$MOCK_STATE_DIR/call_count"
 }
 
 # Record a mock call with context
@@ -22,19 +22,19 @@ record_mock_call() {
     # Increment call count
     local count_file="$MOCK_STATE_DIR/call_count"
     local current_count
-    current_count=$(cat "$count_file" 2> /dev/null || echo "0")
+    current_count=$(cat "$count_file" 2>/dev/null || echo "0")
     local new_count=$((current_count + 1))
-    echo "$new_count" > "$count_file"
+    echo "$new_count" >"$count_file"
 
     # Record detailed call information
-    echo "$timestamp|$command|$args" >> "$MOCK_STATE_DIR/call_history"
+    echo "$timestamp|$command|$args" >>"$MOCK_STATE_DIR/call_history"
 }
 
 # Create sophisticated brew mock with state
 create_brew_mock() {
     local brew_path="$MOCK_BREW_PREFIX/bin/brew"
 
-    cat > "$brew_path" << 'EOF'
+    cat >"$brew_path" <<'EOF'
 #!/bin/bash
 
 # Source mock state functions
@@ -106,7 +106,7 @@ EOF
 create_gum_mock() {
     local gum_path="$MOCK_BREW_PREFIX/bin/gum"
 
-    cat > "$gum_path" << 'EOF'
+    cat >"$gum_path" <<'EOF'
 #!/bin/bash
 
 # Mock gum TUI tool
@@ -157,7 +157,7 @@ EOF
 create_mas_mock() {
     local mas_path="$MOCK_BREW_PREFIX/bin/mas"
 
-    cat > "$mas_path" << 'EOF'
+    cat >"$mas_path" <<'EOF'
 #!/bin/bash
 
 case "$1" in
@@ -190,7 +190,7 @@ EOF
 create_op_mock() {
     local op_path="$MOCK_BREW_PREFIX/bin/op"
 
-    cat > "$op_path" << 'EOF'
+    cat >"$op_path" <<'EOF'
 #!/bin/bash
 
 case "$1" in
@@ -224,7 +224,7 @@ EOF
 create_chezmoi_mock() {
     local chezmoi_path="$MOCK_BREW_PREFIX/bin/chezmoi"
 
-    cat > "$chezmoi_path" << 'EOF'
+    cat >"$chezmoi_path" <<'EOF'
 #!/bin/bash
 
 case "$1" in
@@ -254,7 +254,7 @@ EOF
 create_sudo_mock() {
     local sudo_path="$MOCK_BREW_PREFIX/bin/sudo"
 
-    cat > "$sudo_path" << 'EOF'
+    cat >"$sudo_path" <<'EOF'
 #!/bin/bash
 
 # Track sudo state
@@ -348,7 +348,7 @@ assert_call_count() {
     fi
 
     local actual_count
-    actual_count=$(grep -c "$command|" "$call_history" 2> /dev/null || echo "0")
+    actual_count=$(grep -c "$command|" "$call_history" 2>/dev/null || echo "0")
 
     if [ "$actual_count" -ne "$expected_count" ]; then
         fail "Expected $expected_count calls to $command, but got $actual_count"
@@ -375,7 +375,7 @@ create_trigger_file() {
             ;;
         "old_macos_version")
             # Override sw_vers to return old version with proper argument handling
-            cat > "$MOCK_BREW_PREFIX/bin/sw_vers" << 'EOF'
+            cat >"$MOCK_BREW_PREFIX/bin/sw_vers" <<'EOF'
 #!/bin/bash
 case "$1" in
     "-productVersion")
@@ -404,7 +404,7 @@ create_system_mocks() {
     local hostname="${3:-test-macbook-pro.local}"
 
     # Enhanced sw_vers mock
-    cat > "$MOCK_BREW_PREFIX/bin/sw_vers" << EOF
+    cat >"$MOCK_BREW_PREFIX/bin/sw_vers" <<EOF
 #!/bin/bash
 case "\$1" in
     "-productVersion")
@@ -430,7 +430,7 @@ create_dev_tools_mocks() {
     local python_version="${3:-3.11.4}"
 
     # Git with status support
-    cat > "$MOCK_BREW_PREFIX/bin/git" << EOF
+    cat >"$MOCK_BREW_PREFIX/bin/git" <<EOF
 #!/bin/bash
 case "\$1" in
     "--version")
@@ -462,7 +462,7 @@ create_package_aware_brew() {
     local outdated_formulae="${3:-curl wget}"
     local outdated_casks="${4:-firefox}"
 
-    cat > "$MOCK_BREW_PREFIX/bin/brew" << EOF
+    cat >"$MOCK_BREW_PREFIX/bin/brew" <<EOF
 #!/bin/bash
 case "\$1" in
     "--version")
@@ -504,7 +504,7 @@ create_status_test_mocks() {
     create_package_aware_brew
 
     # Chezmoi mock
-    cat > "$MOCK_BREW_PREFIX/bin/chezmoi" << 'EOF'
+    cat >"$MOCK_BREW_PREFIX/bin/chezmoi" <<'EOF'
 #!/bin/bash
 case "$1" in
     "source-path")

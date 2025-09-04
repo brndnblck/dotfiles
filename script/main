@@ -5,7 +5,7 @@ set -euo pipefail
 CURRENT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 
 source "$CURRENT_DIR/core/ansi"
-if ! command -v gum > /dev/null 2>&1; then
+if ! command -v gum >/dev/null 2>&1; then
     ansi --red --bold "⚠ gum TUI tool not found!" --newline
     ansi --newline
     ansi "Please run the minimal bootstrap first:" --newline

@@ -101,7 +101,7 @@ ansi_report() {
 }
 
 ansi_showHelp() {
-    cat << EOF
+    cat <<EOF
 Generate ANSI escape codes
 
 Please keep in mind that your terminal must support the code in order for you

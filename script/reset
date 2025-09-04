@@ -43,7 +43,7 @@ process_removal_list() {
     local item_type="$3"
 
     local items
-    items=$(eval "$list_command" 2> /dev/null || true)
+    items=$(eval "$list_command" 2>/dev/null || true)
 
     if [ -n "$items" ] && [ "$items" != " " ]; then
         info_log "Found $item_type to remove:"
@@ -126,7 +126,7 @@ reset_homebrew_packages() {
     # Note about mas apps (cannot be uninstalled via mas)
     if check_command "mas" "Mac App Store CLI"; then
         local mas_apps
-        mas_apps=$(mas list 2> /dev/null || true)
+        mas_apps=$(mas list 2>/dev/null || true)
 
         if [ -n "$mas_apps" ]; then
             info_log "Note: Mac App Store applications cannot be automatically removed:"
@@ -167,7 +167,7 @@ reset_dotfiles_and_configs() {
     if check_command "chezmoi" "Chezmoi"; then
         # Get and display managed files
         local managed_files
-        managed_files=$(chezmoi managed 2> /dev/null || true)
+        managed_files=$(chezmoi managed 2>/dev/null || true)
 
         if [ -n "$managed_files" ]; then
             info_log "Found managed dotfiles to remove:"
@@ -180,7 +180,7 @@ reset_dotfiles_and_configs() {
 
         # Remove chezmoi directories
         local chezmoi_source
-        chezmoi_source=$(chezmoi source-path 2> /dev/null || true)
+        chezmoi_source=$(chezmoi source-path 2>/dev/null || true)
         if [ -n "$chezmoi_source" ] && [ -d "$chezmoi_source" ] && [ "$chezmoi_source" != "$DOTFILES_PARENT_DIR" ]; then
             remove_path "$chezmoi_source" "Removing chezmoi source directory"
         fi
@@ -250,11 +250,11 @@ reset_fonts_and_assets() {
     info_log "Cleaning up temporary files and logs..."
 
     # Remove session-specific temp files
-    [ -n "${DOTFILES_SESSION_ID:-}" ] && rm -f "/tmp/*${DOTFILES_SESSION_ID}*" 2> /dev/null || true
+    [ -n "${DOTFILES_SESSION_ID:-}" ] && rm -f "/tmp/*${DOTFILES_SESSION_ID}*" 2>/dev/null || true
 
     # Clean up dotfiles directories and auth markers
     remove_path "${DOTFILES_PARENT_DIR}/tmp" "Removing dotfiles temp directory"
-    rm -f "/tmp/.bootstrap_sudo_authenticated" "/tmp/.bootstrap_sudo_keepalive_pid" 2> /dev/null || true
+    rm -f "/tmp/.bootstrap_sudo_authenticated" "/tmp/.bootstrap_sudo_keepalive_pid" 2>/dev/null || true
 }
 
 # ============================================================================
