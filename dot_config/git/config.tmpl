@@ -6,12 +6,12 @@
   autocorrect = -1
 
 [user]
-  email = {{ (onepasswordDetailsFields "5kaq6gish5gkbcl4dyrp2oy2ue").username.value }}
+  email = {{ (onepasswordItemFields "5kaq6gish5gkbcl4dyrp2oy2ue" "5aoci7oti43g4nrz6fx26dmbai").handle.value }}
   name  = Brandon Black
-  signingkey = {{ (onepasswordDetailsFields "odb55usvohvjx52wh3gzwpbira").public_key.value }}
+  signingkey = {{ (index (onepasswordItemFields "odb55usvohvjx52wh3gzwpbira" "5aoci7oti43g4nrz6fx26dmbai") "public key").value }}
 
 [github]
-  user = {{ (onepasswordItemFields "5kaq6gish5gkbcl4dyrp2oy2ue").handle.value }}
+  user = {{ (onepasswordItemFields "5kaq6gish5gkbcl4dyrp2oy2ue" "5aoci7oti43g4nrz6fx26dmbai").handle.value }}
 
 [push]
   default = tracking

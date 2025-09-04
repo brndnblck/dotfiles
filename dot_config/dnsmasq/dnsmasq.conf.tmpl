@@ -14,8 +14,8 @@ address=/.test/127.0.0.1
 address=/.test/::1
 
 # NextDNS upstream (fetched from 1Password)
-server=45.90.28.0#{{ (onepasswordDetailsFields "uwcib3hf6jjqvcfcjv4qiepamu").id.value }}.dns.nextdns.io
-server=45.90.30.0#{{ (onepasswordDetailsFields "uwcib3hf6jjqvcfcjv4qiepamu").id.value }}.dns.nextdns.io
+server=45.90.28.0#{{ (onepasswordItemFields "uwcib3hf6jjqvcfcjv4qiepamu" "5aoci7oti43g4nrz6fx26dmbai").id.value }}.dns.nextdns.io
+server=45.90.30.0#{{ (onepasswordItemFields "uwcib3hf6jjqvcfcjv4qiepamu" "5aoci7oti43g4nrz6fx26dmbai").id.value }}.dns.nextdns.io
 
 # Cache
 cache-size=10000
